@@ -30,7 +30,10 @@ class MainScene extends Phaser.Scene {
   preload() {
     this.load.image("tiles", "assets/tileset.png")
     this.load.tilemapTiledJSON("map", "assets/map.json")
-    this.load.spritesheet("characters", "assets/characters.png", { frameWidth: 32, frameHeight: 32 })
+    this.load.spritesheet("characters", "assets/characters.png", {
+      frameWidth: CONFIG.CHARACTER_WIDTH,
+      frameHeight: CONFIG.CHARACTER_WIDTH,
+    })
   }
 
   create() {
@@ -244,6 +247,10 @@ class MainScene extends Phaser.Scene {
           otherPlayer.anims.stop()
         }
       }
+    })
+    this.socket.on("positionRejected", (correctPosition: PlayerData) => {
+      // Update the player's position to the correct position received from the server
+      this.player.setPosition(correctPosition.x, correctPosition.y)
     })
 
     this.socket.on("playerLeft", (playerId: string) => {

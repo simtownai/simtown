@@ -19,25 +19,67 @@ const io = new Server(server, {
 const players: Map<string, PlayerData> = new Map()
 const availableSprites: number[] = [0, 1, 2, 3, 4, 5, 6, 7]
 
+// Constants for collision detection
+
 function getNextAvailableSprite(): number {
   if (availableSprites.length === 0) {
-    // If all sprites are taken, reset the list
     availableSprites.push(...[0, 1, 2, 3, 4, 5, 6, 7])
   }
   const randomIndex = Math.floor(Math.random() * availableSprites.length)
   return availableSprites.splice(randomIndex, 1)[0]
 }
 
+function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
+  return (
+    player1.x < player2.x + CONFIG.CHARACTER_WIDTH &&
+    player1.x + CONFIG.CHARACTER_WIDTH > player2.x &&
+    player1.y < player2.y + CONFIG.CHARACTER_WIDTH &&
+    player1.y + CONFIG.CHARACTER_WIDTH > player2.y
+  )
+}
+
+function findValidPosition(newPlayer: PlayerData): PlayerData {
+  let attempts = 0
+  const maxAttempts = 10
+
+  while (attempts < maxAttempts) {
+    let collisionFound = false
+
+    for (const [, otherPlayer] of players) {
+      if (checkCollision(newPlayer, otherPlayer)) {
+        collisionFound = true
+        break
+      }
+    }
+
+    if (!collisionFound) {
+      return newPlayer
+    }
+
+    // If collision found, try a new random position
+    newPlayer.x = Math.random() * 800
+    newPlayer.y = Math.random() * 600
+    attempts++
+  }
+
+  // If we couldn't find a valid position after max attempts, return the last tried position
+  return newPlayer
+}
+
 io.on("connection", (socket) => {
   const playerId = socket.id
   const spriteIndex = getNextAvailableSprite()
-  const initialPosition: PlayerData = {
+  let initialPosition: PlayerData = {
     id: playerId,
     x: Math.random() * 800,
     y: Math.random() * 600,
-    animation: `idle-${spriteIndex}`, // Set initial animation
+    animation: `idle-${spriteIndex}`,
     spriteIndex: spriteIndex,
   }
+
+  // Find a valid initial position without collisions
+  initialPosition = findValidPosition(initialPosition)
+
   players.set(playerId, initialPosition)
 
   console.log(`User ${socket.id} connected. Assigned sprite: ${spriteIndex}. Number of players: ${players.size}`)
@@ -46,9 +88,28 @@ io.on("connection", (socket) => {
   socket.broadcast.emit("playerJoined", initialPosition)
 
   socket.on("updatePosition", (data: PlayerData) => {
-    const updatedData = { ...data, spriteIndex: players.get(playerId)?.spriteIndex }
-    players.set(playerId, updatedData)
-    socket.broadcast.emit("playerMoved", updatedData)
+    const currentPlayer = players.get(playerId)
+    if (!currentPlayer) return
+
+    let newPosition = { ...data, spriteIndex: currentPlayer.spriteIndex }
+
+    // Check for collisions with other players
+    let collisionDetected = false
+    for (const [otherId, otherPlayer] of players) {
+      if (otherId !== playerId && checkCollision(newPosition, otherPlayer)) {
+        collisionDetected = true
+        break
+      }
+    }
+
+    if (!collisionDetected) {
+      // If no collision, update the player's position
+      players.set(playerId, newPosition)
+      socket.broadcast.emit("playerMoved", newPosition)
+    } else {
+      // If collision detected, send the current (non-updated) position back to the client
+      socket.emit("positionRejected", currentPlayer)
+    }
   })
 
   socket.on("disconnect", () => {
