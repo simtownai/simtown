@@ -1,5 +1,6 @@
 import { CONFIG } from "../shared/config"
 import { PlayerData } from "../shared/types"
+import "./style.css"
 import Phaser from "phaser"
 import { Socket, io } from "socket.io-client"
 
@@ -37,10 +38,11 @@ class MainScene extends Phaser.Scene {
     this.setupPlayer()
     this.setupCamera()
     this.setupInput()
-    this.setupFullscreenButton()
     this.setupAnimations()
     this.setupSocketListeners()
     this.socket.connect()
+
+    this.scale.on("resize", this.resize, this)
   }
 
   private setupMap() {
@@ -51,6 +53,11 @@ class MainScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
   }
 
+  private setupCamera() {
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    // We'll start following the player when we set its position
+  }
+
   private setupPlayer() {
     // We'll initialize the player sprite here, but we won't set its position yet
     // The actual position will be set when we receive the "existingPlayers" event
@@ -58,11 +65,6 @@ class MainScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(0, 0, "characters", startFrame)
     this.player.setCollideWorldBounds(true)
     this.player.setVisible(false) // Hide the player until we get its position
-  }
-
-  private setupCamera() {
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-    // We'll start following the player when we set its position
   }
 
   private setupInput() {
@@ -77,20 +79,6 @@ class MainScene extends Phaser.Scene {
       K: Phaser.Input.Keyboard.Key
       L: Phaser.Input.Keyboard.Key
     }
-  }
-
-  private setupFullscreenButton() {
-    const fullscreenButton = this.add
-      .text(10, 10, "Fullscreen", { backgroundColor: "#000" })
-      .setInteractive()
-      .on("pointerdown", () => {
-        if (this.scale.isFullscreen) {
-          this.scale.stopFullscreen()
-        } else {
-          this.scale.startFullscreen()
-        }
-      })
-    fullscreenButton.setScrollFactor(0)
   }
 
   private setupAnimations() {
@@ -149,9 +137,22 @@ class MainScene extends Phaser.Scene {
     }
   }
 
-  resize() {
-    const { width, height } = this.scale
+  resize(gameSize: Phaser.Structs.Size) {
+    const width = gameSize.width
+    const height = gameSize.height
+
     this.cameras.main.setViewport(0, 0, width, height)
+
+    // Update the camera bounds
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+
+    // Keep the world bounds fixed to the map size
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+
+    // Center the camera on the player
+    if (this.player) {
+      this.cameras.main.centerOn(this.player.x, this.player.y)
+    }
   }
 
   update() {
@@ -265,8 +266,12 @@ class MainScene extends Phaser.Scene {
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "game-container",
-  width: 800,
-  height: 600,
+  width: "100%",
+  height: "100%",
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   physics: {
     default: "arcade",
     arcade: {
