@@ -21,6 +21,7 @@ class MainScene extends Phaser.Scene {
     L: Phaser.Input.Keyboard.Key
   }
   private playerSpriteIndex: number = 0
+  private lastSentPlayerData: PlayerData | null = null
 
   constructor() {
     super({ key: "MainScene" })
@@ -201,14 +202,28 @@ class MainScene extends Phaser.Scene {
       this.player.anims.stop()
     }
 
-    // Emit position and animation
-    this.socket.emit("updatePosition", {
-      id: this.socket.id,
+    // Create current PlayerData object
+    const currentPlayerData: PlayerData = {
+      id: this.socket.id!,
       x: this.player.x,
       y: this.player.y,
       animation: animation,
       spriteIndex: this.playerSpriteIndex,
-    })
+    }
+
+    // Check if PlayerData has changed
+    if (
+      !this.lastSentPlayerData ||
+      this.lastSentPlayerData.x !== currentPlayerData.x ||
+      this.lastSentPlayerData.y !== currentPlayerData.y ||
+      this.lastSentPlayerData.animation !== currentPlayerData.animation
+    ) {
+      // Emit position and animation only if there's a change
+      this.socket.emit("updatePosition", currentPlayerData)
+
+      // Update last sent PlayerData
+      this.lastSentPlayerData = { ...currentPlayerData }
+    }
   }
 
   private setupSocketListeners() {
@@ -265,7 +280,7 @@ class MainScene extends Phaser.Scene {
   private addOtherPlayer(playerInfo: PlayerData) {
     const startFrame = playerInfo.spriteIndex * 12
     const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, "characters", startFrame)
-    otherPlayer.anims.play(`idle-${playerInfo.spriteIndex}`)
+    otherPlayer.anims.play(playerInfo.animation)
     this.otherPlayers.set(playerInfo.id, otherPlayer)
   }
 }
