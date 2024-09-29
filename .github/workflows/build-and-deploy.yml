@@ -168,7 +168,7 @@ jobs:
           token: "${{ secrets.GITHUB_TOKEN }}"
           deployment-id: ${{ steps.deployment-server.outputs.deployment_id }}
           state: "success"
-          environment-url: ${{ secrets.HOST }}:3000
+          environment-url: https://api.simtown.dev/
 
       - name: Update server deployment status (failure)
         if: ${{ failure() }}
