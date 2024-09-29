@@ -1,0 +1,9 @@
+services:
+  simtown-server:
+    image: ${IMAGE_NAME:-simtown}
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    restart: always
+    tty: true
