@@ -132,6 +132,9 @@ jobs:
           description: "Deploying server to production environment"
           initial-status: in_progress
 
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Deploy docker-compose.yml to server
         uses: appleboy/scp-action@v0.1.7
         with:
