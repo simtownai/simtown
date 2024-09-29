@@ -23,8 +23,11 @@ class MainScene extends Phaser.Scene {
     J: Phaser.Input.Keyboard.Key
     K: Phaser.Input.Keyboard.Key
     L: Phaser.Input.Keyboard.Key
+    SPACE: Phaser.Input.Keyboard.Key
   }
   private lastSentPlayerData: PlayerData | null = null
+
+  private isAttacking: boolean = false
 
   constructor() {
     super({ key: "MainScene" })
@@ -58,7 +61,7 @@ class MainScene extends Phaser.Scene {
 
   private setupInput() {
     this.cursors = this.input.keyboard!.createCursorKeys()
-    this.keys = this.input.keyboard!.addKeys("W,A,S,D,H,J,K,L") as {
+    this.keys = this.input.keyboard!.addKeys("W,A,S,D,H,J,K,L,SPACE") as {
       W: Phaser.Input.Keyboard.Key
       A: Phaser.Input.Keyboard.Key
       S: Phaser.Input.Keyboard.Key
@@ -67,6 +70,7 @@ class MainScene extends Phaser.Scene {
       J: Phaser.Input.Keyboard.Key
       K: Phaser.Input.Keyboard.Key
       L: Phaser.Input.Keyboard.Key
+      SPACE: Phaser.Input.Keyboard.Key
     }
   }
 
@@ -78,44 +82,64 @@ class MainScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
     this.spriteHandler.setupPlayer(this.player, this.playerSpriteType)
     this.resize(this.scale.gameSize)
+
+    this.player.on(
+      "animationcomplete",
+      (animation: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
+        if (animation.key === `${this.playerSpriteType}-attack1`) {
+          this.isAttacking = false
+        }
+      },
+    )
   }
 
   update() {
     if (!this.player) return
 
-    let dx = 0
-    let dy = 0
+    if (this.isAttacking) {
+      this.player.setVelocity(0, 0)
+    } else {
+      let dx = 0
+      let dy = 0
 
-    if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
-      dx = -1
-      this.player.setFlipX(true)
-    } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
-      dx = 1
-      this.player.setFlipX(false)
+      if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
+        dx = -1
+        this.player.setFlipX(true)
+      } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
+        dx = 1
+        this.player.setFlipX(false)
+      }
+
+      if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
+        dy = -1
+      } else if (this.cursors.down.isDown || this.keys.S.isDown || this.keys.J.isDown) {
+        dy = 1
+      }
+
+      // Normalize diagonal movement
+      if (dx !== 0 && dy !== 0) {
+        dx *= Math.SQRT1_2
+        dy *= Math.SQRT1_2
+      }
+
+      const speed = 160
+      this.player.setVelocity(dx * speed, dy * speed)
+
+      let animation = `${this.playerSpriteType}-idle`
+      if (dx !== 0 || dy !== 0) {
+        animation = `${this.playerSpriteType}-walk`
+      }
+
+      if (this.player.anims.getName() !== animation) {
+        this.player.anims.play(animation, true)
+      }
     }
 
-    if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
-      dy = -1
-    } else if (this.cursors.down.isDown || this.keys.S.isDown || this.keys.J.isDown) {
-      dy = 1
-    }
-
-    // Normalize diagonal movement
-    if (dx !== 0 && dy !== 0) {
-      dx *= Math.SQRT1_2
-      dy *= Math.SQRT1_2
-    }
-
-    const speed = 160
-    this.player.setVelocity(dx * speed, dy * speed)
-
-    let animation = `${this.playerSpriteType}-idle`
-    if (dx !== 0 || dy !== 0) {
-      animation = `${this.playerSpriteType}-walk`
-    }
-
-    if (this.player.anims.getName() !== animation) {
-      this.player.anims.play(animation, true)
+    if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && !this.isAttacking) {
+      this.isAttacking = true
+      const attackAnimation = `${this.playerSpriteType}-attack1`
+      this.player.setVelocity(0, 0) // Stop movement during attack
+      this.player.anims.play(attackAnimation, true)
     }
 
     const currentPlayerData: PlayerData = {
@@ -123,7 +147,7 @@ class MainScene extends Phaser.Scene {
       spriteType: this.playerSpriteType,
       x: this.player.x,
       y: this.player.y,
-      animation: animation,
+      animation: this.player.anims.getName(),
       flipX: this.player.flipX,
     }
 
