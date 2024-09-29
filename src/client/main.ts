@@ -7,7 +7,9 @@ import { Socket, io } from "socket.io-client"
 class MainScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap
   private socket: Socket
+  private playerSpriteIndex: number = 0
   private player!: Phaser.Physics.Arcade.Sprite
+  private lastSentPlayerData: PlayerData | null = null
   private otherPlayers: Map<string, Phaser.Physics.Arcade.Sprite> = new Map()
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private keys: {
@@ -20,8 +22,7 @@ class MainScene extends Phaser.Scene {
     K: Phaser.Input.Keyboard.Key
     L: Phaser.Input.Keyboard.Key
   }
-  private playerSpriteIndex: number = 0
-  private lastSentPlayerData: PlayerData | null = null
+  private backgroundMusic!: Phaser.Sound.BaseSound
 
   constructor() {
     super({ key: "MainScene" })
@@ -35,6 +36,7 @@ class MainScene extends Phaser.Scene {
       frameWidth: CONFIG.CHARACTER_WIDTH,
       frameHeight: CONFIG.CHARACTER_WIDTH,
     })
+    // this.load.audio("background-music", "assets/background-music.mp3")
   }
 
   create() {
@@ -43,6 +45,7 @@ class MainScene extends Phaser.Scene {
     this.setupCamera()
     this.setupInput()
     this.setupAnimations()
+    // this.setupSound()
     this.setupSocketListeners()
     this.socket.connect()
 
@@ -57,11 +60,6 @@ class MainScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
   }
 
-  private setupCamera() {
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-    // We'll start following the player when we set its position
-  }
-
   private setupPlayer() {
     // We'll initialize the player sprite here, but we won't set its position yet
     // The actual position will be set when we receive the "existingPlayers" event
@@ -69,6 +67,11 @@ class MainScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(0, 0, "characters", startFrame)
     this.player.setCollideWorldBounds(true)
     this.player.setVisible(false) // Hide the player until we get its position
+  }
+
+  private setupCamera() {
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    // We'll start following the player when we set its position
   }
 
   private setupInput() {
@@ -141,6 +144,19 @@ class MainScene extends Phaser.Scene {
     }
   }
 
+  private setupSound() {
+    this.backgroundMusic = this.sound.add("background-music", { loop: true, volume: 0.5 })
+    this.backgroundMusic.play()
+
+    this.input.keyboard!.on("keydown-M", () => {
+      if (this.backgroundMusic.isPlaying) {
+        this.backgroundMusic.pause()
+      } else {
+        this.backgroundMusic.resume()
+      }
+    })
+  }
+
   resize(gameSize: Phaser.Structs.Size) {
     const width = gameSize.width
     const height = gameSize.height
@@ -205,10 +221,11 @@ class MainScene extends Phaser.Scene {
     // Create current PlayerData object
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
+      spriteIndex: this.playerSpriteIndex,
       x: this.player.x,
       y: this.player.y,
       animation: animation,
-      spriteIndex: this.playerSpriteIndex,
+      lastFrame: this.player.frame.name,
     }
 
     // Check if PlayerData has changed
@@ -216,10 +233,12 @@ class MainScene extends Phaser.Scene {
       !this.lastSentPlayerData ||
       this.lastSentPlayerData.x !== currentPlayerData.x ||
       this.lastSentPlayerData.y !== currentPlayerData.y ||
-      this.lastSentPlayerData.animation !== currentPlayerData.animation
+      this.lastSentPlayerData.animation !== currentPlayerData.animation ||
+      this.lastSentPlayerData.spriteIndex !== currentPlayerData.spriteIndex ||
+      this.lastSentPlayerData.lastFrame !== currentPlayerData.lastFrame
     ) {
       // Emit position and animation only if there's a change
-      this.socket.emit("updatePosition", currentPlayerData)
+      this.socket.emit("updatePlayerData", currentPlayerData)
 
       // Update last sent PlayerData
       this.lastSentPlayerData = { ...currentPlayerData }
@@ -252,17 +271,19 @@ class MainScene extends Phaser.Scene {
       }
     })
 
-    this.socket.on("playerMoved", (player: PlayerData) => {
+    this.socket.on("playerDataChanged", (player: PlayerData) => {
       const otherPlayer = this.otherPlayers.get(player.id)
       if (otherPlayer) {
         otherPlayer.setPosition(player.x, player.y)
-        if (player.animation !== `idle-${player.spriteIndex}`) {
-          otherPlayer.anims.play(player.animation, true)
-        } else {
+        if (player.animation.startsWith("idle")) {
           otherPlayer.anims.stop()
+          otherPlayer.setFrame(player.lastFrame)
+        } else {
+          otherPlayer.anims.play(player.animation, true)
         }
       }
     })
+
     this.socket.on("positionRejected", (correctPosition: PlayerData) => {
       // Update the player's position to the correct position received from the server
       this.player.setPosition(correctPosition.x, correctPosition.y)
@@ -278,9 +299,13 @@ class MainScene extends Phaser.Scene {
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
-    const startFrame = playerInfo.spriteIndex * 12
-    const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, "characters", startFrame)
-    otherPlayer.anims.play(playerInfo.animation)
+    const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, "characters", playerInfo.lastFrame)
+    if (playerInfo.animation.startsWith("idle")) {
+      // Set the correct frame for idle animation
+      otherPlayer.setFrame(playerInfo.lastFrame)
+    } else {
+      otherPlayer.anims.play(playerInfo.animation)
+    }
     this.otherPlayers.set(playerInfo.id, otherPlayer)
   }
 }
@@ -301,6 +326,9 @@ const config: Phaser.Types.Core.GameConfig = {
     },
   },
   scene: [MainScene],
+  audio: {
+    disableWebAudio: false,
+  },
 }
 
 new Phaser.Game(config)

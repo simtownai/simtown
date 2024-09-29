@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { PlayerData } from "../shared/types"
+import { PlayerData, UpdatePlayerData } from "../shared/types"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -87,16 +87,17 @@ io.on("connection", (socket) => {
   socket.emit("existingPlayers", Array.from(players.values()))
   socket.broadcast.emit("playerJoined", initialPosition)
 
-  socket.on("updatePosition", (data: PlayerData) => {
-    const currentPlayer = players.get(playerId)
-    if (!currentPlayer) return
+  socket.on("updatePlayerData", (playerData: UpdatePlayerData) => {
+    console.log("updatePlayerData", playerData)
+    const currentPlayerData = players.get(playerId)
+    if (!currentPlayerData) return
 
-    let newPosition = { ...data, spriteIndex: currentPlayer.spriteIndex }
+    let newPlayerData = { ...currentPlayerData, ...playerData }
 
     // Check for collisions with other players
     let collisionDetected = false
-    for (const [otherId, otherPlayer] of players) {
-      if (otherId !== playerId && checkCollision(newPosition, otherPlayer)) {
+    for (const [otherId, otherPlayerData] of players) {
+      if (otherId !== playerId && checkCollision(newPlayerData, otherPlayerData)) {
         collisionDetected = true
         break
       }
@@ -104,11 +105,11 @@ io.on("connection", (socket) => {
 
     if (!collisionDetected) {
       // If no collision, update the player's position
-      players.set(playerId, newPosition)
-      socket.broadcast.emit("playerMoved", newPosition)
+      players.set(playerId, newPlayerData)
+      socket.broadcast.emit("playerDataChanged", newPlayerData)
     } else {
       // If collision detected, send the current (non-updated) position back to the client
-      socket.emit("positionRejected", currentPlayer)
+      socket.emit("positionRejected", currentPlayerData)
     }
   })
 

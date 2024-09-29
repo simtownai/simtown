@@ -1,7 +1,10 @@
 export interface PlayerData {
   id: string
+  spriteIndex: number
   x: number
   y: number
   animation: string
-  spriteIndex: number
+  lastFrame: string
 }
+
+export type UpdatePlayerData = Partial<PlayerData> & { id: string }
