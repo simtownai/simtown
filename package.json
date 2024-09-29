@@ -7,7 +7,6 @@
     "dev:client": "vite --port 3001",
     "dev:server": "bun run --watch src/server/server.ts",
     "build": "vite build",
-    "serve": "vite preview",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
