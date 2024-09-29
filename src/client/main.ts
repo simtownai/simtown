@@ -23,6 +23,8 @@ class MainScene extends Phaser.Scene {
     L: Phaser.Input.Keyboard.Key
   }
   private backgroundMusic!: Phaser.Sound.BaseSound
+  private collisionLayer!: Phaser.Tilemaps.TilemapLayer
+  // private wallLayer!: Phaser.Tilemaps.TilemapLayer
 
   constructor() {
     super({ key: "MainScene" })
@@ -30,9 +32,9 @@ class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("tiles", "assets/tileset.png")
-    this.load.tilemapTiledJSON("map", "assets/map.json")
-    this.load.spritesheet("characters", "assets/characters.png", {
+    this.load.pack("pack", "assets/simple-pack.json")
+    // this.load.pack("pack", "assets/villie-pack.json")
+    this.load.spritesheet("characters", "assets/sprites/characters.png", {
       frameWidth: CONFIG.CHARACTER_WIDTH,
       frameHeight: CONFIG.CHARACTER_WIDTH,
     })
@@ -57,6 +59,67 @@ class MainScene extends Phaser.Scene {
     const tileset = this.map.addTilesetImage("tileset", "tiles")!
     this.map.createLayer("Ground", tileset)
     this.map.createLayer("Objects", tileset)!
+    this.collisionLayer = this.map.createLayer("Collisions", tileset)!
+    this.collisionLayer.setCollisionByExclusion([-1])
+    this.collisionLayer.setVisible(false)
+
+    // this.map = this.make.tilemap({ key: "GenerativeAgentsDevMap" })
+    // const collisions = this.map.addTilesetImage("blocks", "blocks_1")!
+    // const walls = this.map.addTilesetImage("Room_Builder_32x32", "walls")!
+    // const interiors_pt1 = this.map.addTilesetImage("interiors_pt1", "interiors_pt1")!
+    // const interiors_pt2 = this.map.addTilesetImage("interiors_pt2", "interiors_pt2")!
+    // const interiors_pt3 = this.map.addTilesetImage("interiors_pt3", "interiors_pt3")!
+    // const interiors_pt4 = this.map.addTilesetImage("interiors_pt4", "interiors_pt4")!
+    // const interiors_pt5 = this.map.addTilesetImage("interiors_pt5", "interiors_pt5")!
+    // const CuteRPG_Field_B = this.map.addTilesetImage("CuteRPG_Field_B", "CuteRPG_Field_B")!
+    // const CuteRPG_Field_C = this.map.addTilesetImage("CuteRPG_Field_C", "CuteRPG_Field_C")!
+    // const CuteRPG_Harbor_C = this.map.addTilesetImage("CuteRPG_Harbor_C", "CuteRPG_Harbor_C")!
+    // const CuteRPG_Village_B = this.map.addTilesetImage("CuteRPG_Village_B", "CuteRPG_Village_B")!
+    // const CuteRPG_Forest_B = this.map.addTilesetImage("CuteRPG_Forest_B", "CuteRPG_Forest_B")!
+    // const CuteRPG_Desert_C = this.map.addTilesetImage("CuteRPG_Desert_C", "CuteRPG_Desert_C")!
+    // const CuteRPG_Mountains_B = this.map.addTilesetImage("CuteRPG_Mountains_B", "CuteRPG_Mountains_B")!
+    // const CuteRPG_Desert_B = this.map.addTilesetImage("CuteRPG_Desert_B", "CuteRPG_Desert_B")!
+    // const CuteRPG_Forest_C = this.map.addTilesetImage("CuteRPG_Forest_C", "CuteRPG_Forest_C")!
+    // const tileset_group_1 = [
+    //   CuteRPG_Field_B,
+    //   CuteRPG_Field_C,
+    //   CuteRPG_Harbor_C,
+    //   CuteRPG_Village_B,
+    //   CuteRPG_Forest_B,
+    //   CuteRPG_Desert_C,
+    //   CuteRPG_Mountains_B,
+    //   CuteRPG_Desert_B,
+    //   CuteRPG_Forest_C,
+    //   interiors_pt1,
+    //   interiors_pt2,
+    //   interiors_pt3,
+    //   interiors_pt4,
+    //   interiors_pt5,
+    //   walls,
+    // ]
+    // this.map.createLayer("Bottom Ground", tileset_group_1, 0, 0)
+    // this.map.createLayer("Exterior Ground", tileset_group_1, 0, 0)
+    // this.map.createLayer("Exterior Decoration L1", tileset_group_1, 0, 0)
+    // this.map.createLayer("Exterior Decoration L2", tileset_group_1, 0, 0)
+    // this.map.createLayer("Interior Ground", tileset_group_1, 0, 0)
+    // this.wallLayer = this.map.createLayer("Wall", [CuteRPG_Field_C, walls], 0, 0)!
+    // this.map.createLayer("Interior Furniture L1", tileset_group_1, 0, 0)
+    // this.map.createLayer("Interior Furniture L2 ", tileset_group_1, 0, 0)
+    // const foregroundL1Layer = this.map.createLayer("Foreground L1", tileset_group_1, 0, 0)!
+    // const foregroundL2Layer = this.map.createLayer("Foreground L2", tileset_group_1, 0, 0)!
+    // // this.spawnJsonAreas = this.map.createLayer("Spawning Blocks", tileset_group_1, 0, 0)!
+    // // this.sectorJsonAreas = this.map.createLayer("Sector Blocks", tileset_group_1, 0, 0)!
+    // // this.objectInterAreas = this.map.createLayer("Object Interaction Blocks", tileset_group_1, 0, 0)!
+    // // this.arenaBlockAreas = this.map.createLayer("Arena Blocks", tileset_group_1, 0, 0)!
+    // this.collisionLayer = this.map.createLayer("Collisions", collisions, 0, 0)!
+    // this.collisionLayer.setCollisionByExclusion([-1])
+    // this.wallLayer.setCollisionByExclusion([-1])
+    // this.collisionLayer.setVisible(false)
+    // // Set layer depths
+    // this.collisionLayer.setDepth(-1)
+    // foregroundL1Layer.setDepth(2)
+    // foregroundL2Layer.setDepth(2)
+
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
   }
 
@@ -251,12 +314,11 @@ class MainScene extends Phaser.Scene {
       players.forEach((player) => {
         if (player.id === this.socket.id) {
           this.playerSpriteIndex = player.spriteIndex
-          const startFrame = this.playerSpriteIndex * 12 // Each character has 12 frames (3 for each direction)
-          this.player = this.physics.add.sprite(player.x, player.y, "characters", startFrame)
+          this.player = this.physics.add.sprite(player.x, player.y, "characters")
           this.player.setCollideWorldBounds(true)
+          this.physics.add.collider(this.player, this.collisionLayer)
+          // this.physics.add.collider(this.player, this.wallLayer)
           this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
-
-          // Set the initial animation
           this.player.anims.play(`idle-${this.playerSpriteIndex}`)
         } else {
           this.addOtherPlayer(player)
