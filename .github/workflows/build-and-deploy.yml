@@ -143,7 +143,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           source: "docker-compose.yml"
-          target: "/{{ secrets.USERNAME }}/simtown/"
+          target: "/${{ secrets.USERNAME }}/simtown/"
 
       - name: Deploy server using Docker Compose
         uses: appleboy/ssh-action@v1.0.3
@@ -155,7 +155,7 @@ jobs:
           command_timeout: "60m"
           script: |
             set -x
-            cd /${{ secrets.SERVER_USERNAME }}/simtown/
+            cd /${{ secrets.USERNAME }}/simtown/
             echo "IMAGE_NAME=ghcr.io/${{ github.repository }}:latest" > .env
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker-compose pull
