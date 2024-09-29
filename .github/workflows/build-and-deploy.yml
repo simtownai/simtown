@@ -102,7 +102,6 @@ jobs:
             sudo mv /tmp/simtown/dist/* $TARGET_DIR/
             sudo rm -rf /tmp/simtown
 
-
       - name: Update client deployment status (success)
         if: ${{ success() }}
         uses: chrnorm/deployment-status@v2
