@@ -10,56 +10,56 @@ export class SpriteHandler {
   }
 
   preloadSprites() {
-    this.scene.load.spritesheet("orc-idle", "assets/Orc/Orc/Orc-Idle.png", {
+    this.scene.load.spritesheet("orc-idle", "assets/sprites/Orc/Orc/Orc-Idle.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("orc-walk", "assets/Orc/Orc/Orc-Walk.png", {
+    this.scene.load.spritesheet("orc-walk", "assets/sprites/Orc/Orc/Orc-Walk.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("orc-attack1", "assets/Orc/Orc/Orc-Attack01.png", {
+    this.scene.load.spritesheet("orc-attack1", "assets/sprites/Orc/Orc/Orc-Attack01.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("orc-attack2", "assets/Orc/Orc/Orc-Attack02.png", {
+    this.scene.load.spritesheet("orc-attack2", "assets/sprites/Orc/Orc/Orc-Attack02.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("orc-hurt", "assets/Orc/Orc/Orc-Hurt.png", {
+    this.scene.load.spritesheet("orc-hurt", "assets/sprites/Orc/Orc/Orc-Hurt.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("orc-death", "assets/Orc/Orc/Orc-Death.png", {
+    this.scene.load.spritesheet("orc-death", "assets/sprites/Orc/Orc/Orc-Death.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
 
-    this.scene.load.spritesheet("soldier-idle", "assets/Soldier/Soldier/Soldier-Idle.png", {
+    this.scene.load.spritesheet("soldier-idle", "assets/sprites/Soldier/Soldier/Soldier-Idle.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("soldier-walk", "assets/Soldier/Soldier/Soldier-Walk.png", {
+    this.scene.load.spritesheet("soldier-walk", "assets/sprites/Soldier/Soldier/Soldier-Walk.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("soldier-attack1", "assets/Soldier/Soldier/Soldier-Attack01.png", {
+    this.scene.load.spritesheet("soldier-attack1", "assets/sprites/Soldier/Soldier/Soldier-Attack01.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("soldier-attack2", "assets/Soldier/Soldier/Soldier-Attack02.png", {
+    this.scene.load.spritesheet("soldier-attack2", "assets/sprites/Soldier/Soldier/Soldier-Attack02.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("soldier-attack3", "assets/Soldier/Soldier/Soldier-Attack03.png", {
+    this.scene.load.spritesheet("soldier-attack3", "assets/sprites/Soldier/Soldier/Soldier-Attack03.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("soldier-hurt", "assets/Soldier/Soldier/Soldier-Hurt.png", {
+    this.scene.load.spritesheet("soldier-hurt", "assets/sprites/Soldier/Soldier/Soldier-Hurt.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
-    this.scene.load.spritesheet("soldier-death", "assets/Soldier/Soldier/Soldier-Death.png", {
+    this.scene.load.spritesheet("soldier-death", "assets/sprites/Soldier/Soldier/Soldier-Death.png", {
       frameWidth: CONFIG.SPRITE_WIDTH,
       frameHeight: CONFIG.SPRITE_WIDTH,
     })
