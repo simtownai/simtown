@@ -75,7 +75,7 @@ jobs:
           name: dist
           path: dist
 
-      - name: Deploy client to web server
+      - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
@@ -83,7 +83,25 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           source: "dist/*"
-          target: "/usr/share/nginx/simtown.dev/html"
+          target: "/tmp/simtown"
+
+      - name: Replace target files
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          command_timeout: "60m"
+          script: |
+            set -x
+            TARGET_DIR="/usr/share/nginx/simtown.dev/html"
+
+            sudo rm -rf $TARGET_DIR/*
+            sudo mkdir -p $TARGET_DIR
+            sudo mv /tmp/simtown/dist/* $TARGET_DIR/
+            sudo rm -rf /tmp/simtown
+
 
       - name: Update client deployment status (success)
         if: ${{ success() }}
