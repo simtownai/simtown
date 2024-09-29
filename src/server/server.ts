@@ -3,7 +3,21 @@ import { PlayerData, SpriteType, UpdatePlayerData, spriteTypes } from "../shared
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
+import pino from "pino"
 import { Server } from "socket.io"
+
+const logger = pino({
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  transport:
+    process.env.NODE_ENV !== "production"
+      ? {
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+          },
+        }
+      : undefined,
+})
 
 const app = express()
 app.use(cors())
@@ -77,7 +91,7 @@ io.on("connection", (socket) => {
 
   players.set(playerId, initialPosition)
 
-  console.log(`User ${socket.id} connected. Assigned sprite: ${spriteType}. Number of players: ${players.size}`)
+  logger.info(`User ${socket.id} connected. Assigned sprite: ${spriteType}. Number of players: ${players.size}`)
 
   socket.emit("existingPlayers", Array.from(players.values()))
   socket.broadcast.emit("playerJoined", initialPosition)
@@ -113,10 +127,10 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     players.delete(playerId)
     io.emit("playerLeft", playerId)
-    console.log(`User ${socket.id} disconnected. Number of players: ${players.size}`)
+    logger.info(`User ${socket.id} disconnected. Number of players: ${players.size}`)
   })
 })
 
 server.listen(CONFIG.SERVER_PORT, () => {
-  console.log(`Server is running on ${CONFIG.SERVER_URL}`)
+  logger.info(`Server is running on ${CONFIG.SERVER_URL}`)
 })
