@@ -4,7 +4,7 @@
   "tabWidth": 2,
   "useTabs": false,
   "printWidth": 120,
-  "jsxBracketSameLine": false,
+  "bracketSameLine": false,
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true
