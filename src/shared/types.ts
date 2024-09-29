@@ -1,10 +1,18 @@
+export const spriteTypes = ["orc", "soldier"] as const
+export type SpriteType = (typeof spriteTypes)[number]
+
 export interface PlayerData {
   id: string
-  spriteIndex: number
+  spriteType: SpriteType
   x: number
   y: number
   animation: string
-  lastFrame: string
+  flipX: boolean
 }
 
-export type UpdatePlayerData = Partial<PlayerData> & { id: string }
+export interface UpdatePlayerData {
+  x: number
+  y: number
+  animation: string
+  flipX: boolean
+}

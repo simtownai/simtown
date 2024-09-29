@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { PlayerData, UpdatePlayerData } from "../shared/types"
+import { PlayerData, SpriteType, UpdatePlayerData, spriteTypes } from "../shared/types"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -17,24 +17,18 @@ const io = new Server(server, {
 })
 
 const players: Map<string, PlayerData> = new Map()
-const availableSprites: number[] = [0, 1, 2, 3, 4, 5, 6, 7]
 
-// Constants for collision detection
-
-function getNextAvailableSprite(): number {
-  if (availableSprites.length === 0) {
-    availableSprites.push(...[0, 1, 2, 3, 4, 5, 6, 7])
-  }
-  const randomIndex = Math.floor(Math.random() * availableSprites.length)
-  return availableSprites.splice(randomIndex, 1)[0]
+function getNextAvailableSpriteType(): SpriteType {
+  return spriteTypes[Math.floor(Math.random() * spriteTypes.length)]
 }
 
 function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
+  const characterWidth = 24
   return (
-    player1.x < player2.x + CONFIG.CHARACTER_WIDTH &&
-    player1.x + CONFIG.CHARACTER_WIDTH > player2.x &&
-    player1.y < player2.y + CONFIG.CHARACTER_WIDTH &&
-    player1.y + CONFIG.CHARACTER_WIDTH > player2.y
+    player1.x < player2.x + characterWidth &&
+    player1.x + characterWidth > player2.x &&
+    player1.y < player2.y + characterWidth &&
+    player1.y + characterWidth > player2.y
   )
 }
 
@@ -68,13 +62,14 @@ function findValidPosition(newPlayer: PlayerData): PlayerData {
 
 io.on("connection", (socket) => {
   const playerId = socket.id
-  const spriteIndex = getNextAvailableSprite()
+  const spriteType = getNextAvailableSpriteType()
   let initialPosition: PlayerData = {
     id: playerId,
+    spriteType: spriteType,
     x: Math.random() * 800,
     y: Math.random() * 600,
-    animation: `idle-${spriteIndex}`,
-    spriteIndex: spriteIndex,
+    animation: `${spriteType}-idle`,
+    flipX: false,
   }
 
   // Find a valid initial position without collisions
@@ -82,17 +77,19 @@ io.on("connection", (socket) => {
 
   players.set(playerId, initialPosition)
 
-  console.log(`User ${socket.id} connected. Assigned sprite: ${spriteIndex}. Number of players: ${players.size}`)
+  console.log(`User ${socket.id} connected. Assigned sprite: ${spriteType}. Number of players: ${players.size}`)
 
   socket.emit("existingPlayers", Array.from(players.values()))
   socket.broadcast.emit("playerJoined", initialPosition)
 
   socket.on("updatePlayerData", (playerData: UpdatePlayerData) => {
-    console.log("updatePlayerData", playerData)
     const currentPlayerData = players.get(playerId)
     if (!currentPlayerData) return
 
-    let newPlayerData = { ...currentPlayerData, ...playerData }
+    let newPlayerData: PlayerData = {
+      ...currentPlayerData,
+      ...playerData,
+    }
 
     // Check for collisions with other players
     let collisionDetected = false
@@ -114,10 +111,6 @@ io.on("connection", (socket) => {
   })
 
   socket.on("disconnect", () => {
-    const player = players.get(playerId)
-    if (player) {
-      availableSprites.push(player.spriteIndex)
-    }
     players.delete(playerId)
     io.emit("playerLeft", playerId)
     console.log(`User ${socket.id} disconnected. Number of players: ${players.size}`)

@@ -1,15 +1,17 @@
 import { CONFIG } from "../shared/config"
-import { PlayerData } from "../shared/types"
+import { PlayerData, SpriteType } from "../shared/types"
+import { SpriteHandler } from "./spriteHandler"
 import "./style.css"
 import Phaser from "phaser"
 import { Socket, io } from "socket.io-client"
 
 class MainScene extends Phaser.Scene {
-  private map!: Phaser.Tilemaps.Tilemap
   private socket: Socket
-  private playerSpriteIndex: number = 0
+  private map!: Phaser.Tilemaps.Tilemap
+  private collisionLayer!: Phaser.Tilemaps.TilemapLayer
   private player!: Phaser.Physics.Arcade.Sprite
-  private lastSentPlayerData: PlayerData | null = null
+  private playerSpriteType: SpriteType
+  private spriteHandler!: SpriteHandler
   private otherPlayers: Map<string, Phaser.Physics.Arcade.Sprite> = new Map()
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private keys: {
@@ -22,9 +24,7 @@ class MainScene extends Phaser.Scene {
     K: Phaser.Input.Keyboard.Key
     L: Phaser.Input.Keyboard.Key
   }
-  private backgroundMusic!: Phaser.Sound.BaseSound
-  private collisionLayer!: Phaser.Tilemaps.TilemapLayer
-  // private wallLayer!: Phaser.Tilemaps.TilemapLayer
+  private lastSentPlayerData: PlayerData | null = null
 
   constructor() {
     super({ key: "MainScene" })
@@ -33,24 +33,16 @@ class MainScene extends Phaser.Scene {
 
   preload() {
     this.load.pack("pack", "assets/simple-pack.json")
-    // this.load.pack("pack", "assets/villie-pack.json")
-    this.load.spritesheet("characters", "assets/sprites/characters.png", {
-      frameWidth: CONFIG.CHARACTER_WIDTH,
-      frameHeight: CONFIG.CHARACTER_WIDTH,
-    })
-    // this.load.audio("background-music", "assets/background-music.mp3")
+    this.spriteHandler = new SpriteHandler(this)
+    this.spriteHandler.preloadSprites()
   }
 
   create() {
     this.setupMap()
-    this.setupPlayer()
-    this.setupCamera()
+    this.spriteHandler.createAnimations()
     this.setupInput()
-    this.setupAnimations()
-    // this.setupSound()
     this.setupSocketListeners()
     this.socket.connect()
-
     this.scale.on("resize", this.resize, this)
   }
 
@@ -62,79 +54,6 @@ class MainScene extends Phaser.Scene {
     this.collisionLayer = this.map.createLayer("Collisions", tileset)!
     this.collisionLayer.setCollisionByExclusion([-1])
     this.collisionLayer.setVisible(false)
-
-    // this.map = this.make.tilemap({ key: "GenerativeAgentsDevMap" })
-    // const collisions = this.map.addTilesetImage("blocks", "blocks_1")!
-    // const walls = this.map.addTilesetImage("Room_Builder_32x32", "walls")!
-    // const interiors_pt1 = this.map.addTilesetImage("interiors_pt1", "interiors_pt1")!
-    // const interiors_pt2 = this.map.addTilesetImage("interiors_pt2", "interiors_pt2")!
-    // const interiors_pt3 = this.map.addTilesetImage("interiors_pt3", "interiors_pt3")!
-    // const interiors_pt4 = this.map.addTilesetImage("interiors_pt4", "interiors_pt4")!
-    // const interiors_pt5 = this.map.addTilesetImage("interiors_pt5", "interiors_pt5")!
-    // const CuteRPG_Field_B = this.map.addTilesetImage("CuteRPG_Field_B", "CuteRPG_Field_B")!
-    // const CuteRPG_Field_C = this.map.addTilesetImage("CuteRPG_Field_C", "CuteRPG_Field_C")!
-    // const CuteRPG_Harbor_C = this.map.addTilesetImage("CuteRPG_Harbor_C", "CuteRPG_Harbor_C")!
-    // const CuteRPG_Village_B = this.map.addTilesetImage("CuteRPG_Village_B", "CuteRPG_Village_B")!
-    // const CuteRPG_Forest_B = this.map.addTilesetImage("CuteRPG_Forest_B", "CuteRPG_Forest_B")!
-    // const CuteRPG_Desert_C = this.map.addTilesetImage("CuteRPG_Desert_C", "CuteRPG_Desert_C")!
-    // const CuteRPG_Mountains_B = this.map.addTilesetImage("CuteRPG_Mountains_B", "CuteRPG_Mountains_B")!
-    // const CuteRPG_Desert_B = this.map.addTilesetImage("CuteRPG_Desert_B", "CuteRPG_Desert_B")!
-    // const CuteRPG_Forest_C = this.map.addTilesetImage("CuteRPG_Forest_C", "CuteRPG_Forest_C")!
-    // const tileset_group_1 = [
-    //   CuteRPG_Field_B,
-    //   CuteRPG_Field_C,
-    //   CuteRPG_Harbor_C,
-    //   CuteRPG_Village_B,
-    //   CuteRPG_Forest_B,
-    //   CuteRPG_Desert_C,
-    //   CuteRPG_Mountains_B,
-    //   CuteRPG_Desert_B,
-    //   CuteRPG_Forest_C,
-    //   interiors_pt1,
-    //   interiors_pt2,
-    //   interiors_pt3,
-    //   interiors_pt4,
-    //   interiors_pt5,
-    //   walls,
-    // ]
-    // this.map.createLayer("Bottom Ground", tileset_group_1, 0, 0)
-    // this.map.createLayer("Exterior Ground", tileset_group_1, 0, 0)
-    // this.map.createLayer("Exterior Decoration L1", tileset_group_1, 0, 0)
-    // this.map.createLayer("Exterior Decoration L2", tileset_group_1, 0, 0)
-    // this.map.createLayer("Interior Ground", tileset_group_1, 0, 0)
-    // this.wallLayer = this.map.createLayer("Wall", [CuteRPG_Field_C, walls], 0, 0)!
-    // this.map.createLayer("Interior Furniture L1", tileset_group_1, 0, 0)
-    // this.map.createLayer("Interior Furniture L2 ", tileset_group_1, 0, 0)
-    // const foregroundL1Layer = this.map.createLayer("Foreground L1", tileset_group_1, 0, 0)!
-    // const foregroundL2Layer = this.map.createLayer("Foreground L2", tileset_group_1, 0, 0)!
-    // // this.spawnJsonAreas = this.map.createLayer("Spawning Blocks", tileset_group_1, 0, 0)!
-    // // this.sectorJsonAreas = this.map.createLayer("Sector Blocks", tileset_group_1, 0, 0)!
-    // // this.objectInterAreas = this.map.createLayer("Object Interaction Blocks", tileset_group_1, 0, 0)!
-    // // this.arenaBlockAreas = this.map.createLayer("Arena Blocks", tileset_group_1, 0, 0)!
-    // this.collisionLayer = this.map.createLayer("Collisions", collisions, 0, 0)!
-    // this.collisionLayer.setCollisionByExclusion([-1])
-    // this.wallLayer.setCollisionByExclusion([-1])
-    // this.collisionLayer.setVisible(false)
-    // // Set layer depths
-    // this.collisionLayer.setDepth(-1)
-    // foregroundL1Layer.setDepth(2)
-    // foregroundL2Layer.setDepth(2)
-
-    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-  }
-
-  private setupPlayer() {
-    // We'll initialize the player sprite here, but we won't set its position yet
-    // The actual position will be set when we receive the "existingPlayers" event
-    const startFrame = 0 // We'll update this when we get the player's spriteIndex
-    this.player = this.physics.add.sprite(0, 0, "characters", startFrame)
-    this.player.setCollideWorldBounds(true)
-    this.player.setVisible(false) // Hide the player until we get its position
-  }
-
-  private setupCamera() {
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-    // We'll start following the player when we set its position
   }
 
   private setupInput() {
@@ -151,101 +70,28 @@ class MainScene extends Phaser.Scene {
     }
   }
 
-  private setupAnimations() {
-    const createAnimForSprite = (spriteIndex: number) => {
-      const col = spriteIndex % 4
-      const row = Math.floor(spriteIndex / 4)
-
-      const CHARACTERS_PER_ROW = 4
-      const FRAMES_PER_CHARACTER = 3
-      const DIRECTIONS = 4 // down, left, right, up
-      const FRAMES_PER_ROW = CHARACTERS_PER_ROW * FRAMES_PER_CHARACTER * DIRECTIONS
-
-      const baseFrame = row * FRAMES_PER_ROW + col * FRAMES_PER_CHARACTER
-
-      this.anims.create({
-        key: `idle-${spriteIndex}`,
-        frames: [{ key: "characters", frame: baseFrame + 1 }],
-        frameRate: 10,
-        repeat: -1,
-      })
-
-      this.anims.create({
-        key: `down-${spriteIndex}`,
-        frames: this.anims.generateFrameNumbers("characters", { frames: [baseFrame, baseFrame + 1, baseFrame + 2] }),
-        frameRate: 10,
-        repeat: -1,
-      })
-      this.anims.create({
-        key: `left-${spriteIndex}`,
-        frames: this.anims.generateFrameNumbers("characters", {
-          frames: [baseFrame + 12, baseFrame + 13, baseFrame + 14],
-        }),
-        frameRate: 10,
-        repeat: -1,
-      })
-      this.anims.create({
-        key: `right-${spriteIndex}`,
-        frames: this.anims.generateFrameNumbers("characters", {
-          frames: [baseFrame + 24, baseFrame + 25, baseFrame + 26],
-        }),
-        frameRate: 10,
-        repeat: -1,
-      })
-      this.anims.create({
-        key: `up-${spriteIndex}`,
-        frames: this.anims.generateFrameNumbers("characters", {
-          frames: [baseFrame + 36, baseFrame + 37, baseFrame + 38],
-        }),
-        frameRate: 10,
-        repeat: -1,
-      })
-    }
-
-    for (let i = 0; i < 8; i++) {
-      createAnimForSprite(i)
-    }
-  }
-
-  private setupSound() {
-    this.backgroundMusic = this.sound.add("background-music", { loop: true, volume: 0.5 })
-    this.backgroundMusic.play()
-
-    this.input.keyboard!.on("keydown-M", () => {
-      if (this.backgroundMusic.isPlaying) {
-        this.backgroundMusic.pause()
-      } else {
-        this.backgroundMusic.resume()
-      }
-    })
-  }
-
-  resize(gameSize: Phaser.Structs.Size) {
-    const width = gameSize.width
-    const height = gameSize.height
-
-    this.cameras.main.setViewport(0, 0, width, height)
-
-    // Update the camera bounds
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-
-    // Keep the world bounds fixed to the map size
-    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-
-    // Center the camera on the player
-    if (this.player) {
-      this.cameras.main.centerOn(this.player.x, this.player.y)
-    }
+  private setupPlayer(playerInfo: PlayerData) {
+    this.playerSpriteType = playerInfo.spriteType
+    this.player = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
+    this.player.setCollideWorldBounds(true)
+    this.physics.add.collider(this.player, this.collisionLayer)
+    this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
+    this.spriteHandler.setupPlayer(this.player, this.playerSpriteType)
+    this.resize(this.scale.gameSize)
   }
 
   update() {
+    if (!this.player) return
+
     let dx = 0
     let dy = 0
 
     if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
       dx = -1
+      this.player.setFlipX(true)
     } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
       dx = 1
+      this.player.setFlipX(false)
     }
 
     if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
@@ -263,47 +109,32 @@ class MainScene extends Phaser.Scene {
     const speed = 160
     this.player.setVelocity(dx * speed, dy * speed)
 
-    let animation = `idle-${this.playerSpriteIndex}`
-    if (dx < 0) {
-      animation = `left-${this.playerSpriteIndex}`
-    } else if (dx > 0) {
-      animation = `right-${this.playerSpriteIndex}`
-    } else if (dy < 0) {
-      animation = `up-${this.playerSpriteIndex}`
-    } else if (dy > 0) {
-      animation = `down-${this.playerSpriteIndex}`
+    let animation = `${this.playerSpriteType}-idle`
+    if (dx !== 0 || dy !== 0) {
+      animation = `${this.playerSpriteType}-walk`
     }
 
-    // Play animation
-    if (animation !== `idle-${this.playerSpriteIndex}`) {
+    if (this.player.anims.getName() !== animation) {
       this.player.anims.play(animation, true)
-    } else {
-      this.player.anims.stop()
     }
 
-    // Create current PlayerData object
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
-      spriteIndex: this.playerSpriteIndex,
+      spriteType: this.playerSpriteType,
       x: this.player.x,
       y: this.player.y,
       animation: animation,
-      lastFrame: this.player.frame.name,
+      flipX: this.player.flipX,
     }
 
-    // Check if PlayerData has changed
     if (
       !this.lastSentPlayerData ||
       this.lastSentPlayerData.x !== currentPlayerData.x ||
       this.lastSentPlayerData.y !== currentPlayerData.y ||
       this.lastSentPlayerData.animation !== currentPlayerData.animation ||
-      this.lastSentPlayerData.spriteIndex !== currentPlayerData.spriteIndex ||
-      this.lastSentPlayerData.lastFrame !== currentPlayerData.lastFrame
+      this.lastSentPlayerData.flipX !== currentPlayerData.flipX
     ) {
-      // Emit position and animation only if there's a change
       this.socket.emit("updatePlayerData", currentPlayerData)
-
-      // Update last sent PlayerData
       this.lastSentPlayerData = { ...currentPlayerData }
     }
   }
@@ -313,13 +144,7 @@ class MainScene extends Phaser.Scene {
       console.log("Received existing players:", players)
       players.forEach((player) => {
         if (player.id === this.socket.id) {
-          this.playerSpriteIndex = player.spriteIndex
-          this.player = this.physics.add.sprite(player.x, player.y, "characters")
-          this.player.setCollideWorldBounds(true)
-          this.physics.add.collider(this.player, this.collisionLayer)
-          // this.physics.add.collider(this.player, this.wallLayer)
-          this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
-          this.player.anims.play(`idle-${this.playerSpriteIndex}`)
+          this.setupPlayer(player)
         } else {
           this.addOtherPlayer(player)
         }
@@ -337,17 +162,12 @@ class MainScene extends Phaser.Scene {
       const otherPlayer = this.otherPlayers.get(player.id)
       if (otherPlayer) {
         otherPlayer.setPosition(player.x, player.y)
-        if (player.animation.startsWith("idle")) {
-          otherPlayer.anims.stop()
-          otherPlayer.setFrame(player.lastFrame)
-        } else {
-          otherPlayer.anims.play(player.animation, true)
-        }
+        otherPlayer.setFlipX(player.flipX)
+        otherPlayer.anims.play(player.animation, true)
       }
     })
 
     this.socket.on("positionRejected", (correctPosition: PlayerData) => {
-      // Update the player's position to the correct position received from the server
       this.player.setPosition(correctPosition.x, correctPosition.y)
     })
 
@@ -361,14 +181,24 @@ class MainScene extends Phaser.Scene {
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
-    const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, "characters", playerInfo.lastFrame)
-    if (playerInfo.animation.startsWith("idle")) {
-      // Set the correct frame for idle animation
-      otherPlayer.setFrame(playerInfo.lastFrame)
-    } else {
-      otherPlayer.anims.play(playerInfo.animation)
-    }
+    const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    this.spriteHandler.setupPlayer(otherPlayer, playerInfo.spriteType)
+
+    otherPlayer.setFlipX(playerInfo.flipX)
+    otherPlayer.anims.play(playerInfo.animation)
     this.otherPlayers.set(playerInfo.id, otherPlayer)
+  }
+
+  resize(gameSize: Phaser.Structs.Size) {
+    const width = gameSize.width
+    const height = gameSize.height
+
+    this.cameras.main.setViewport(0, 0, width, height)
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    if (this.player) {
+      this.cameras.main.centerOn(this.player.x, this.player.y)
+    }
   }
 }
 
@@ -391,6 +221,9 @@ const config: Phaser.Types.Core.GameConfig = {
   audio: {
     disableWebAudio: false,
   },
+  pixelArt: true,
+  autoRound: true,
+  autoFocus: true,
 }
 
 new Phaser.Game(config)
