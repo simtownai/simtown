@@ -35,7 +35,8 @@ class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.pack("pack", "assets/simple-pack.json")
+    this.load.tilemapTiledJSON("map", "assets/maps/simple-map.json")
+    this.load.image("tiles", "assets/tiles/cute-fantasy-rpg-free.png")
     this.spriteHandler = new SpriteHandler(this)
     this.spriteHandler.preloadSprites()
   }
@@ -51,8 +52,9 @@ class MainScene extends Phaser.Scene {
 
   private setupMap() {
     this.map = this.make.tilemap({ key: "map" })
-    const tileset = this.map.addTilesetImage("tileset", "tiles")!
-    this.map.createLayer("Ground", tileset)
+    const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
+    this.map.createLayer("Grass", tileset)!
+    this.map.createLayer("Road and water", tileset)!
     this.map.createLayer("Objects", tileset)!
     this.collisionLayer = this.map.createLayer("Collisions", tileset)!
     this.collisionLayer.setCollisionByExclusion([-1])

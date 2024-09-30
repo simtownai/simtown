@@ -65,8 +65,8 @@ function findValidPosition(newPlayer: PlayerData): PlayerData {
     }
 
     // If collision found, try a new random position
-    newPlayer.x = Math.random() * 800
-    newPlayer.y = Math.random() * 600
+    newPlayer.x = 300 + Math.random() * 100
+    newPlayer.y = 250 + Math.random() * 50
     attempts++
   }
 
@@ -80,8 +80,8 @@ io.on("connection", (socket) => {
   let initialPosition: PlayerData = {
     id: playerId,
     spriteType: spriteType,
-    x: Math.random() * 800,
-    y: Math.random() * 600,
+    x: 300 + Math.random() * 100,
+    y: 250 + Math.random() * 50,
     animation: `${spriteType}-idle`,
     flipX: false,
   }

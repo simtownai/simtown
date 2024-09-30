@@ -120,7 +120,7 @@ export class SpriteHandler {
   }
 
   setupPlayer(player: Phaser.Physics.Arcade.Sprite, spriteType: string) {
-    player.setScale(2) // This will make the 16x16 character 32x32 pixels
+    player.setScale(1) // This will make the 16x16 character 32x32 pixels
     player.body!.setSize(CONFIG.SPRITE_CHARACTER_WIDTH, CONFIG.SPRITE_CHARACTER_WIDTH)
     player.body!.setOffset(
       CONFIG.SPRITE_WIDTH / 2 - CONFIG.SPRITE_CHARACTER_WIDTH / 2,
