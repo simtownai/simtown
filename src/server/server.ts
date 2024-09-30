@@ -37,7 +37,7 @@ function getNextAvailableSpriteType(): SpriteType {
 }
 
 function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
-  const characterWidth = 24
+  const characterWidth = CONFIG.SPRITE_CHARACTER_WIDTH
   return (
     player1.x < player2.x + characterWidth &&
     player1.x + characterWidth > player2.x &&
