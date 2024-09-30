@@ -51,12 +51,12 @@ class MainScene extends Phaser.Scene {
 
     this.setupMap()
     this.spriteHandler.createAnimations()
-    this.setupInput()
     this.setupSocketListeners()
     this.socket.connect()
     this.scale.on("resize", this.resize, this)
     this.setupVirtualJoystick()
     this.setupCameras()
+    this.setupInput()
   }
 
   private setupMap() {
@@ -86,6 +86,24 @@ class MainScene extends Phaser.Scene {
       L: Phaser.Input.Keyboard.Key
       SPACE: Phaser.Input.Keyboard.Key
     }
+    this.input.on("pointerdown", this.onPointerDown, this)
+    this.input.on("pointerup", this.onPointerUp, this)
+  }
+
+  private onPointerDown(pointer: Phaser.Input.Pointer) {
+    if (!this.joystick) return
+
+    this.joystick.x = pointer.x
+    this.joystick.y = pointer.y
+
+    this.joystick.setVisible(true)
+    this.joystick.setEnable(true)
+  }
+
+  private onPointerUp(pointer: Phaser.Input.Pointer) {
+    if (!this.joystick) return
+    this.joystick.setVisible(false)
+    this.joystick.setEnable(false)
   }
 
   private setupCameras() {
@@ -107,13 +125,16 @@ class MainScene extends Phaser.Scene {
       console.log("Touch device detected")
 
       this.joystick = new VirtualJoystick(this, {
-        x: 70,
-        y: this.scale.height - 70,
+        x: 0,
+        y: 0,
         radius: 50,
-        base: this.add.circle(0, 0, 50, 0x888888),
-        thumb: this.add.circle(0, 0, 25, 0xcccccc),
-        fixed: true,
+        base: this.add.circle(0, 0, 50, 0x888888).setAlpha(0.5),
+        thumb: this.add.circle(0, 0, 25, 0xcccccc).setAlpha(0.7),
+        fixed: false,
       })
+
+      this.joystick.setVisible(false)
+      this.joystick.setEnable(false)
 
       this.uiContainer.add([this.joystick.base, this.joystick.thumb])
     }
