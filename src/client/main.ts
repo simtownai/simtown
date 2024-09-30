@@ -55,7 +55,8 @@ class MainScene extends Phaser.Scene {
     const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
     this.map.createLayer("Grass", tileset)!
     this.map.createLayer("Road and water", tileset)!
-    this.map.createLayer("Objects", tileset)!
+    this.map.createLayer("Objects1", tileset)!
+    this.map.createLayer("Objects2", tileset)!
     this.collisionLayer = this.map.createLayer("Collisions", tileset)!
     this.collisionLayer.setCollisionByExclusion([-1])
     this.collisionLayer.setVisible(false)
