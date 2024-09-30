@@ -124,7 +124,7 @@ class MainScene extends Phaser.Scene {
         dy *= Math.SQRT1_2
       }
 
-      const speed = 160
+      const speed = 80
       this.player.setVelocity(dx * speed, dy * speed)
 
       let animation = `${this.playerSpriteType}-idle`
@@ -219,7 +219,7 @@ class MainScene extends Phaser.Scene {
     const width = gameSize.width
     const height = gameSize.height
 
-    this.cameras.main.setZoom(2)
+    this.cameras.main.setZoom(3)
     this.cameras.main.setViewport(0, 0, width, height)
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)

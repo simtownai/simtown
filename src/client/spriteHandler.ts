@@ -76,7 +76,7 @@ export class SpriteHandler {
       this.scene.anims.create({
         key: `${prefix}-walk`,
         frames: this.scene.anims.generateFrameNumbers(`${prefix}-walk`, { start: 0, end: 7 }),
-        frameRate: 10,
+        frameRate: 20,
         repeat: -1,
       })
       this.scene.anims.create({
