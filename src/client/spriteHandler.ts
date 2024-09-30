@@ -88,13 +88,19 @@ export class SpriteHandler {
     })
   }
 
-  private createAnimation(spriteType: SpriteType, key: string, spritesheet: string, frameRate: number, repeat: number) {
+  private createAnimation(
+    spriteType: SpriteType,
+    animation: string,
+    spritesheet: string,
+    frameRate: number,
+    repeat: number,
+  ) {
     const texture = this.scene.textures.get(spritesheet)
     if (texture) {
       const frameCount = texture.frameTotal - 1
 
       this.scene.anims.create({
-        key: `${spriteType}-${key}`,
+        key: `${spriteType}-${animation}`,
         frames: this.scene.anims.generateFrameNumbers(spritesheet, { start: 0, end: frameCount - 1 }),
         frameRate,
         repeat,
