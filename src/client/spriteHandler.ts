@@ -1,126 +1,109 @@
 import { CONFIG } from "../shared/config"
-import { spriteTypes } from "../shared/types"
+import { SpriteType } from "../shared/types"
 import Phaser from "phaser"
+
+const animationsConfig: { [key in SpriteType]?: string[] } = {
+  Archer: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
+  "Armored Axeman": ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
+  "Armored Orc": ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk"],
+  "Armored Skeleton": ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
+  "Elite Orc": ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
+  Knight: ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk"],
+  "Knight Templar": ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk01", "Walk02"],
+  Lancer: ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk01", "Walk02"],
+  Orc: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
+  "Orc rider": ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk"],
+  Priest: ["Attack", "Death", "Heal", "Hurt", "Idle", "Walk"],
+  Skeleton: ["Attack01", "Attack02", "Block", "Death", "Hurt", "Idle", "Walk"],
+  "Skeleton Archer": ["Attack", "Death", "Hurt", "Idle", "Walk"],
+  Slime: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
+  Soldier: ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
+  Swordsman: ["Attack01", "Attack02", "Attack3", "Death", "Hurt", "Idle", "Walk"],
+  Werebear: ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
+  Werewolf: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
+  Wizard: ["Attack01", "Attack02", "DEATH", "Hurt", "Idle", "Walk"],
+}
 
 export class SpriteHandler {
   private scene: Phaser.Scene
+  private spriteInfo: { [key in SpriteType]?: Set<string> } = {}
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
   }
 
   preloadSprites() {
-    this.scene.load.spritesheet("orc-idle", "assets/sprites/Orc/Orc/Orc-Idle.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("orc-walk", "assets/sprites/Orc/Orc/Orc-Walk.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("orc-attack1", "assets/sprites/Orc/Orc/Orc-Attack01.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("orc-attack2", "assets/sprites/Orc/Orc/Orc-Attack02.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("orc-hurt", "assets/sprites/Orc/Orc/Orc-Hurt.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("orc-death", "assets/sprites/Orc/Orc/Orc-Death.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
+    Object.entries(animationsConfig).forEach(([spriteType, availableAnimations]) => {
+      const basePath = `assets/sprites/Tiny RPG Character Asset Pack v1.03 -Full 20 Characters/Characters(100x100)/${spriteType}/${spriteType}/${spriteType}`
 
-    this.scene.load.spritesheet("soldier-idle", "assets/sprites/Soldier/Soldier/Soldier-Idle.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("soldier-walk", "assets/sprites/Soldier/Soldier/Soldier-Walk.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("soldier-attack1", "assets/sprites/Soldier/Soldier/Soldier-Attack01.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("soldier-attack2", "assets/sprites/Soldier/Soldier/Soldier-Attack02.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("soldier-attack3", "assets/sprites/Soldier/Soldier/Soldier-Attack03.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("soldier-hurt", "assets/sprites/Soldier/Soldier/Soldier-Hurt.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
-    })
-    this.scene.load.spritesheet("soldier-death", "assets/sprites/Soldier/Soldier/Soldier-Death.png", {
-      frameWidth: CONFIG.SPRITE_WIDTH,
-      frameHeight: CONFIG.SPRITE_WIDTH,
+      availableAnimations.forEach((animation) => {
+        const animationName = `${spriteType}-${animation.toLowerCase()}`
+        const path = `${basePath}-${animation}.png`
+
+        this.scene.load.spritesheet(animationName, path, {
+          frameWidth: CONFIG.SPRITE_WIDTH,
+          frameHeight: CONFIG.SPRITE_WIDTH,
+        })
+
+        this.scene.load.on(`filecomplete-spritesheet-${animationName}`, () => {
+          if (!this.spriteInfo[spriteType]) {
+            this.spriteInfo[spriteType] = new Set<string>()
+          }
+          this.spriteInfo[spriteType]!.add(animation.toLowerCase())
+        })
+      })
     })
   }
 
   createAnimations() {
-    const createAnimsForCharacter = (prefix: string) => {
-      this.scene.anims.create({
-        key: `${prefix}-idle`,
-        frames: this.scene.anims.generateFrameNumbers(`${prefix}-idle`, { start: 0, end: 5 }),
-        frameRate: 10,
-        repeat: -1,
-      })
-      this.scene.anims.create({
-        key: `${prefix}-walk`,
-        frames: this.scene.anims.generateFrameNumbers(`${prefix}-walk`, { start: 0, end: 7 }),
-        frameRate: 20,
-        repeat: -1,
-      })
-      this.scene.anims.create({
-        key: `${prefix}-attack1`,
-        frames: this.scene.anims.generateFrameNumbers(`${prefix}-attack1`, { start: 0, end: 5 }),
-        frameRate: 10,
-        repeat: 0,
-      })
-      this.scene.anims.create({
-        key: `${prefix}-attack2`,
-        frames: this.scene.anims.generateFrameNumbers(`${prefix}-attack2`, { start: 0, end: 5 }),
-        frameRate: 10,
-        repeat: 0,
-      })
-      this.scene.anims.create({
-        key: `${prefix}-hurt`,
-        frames: this.scene.anims.generateFrameNumbers(`${prefix}-hurt`, { start: 0, end: 3 }),
-        frameRate: 10,
-        repeat: 0,
-      })
-      this.scene.anims.create({
-        key: `${prefix}-death`,
-        frames: this.scene.anims.generateFrameNumbers(`${prefix}-death`, { start: 0, end: 3 }),
-        frameRate: 10,
-        repeat: 0,
-      })
+    Object.entries(this.spriteInfo).forEach(([spriteType, animations]) => {
+      this.createAnimationForCharacter(spriteType as SpriteType, animations!)
+    })
+  }
 
-      if (prefix === "soldier") {
-        this.scene.anims.create({
-          key: `${prefix}-attack3`,
-          frames: this.scene.anims.generateFrameNumbers(`${prefix}-attack3`, { start: 0, end: 8 }),
-          frameRate: 10,
-          repeat: 0,
-        })
+  private createAnimationForCharacter(spriteType: SpriteType, animations: Set<string>) {
+    animations.forEach((animation) => {
+      let animationFinal = animation
+
+      if (animation === "walk02") {
+        return
       }
-    }
+      if (animation === "walk01") {
+        animationFinal = "walk"
+      } else if (animation === "attack" || animation === "attack01") {
+        animationFinal = "attack1"
+      } else if (animation === "attack02") {
+        animationFinal = "attack2"
+      } else if (animation === "attack03" || animation === "attack3") {
+        animationFinal = "attack3"
+      }
 
-    for (const spriteType of spriteTypes) {
-      createAnimsForCharacter(spriteType)
+      this.createAnimation(
+        spriteType,
+        animationFinal,
+        `${spriteType}-${animation}`,
+        animation.toLowerCase().startsWith("walk") ? 20 : 10,
+        animation.toLowerCase().startsWith("idle") || animation.toLowerCase().startsWith("walk") ? -1 : 0,
+      )
+    })
+  }
+
+  private createAnimation(spriteType: SpriteType, key: string, spritesheet: string, frameRate: number, repeat: number) {
+    const texture = this.scene.textures.get(spritesheet)
+    if (texture) {
+      const frameCount = texture.frameTotal - 1
+
+      this.scene.anims.create({
+        key: `${spriteType}-${key}`,
+        frames: this.scene.anims.generateFrameNumbers(spritesheet, { start: 0, end: frameCount - 1 }),
+        frameRate,
+        repeat,
+      })
     }
   }
 
-  setupPlayer(player: Phaser.Physics.Arcade.Sprite, spriteType: string) {
-    player.setScale(1) // This will make the 16x16 character 32x32 pixels
+  public setupPlayer(player: Phaser.Physics.Arcade.Sprite, spriteType: SpriteType) {
+    player.setScale(1)
     player.body!.setSize(CONFIG.SPRITE_CHARACTER_WIDTH, CONFIG.SPRITE_CHARACTER_WIDTH)
     player.body!.setOffset(
       CONFIG.SPRITE_WIDTH / 2 - CONFIG.SPRITE_CHARACTER_WIDTH / 2,

@@ -1,4 +1,24 @@
-export const spriteTypes = ["orc", "soldier"] as const
+export const spriteTypes = [
+  "Archer",
+  "Armored Axeman",
+  "Armored Orc",
+  "Armored Skeleton",
+  "Elite Orc",
+  "Knight",
+  "Knight Templar",
+  "Lancer",
+  "Orc",
+  "Orc rider",
+  "Priest",
+  "Skeleton",
+  "Skeleton Archer",
+  "Slime",
+  "Soldier",
+  "Swordsman",
+  "Werebear",
+  "Werewolf",
+  "Wizard",
+] as const
 export type SpriteType = (typeof spriteTypes)[number]
 
 export interface PlayerData {
