@@ -145,6 +145,7 @@ class MainScene extends Phaser.Scene {
 
   private setupCameras() {
     this.cameras.main.setZoom(3)
+    this.cameras.main.roundPixels = true
 
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
@@ -208,9 +209,8 @@ class MainScene extends Phaser.Scene {
       let dy = 0
 
       if (this.joystick && this.joystick.force > 0) {
-        const angle = this.joystick.angle
-        dx = Math.cos((angle * Math.PI) / 180)
-        dy = Math.sin((angle * Math.PI) / 180)
+        dx = this.joystick.forceX
+        dy = this.joystick.forceY
         this.player.setFlipX(dx < 0)
       } else {
         if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
@@ -229,13 +229,17 @@ class MainScene extends Phaser.Scene {
       }
 
       // Normalize diagonal movement
-      if (dx !== 0 && dy !== 0) {
-        dx *= Math.SQRT1_2
-        dy *= Math.SQRT1_2
+      const magnitude = Math.sqrt(dx * dx + dy * dy)
+      if (magnitude > 0) {
+        dx /= magnitude
+        dy /= magnitude
       }
 
       const speed = 80
       this.player.setVelocity(dx * speed, dy * speed)
+
+      this.player.x = Math.round(this.player.x)
+      this.player.y = Math.round(this.player.y)
 
       let animation = `${this.playerSpriteType}-idle`
       if (dx !== 0 || dy !== 0) {
