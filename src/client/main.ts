@@ -1,5 +1,6 @@
 import { CONFIG } from "../shared/config"
 import { PlayerData, SpriteType } from "../shared/types"
+import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
 import "./style.css"
 import Phaser from "phaser"
@@ -180,7 +181,8 @@ class MainScene extends Phaser.Scene {
 
   private setupPlayer(playerInfo: PlayerData) {
     this.playerSpriteType = playerInfo.spriteType
-    this.player = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
+    this.player = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
+    this.physics.add.existing(this.player)
     this.player.setCollideWorldBounds(true)
     this.physics.add.collider(this.player, this.collisionLayer)
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
@@ -237,9 +239,6 @@ class MainScene extends Phaser.Scene {
 
       const speed = 80
       this.player.setVelocity(dx * speed, dy * speed)
-
-      this.player.x = Math.round(this.player.x)
-      this.player.y = Math.round(this.player.y)
 
       let animation = `${this.playerSpriteType}-idle`
       if (dx !== 0 || dy !== 0) {
@@ -321,7 +320,9 @@ class MainScene extends Phaser.Scene {
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
-    const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    // const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    const otherPlayer = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    this.physics.add.existing(otherPlayer)
     this.spriteHandler.setupPlayer(otherPlayer, playerInfo.spriteType)
 
     otherPlayer.setFlipX(playerInfo.flipX)
@@ -368,6 +369,7 @@ const config: Phaser.Types.Core.GameConfig = {
   pixelArt: true,
   autoRound: true,
   autoFocus: true,
+  roundPixels: true,
 }
 
 new Phaser.Game(config)
