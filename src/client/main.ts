@@ -33,6 +33,11 @@ class MainScene extends Phaser.Scene {
   private gameContainer!: Phaser.GameObjects.Container
   private uiContainer!: Phaser.GameObjects.Container
 
+  private touchStartX: number = 0
+  private touchStartY: number = 0
+  private isTouching: boolean = false
+  private touchMoved: boolean = false
+
   constructor() {
     super({ key: "MainScene" })
     this.socket = io(CONFIG.SERVER_URL, { autoConnect: false })
@@ -87,6 +92,7 @@ class MainScene extends Phaser.Scene {
       SPACE: Phaser.Input.Keyboard.Key
     }
     this.input.on("pointerdown", this.onPointerDown, this)
+    this.input.on("pointermove", this.onPointerMove, this)
     this.input.on("pointerup", this.onPointerUp, this)
   }
 
@@ -96,14 +102,45 @@ class MainScene extends Phaser.Scene {
     this.joystick.x = pointer.x
     this.joystick.y = pointer.y
 
-    this.joystick.setVisible(true)
-    this.joystick.setEnable(true)
+    this.touchStartX = pointer.x
+    this.touchStartY = pointer.y
+    this.isTouching = true
+    this.touchMoved = false
+  }
+
+  private onPointerMove(pointer: Phaser.Input.Pointer) {
+    if (!this.isTouching) return
+
+    const distance = Phaser.Math.Distance.Between(this.touchStartX, this.touchStartY, pointer.x, pointer.y)
+    const moveThreshold = 10 // pixels
+    if (distance >= moveThreshold) {
+      if (!this.touchMoved) {
+        this.touchMoved = true
+        this.joystick.setVisible(true)
+        this.joystick.setEnable(true)
+      }
+    }
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer) {
     if (!this.joystick) return
+
+    if (!this.touchMoved) {
+      this.handleTap()
+    }
+    this.isTouching = false
+    this.touchMoved = false
+
     this.joystick.setVisible(false)
     this.joystick.setEnable(false)
+  }
+
+  private handleTap() {
+    if (!this.isAttacking) {
+      this.isAttacking = true
+      const attackAnimation = `${this.playerSpriteType}-attack1`
+      this.player.anims.play(attackAnimation, true)
+    }
   }
 
   private setupCameras() {
