@@ -3,6 +3,7 @@ import { PlayerData, SpriteType } from "../shared/types"
 import { SpriteHandler } from "./spriteHandler"
 import "./style.css"
 import Phaser from "phaser"
+import VirtualJoystick from "phaser3-rex-plugins/plugins/virtualjoystick.js"
 import { Socket, io } from "socket.io-client"
 
 class MainScene extends Phaser.Scene {
@@ -26,8 +27,11 @@ class MainScene extends Phaser.Scene {
     SPACE: Phaser.Input.Keyboard.Key
   }
   private lastSentPlayerData: PlayerData | null = null
-
   private isAttacking: boolean = false
+  private joystick: VirtualJoystick
+  private uiCamera!: Phaser.Cameras.Scene2D.Camera
+  private gameContainer!: Phaser.GameObjects.Container
+  private uiContainer!: Phaser.GameObjects.Container
 
   constructor() {
     super({ key: "MainScene" })
@@ -42,24 +46,31 @@ class MainScene extends Phaser.Scene {
   }
 
   create() {
+    this.gameContainer = this.add.container(0, 0)
+    this.uiContainer = this.add.container(0, 0)
+
     this.setupMap()
     this.spriteHandler.createAnimations()
     this.setupInput()
     this.setupSocketListeners()
     this.socket.connect()
     this.scale.on("resize", this.resize, this)
+    this.setupVirtualJoystick()
+    this.setupCameras()
   }
 
   private setupMap() {
     this.map = this.make.tilemap({ key: "map" })
     const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
-    this.map.createLayer("Grass", tileset)!
-    this.map.createLayer("Road and water", tileset)!
-    this.map.createLayer("Objects1", tileset)!
-    this.map.createLayer("Objects2", tileset)!
+    const grassLayer = this.map.createLayer("Grass", tileset)!
+    const roadLayer = this.map.createLayer("Road and water", tileset)!
+    const objects1Layer = this.map.createLayer("Objects1", tileset)!
+    const objects2Layer = this.map.createLayer("Objects2", tileset)!
     this.collisionLayer = this.map.createLayer("Collisions", tileset)!
     this.collisionLayer.setCollisionByExclusion([-1])
     this.collisionLayer.setVisible(false)
+
+    this.gameContainer.add([grassLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
   }
 
   private setupInput() {
@@ -74,6 +85,37 @@ class MainScene extends Phaser.Scene {
       K: Phaser.Input.Keyboard.Key
       L: Phaser.Input.Keyboard.Key
       SPACE: Phaser.Input.Keyboard.Key
+    }
+  }
+
+  private setupCameras() {
+    this.cameras.main.setZoom(3)
+
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+
+    this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height)
+    this.uiCamera.setZoom(1)
+    this.uiCamera.setScroll(0, 0)
+
+    this.uiCamera.ignore(this.gameContainer)
+    this.cameras.main.ignore(this.uiContainer)
+  }
+
+  private setupVirtualJoystick() {
+    if (this.sys.game.device.input.touch) {
+      console.log("Touch device detected")
+
+      this.joystick = new VirtualJoystick(this, {
+        x: 70,
+        y: this.scale.height - 70,
+        radius: 50,
+        base: this.add.circle(0, 0, 50, 0x888888),
+        thumb: this.add.circle(0, 0, 25, 0xcccccc),
+        fixed: true,
+      })
+
+      this.uiContainer.add([this.joystick.base, this.joystick.thumb])
     }
   }
 
@@ -94,6 +136,8 @@ class MainScene extends Phaser.Scene {
         }
       },
     )
+
+    this.gameContainer.add(this.player)
   }
 
   update() {
@@ -105,18 +149,25 @@ class MainScene extends Phaser.Scene {
       let dx = 0
       let dy = 0
 
-      if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
-        dx = -1
-        this.player.setFlipX(true)
-      } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
-        dx = 1
-        this.player.setFlipX(false)
-      }
+      if (this.joystick && this.joystick.force > 0) {
+        const angle = this.joystick.angle
+        dx = Math.cos((angle * Math.PI) / 180)
+        dy = Math.sin((angle * Math.PI) / 180)
+        this.player.setFlipX(dx < 0)
+      } else {
+        if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
+          dx = -1
+          this.player.setFlipX(true)
+        } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
+          dx = 1
+          this.player.setFlipX(false)
+        }
 
-      if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
-        dy = -1
-      } else if (this.cursors.down.isDown || this.keys.S.isDown || this.keys.J.isDown) {
-        dy = 1
+        if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
+          dy = -1
+        } else if (this.cursors.down.isDown || this.keys.S.isDown || this.keys.J.isDown) {
+          dy = 1
+        }
       }
 
       // Normalize diagonal movement
@@ -214,18 +265,21 @@ class MainScene extends Phaser.Scene {
     otherPlayer.setFlipX(playerInfo.flipX)
     otherPlayer.anims.play(playerInfo.animation)
     this.otherPlayers.set(playerInfo.id, otherPlayer)
+
+    this.gameContainer.add(otherPlayer)
   }
 
   resize(gameSize: Phaser.Structs.Size) {
     const width = gameSize.width
     const height = gameSize.height
 
-    this.cameras.main.setZoom(3)
     this.cameras.main.setViewport(0, 0, width, height)
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
     if (this.player) {
       this.cameras.main.centerOn(this.player.x, this.player.y)
+    }
+
+    if (this.uiCamera) {
+      this.uiCamera.setViewport(0, 0, width, height)
     }
   }
 }

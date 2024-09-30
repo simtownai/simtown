@@ -13,6 +13,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "phaser": "^3.85.2",
+    "phaser3-rex-plugins": "^1.80.8",
     "pino": "^9.4.0",
     "pino-pretty": "^11.2.2",
     "socket.io": "^4.4.1",
