@@ -105,14 +105,15 @@ io.on("connection", (socket) => {
       ...playerData,
     }
 
-    // Check for collisions with other players
     let collisionDetected = false
-    for (const [otherId, otherPlayerData] of players) {
-      if (otherId !== playerId && checkCollision(newPlayerData, otherPlayerData)) {
-        collisionDetected = true
-        break
-      }
-    }
+    // // Check for collisions with other players
+    // let collisionDetected = false
+    // for (const [otherId, otherPlayerData] of players) {
+    //   if (otherId !== playerId && checkCollision(newPlayerData, otherPlayerData)) {
+    //     collisionDetected = true
+    //     break
+    //   }
+    // }
 
     if (!collisionDetected) {
       // If no collision, update the player's position
