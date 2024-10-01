@@ -279,7 +279,16 @@ class MainScene extends Phaser.Scene {
       if (this.joystick && this.joystick.force > 0) {
         dx = this.joystick.forceX
         dy = this.joystick.forceY
-        this.player.setFlipX(dx < 0)
+
+        const magnitude = Math.sqrt(dx * dx + dy * dy)
+        if (magnitude > 0) {
+          dx /= magnitude
+          dy /= magnitude
+        }
+
+        if (Math.abs(dx) > 0.2) {
+          this.player.setFlipX(dx < 0)
+        }
       } else {
         if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
           dx = -1
@@ -294,13 +303,6 @@ class MainScene extends Phaser.Scene {
         } else if (this.cursors.down.isDown || this.keys.S.isDown || this.keys.J.isDown) {
           dy = 1
         }
-      }
-
-      // Normalize diagonal movement
-      const magnitude = Math.sqrt(dx * dx + dy * dy)
-      if (magnitude > 0) {
-        dx /= magnitude
-        dy /= magnitude
       }
 
       const speed = 80
