@@ -54,11 +54,6 @@ class MainScene extends Phaser.Scene {
   }
 
   create() {
-    this.gameContainer = this.add.container(0, 0)
-    this.uiContainer = this.add.container(0, 0)
-    this.otherPlayersContainer = this.add.container(0, 0)
-    this.playerContainer = this.add.container(0, 0)
-
     this.setupMap()
     this.spriteHandler.createAnimations()
     this.setupSocketListeners()
@@ -67,11 +62,14 @@ class MainScene extends Phaser.Scene {
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
-
-    this.gameContainer.add([this.otherPlayersContainer, this.playerContainer])
   }
 
   private setupMap() {
+    this.gameContainer = this.add.container(0, 0)
+    this.uiContainer = this.add.container(0, 0)
+    this.playerContainer = this.add.container(0, 0)
+    this.otherPlayersContainer = this.add.container(0, 0)
+
     this.map = this.make.tilemap({ key: "map" })
     const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
     const grassLayer = this.map.createLayer("Grass", tileset)!
@@ -83,6 +81,22 @@ class MainScene extends Phaser.Scene {
     this.collisionLayer.setVisible(false)
 
     this.gameContainer.add([grassLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
+    this.gameContainer.add([this.otherPlayersContainer, this.playerContainer])
+  }
+
+  private setupCameras() {
+    this.cameras.main.setZoom(3)
+    this.cameras.main.roundPixels = true
+
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+
+    this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height)
+    this.uiCamera.setZoom(1)
+    this.uiCamera.setScroll(0, 0)
+
+    this.uiCamera.ignore(this.gameContainer)
+    this.cameras.main.ignore(this.uiContainer)
   }
 
   private setupInput() {
@@ -101,6 +115,26 @@ class MainScene extends Phaser.Scene {
     this.input.on("pointerdown", this.onPointerDown, this)
     this.input.on("pointermove", this.onPointerMove, this)
     this.input.on("pointerup", this.onPointerUp, this)
+  }
+
+  private setupVirtualJoystick() {
+    if (this.sys.game.device.input.touch) {
+      console.log("Touch device detected")
+
+      this.joystick = new VirtualJoystick(this, {
+        x: 0,
+        y: 0,
+        radius: 50,
+        base: this.add.circle(0, 0, 50, 0x888888).setAlpha(0.5),
+        thumb: this.add.circle(0, 0, 25, 0xcccccc).setAlpha(0.7),
+        fixed: false,
+      })
+
+      this.joystick.setVisible(false)
+      this.joystick.setEnable(false)
+
+      this.uiContainer.add([this.joystick.base, this.joystick.thumb])
+    }
   }
 
   private onPointerDown(pointer: Phaser.Input.Pointer) {
@@ -150,41 +184,6 @@ class MainScene extends Phaser.Scene {
     }
   }
 
-  private setupCameras() {
-    this.cameras.main.setZoom(3)
-    this.cameras.main.roundPixels = true
-
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
-
-    this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height)
-    this.uiCamera.setZoom(1)
-    this.uiCamera.setScroll(0, 0)
-
-    this.uiCamera.ignore(this.gameContainer)
-    this.cameras.main.ignore(this.uiContainer)
-  }
-
-  private setupVirtualJoystick() {
-    if (this.sys.game.device.input.touch) {
-      console.log("Touch device detected")
-
-      this.joystick = new VirtualJoystick(this, {
-        x: 0,
-        y: 0,
-        radius: 50,
-        base: this.add.circle(0, 0, 50, 0x888888).setAlpha(0.5),
-        thumb: this.add.circle(0, 0, 25, 0xcccccc).setAlpha(0.7),
-        fixed: false,
-      })
-
-      this.joystick.setVisible(false)
-      this.joystick.setEnable(false)
-
-      this.uiContainer.add([this.joystick.base, this.joystick.thumb])
-    }
-  }
-
   private setupPlayer(playerInfo: PlayerData) {
     this.playerSpriteType = playerInfo.spriteType
     this.player = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
@@ -205,6 +204,60 @@ class MainScene extends Phaser.Scene {
     )
 
     this.playerContainer.add(this.player)
+  }
+
+  private addOtherPlayer(playerInfo: PlayerData) {
+    // const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    const otherPlayer = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    this.physics.add.existing(otherPlayer)
+    this.spriteHandler.setupPlayer(otherPlayer, playerInfo.spriteType)
+
+    otherPlayer.setFlipX(playerInfo.flipX)
+    otherPlayer.anims.play(playerInfo.animation)
+    this.otherPlayers.set(playerInfo.id, otherPlayer)
+
+    this.otherPlayersContainer.add(otherPlayer)
+  }
+
+  private setupSocketListeners() {
+    this.socket.on("existingPlayers", (players: PlayerData[]) => {
+      console.log("Received existing players:", players)
+      players.forEach((player) => {
+        if (player.id === this.socket.id) {
+          this.setupPlayer(player)
+        } else {
+          this.addOtherPlayer(player)
+        }
+      })
+    })
+
+    this.socket.on("playerJoined", (player: PlayerData) => {
+      console.log("Player joined:", player)
+      if (player.id !== this.socket.id) {
+        this.addOtherPlayer(player)
+      }
+    })
+
+    this.socket.on("playerDataChanged", (player: PlayerData) => {
+      const otherPlayer = this.otherPlayers.get(player.id)
+      if (otherPlayer) {
+        otherPlayer.setPosition(player.x, player.y)
+        otherPlayer.setFlipX(player.flipX)
+        otherPlayer.anims.play(player.animation, true)
+      }
+    })
+
+    this.socket.on("positionRejected", (correctPosition: PlayerData) => {
+      this.player.setPosition(correctPosition.x, correctPosition.y)
+    })
+
+    this.socket.on("playerLeft", (playerId: string) => {
+      const otherPlayer = this.otherPlayers.get(playerId)
+      if (otherPlayer) {
+        otherPlayer.destroy()
+        this.otherPlayers.delete(playerId)
+      }
+    })
   }
 
   update() {
@@ -282,60 +335,6 @@ class MainScene extends Phaser.Scene {
       this.socket.emit("updatePlayerData", currentPlayerData)
       this.lastSentPlayerData = { ...currentPlayerData }
     }
-  }
-
-  private setupSocketListeners() {
-    this.socket.on("existingPlayers", (players: PlayerData[]) => {
-      console.log("Received existing players:", players)
-      players.forEach((player) => {
-        if (player.id === this.socket.id) {
-          this.setupPlayer(player)
-        } else {
-          this.addOtherPlayer(player)
-        }
-      })
-    })
-
-    this.socket.on("playerJoined", (player: PlayerData) => {
-      console.log("Player joined:", player)
-      if (player.id !== this.socket.id) {
-        this.addOtherPlayer(player)
-      }
-    })
-
-    this.socket.on("playerDataChanged", (player: PlayerData) => {
-      const otherPlayer = this.otherPlayers.get(player.id)
-      if (otherPlayer) {
-        otherPlayer.setPosition(player.x, player.y)
-        otherPlayer.setFlipX(player.flipX)
-        otherPlayer.anims.play(player.animation, true)
-      }
-    })
-
-    this.socket.on("positionRejected", (correctPosition: PlayerData) => {
-      this.player.setPosition(correctPosition.x, correctPosition.y)
-    })
-
-    this.socket.on("playerLeft", (playerId: string) => {
-      const otherPlayer = this.otherPlayers.get(playerId)
-      if (otherPlayer) {
-        otherPlayer.destroy()
-        this.otherPlayers.delete(playerId)
-      }
-    })
-  }
-
-  private addOtherPlayer(playerInfo: PlayerData) {
-    // const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
-    const otherPlayer = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
-    this.physics.add.existing(otherPlayer)
-    this.spriteHandler.setupPlayer(otherPlayer, playerInfo.spriteType)
-
-    otherPlayer.setFlipX(playerInfo.flipX)
-    otherPlayer.anims.play(playerInfo.animation)
-    this.otherPlayers.set(playerInfo.id, otherPlayer)
-
-    this.otherPlayersContainer.add(otherPlayer)
   }
 
   resize(gameSize: Phaser.Structs.Size) {
