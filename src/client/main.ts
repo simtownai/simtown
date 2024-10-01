@@ -7,6 +7,11 @@ import Phaser from "phaser"
 import VirtualJoystick from "phaser3-rex-plugins/plugins/virtualjoystick.js"
 import { Socket, io } from "socket.io-client"
 
+interface OtherPlayerData {
+  sprite: Phaser.Physics.Arcade.Sprite
+  speechBubble: Phaser.GameObjects.Sprite
+}
+
 class MainScene extends Phaser.Scene {
   private socket: Socket
   private map!: Phaser.Tilemaps.Tilemap
@@ -14,7 +19,7 @@ class MainScene extends Phaser.Scene {
   private playerSprite!: Phaser.Physics.Arcade.Sprite
   private playerSpriteType: SpriteType
   private spriteHandler!: SpriteHandler
-  private otherPlayers: Map<string, Phaser.Physics.Arcade.Sprite> = new Map()
+  private otherPlayers: Map<string, OtherPlayerData> = new Map()
   private otherPlayersGroup!: Phaser.Physics.Arcade.Group
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private keys: {
@@ -214,15 +219,21 @@ class MainScene extends Phaser.Scene {
     const otherPlayerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
     this.physics.add.existing(otherPlayerSprite)
     this.spriteHandler.setupPlayer(otherPlayerSprite, playerInfo.spriteType)
-
     otherPlayerSprite.setFlipX(playerInfo.flipX)
     otherPlayerSprite.anims.play(playerInfo.animation, true)
-    this.otherPlayers.set(playerInfo.id, otherPlayerSprite)
-
     this.otherPlayersGroup.add(otherPlayerSprite)
     otherPlayerSprite.body!.immovable = true
 
-    this.otherPlayersContainer.add(otherPlayerSprite)
+    const speechBubble = this.spriteHandler.createSpeechBubble()
+    speechBubble.on("pointerdown", () => {
+      console.log(`Speech bubble clicked for player ${playerInfo.id}`)
+    })
+
+    this.otherPlayersContainer.add([otherPlayerSprite, speechBubble])
+    this.otherPlayers.set(playerInfo.id, {
+      sprite: otherPlayerSprite,
+      speechBubble,
+    })
   }
 
   private setupSocketListeners() {
@@ -245,11 +256,13 @@ class MainScene extends Phaser.Scene {
     })
 
     this.socket.on("playerDataChanged", (player: PlayerData) => {
-      const otherPlayer = this.otherPlayers.get(player.id)
-      if (otherPlayer) {
-        otherPlayer.body!.reset(player.x, player.y)
-        otherPlayer.setFlipX(player.flipX)
-        otherPlayer.anims.play(player.animation, true)
+      const otherPlayerData = this.otherPlayers.get(player.id)
+      if (otherPlayerData) {
+        otherPlayerData.sprite.body!.reset(player.x, player.y)
+        otherPlayerData.sprite.setFlipX(player.flipX)
+        otherPlayerData.sprite.anims.play(player.animation, true)
+
+        otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_CHARACTER_WIDTH + 5))
       }
     })
 
@@ -260,8 +273,9 @@ class MainScene extends Phaser.Scene {
     this.socket.on("playerLeft", (playerId: string) => {
       const otherPlayer = this.otherPlayers.get(playerId)
       if (otherPlayer) {
-        this.otherPlayersGroup.remove(otherPlayer, true, true)
-        otherPlayer.destroy()
+        this.otherPlayersGroup.remove(otherPlayer.sprite, true, true)
+        otherPlayer.sprite.destroy()
+        otherPlayer.speechBubble.destroy()
         this.otherPlayers.delete(playerId)
       }
     })
@@ -344,6 +358,40 @@ class MainScene extends Phaser.Scene {
       this.socket.emit("updatePlayerData", currentPlayerData)
       this.lastSentPlayerData = { ...currentPlayerData }
     }
+
+    this.otherPlayers.forEach((otherPlayerData, playerId) => {
+      const otherPlayerSprite = otherPlayerData.sprite
+      const otherPlayerSpeechBubble = otherPlayerData.speechBubble
+
+      otherPlayerSpeechBubble.setPosition(
+        otherPlayerSprite.x,
+        otherPlayerSprite.y - (CONFIG.SPRITE_CHARACTER_WIDTH + 5),
+      )
+
+      const distance = Phaser.Math.Distance.Between(
+        this.playerSprite.x,
+        this.playerSprite.y,
+        otherPlayerSprite.x,
+        otherPlayerSprite.y,
+      )
+
+      if (distance < CONFIG.INTERACTION_PROXIMITY_THRESHOLD) {
+        if (!otherPlayerSpeechBubble.visible) {
+          otherPlayerSpeechBubble.setVisible(true)
+          otherPlayerSpeechBubble.anims.play("speech-bubble-animation")
+        }
+      } else {
+        if (
+          otherPlayerSpeechBubble.visible &&
+          otherPlayerSpeechBubble.anims.currentAnim?.key !== "speech-bubble-animation-reverse"
+        ) {
+          otherPlayerSpeechBubble.anims.play("speech-bubble-animation-reverse")
+          otherPlayerSpeechBubble.once("animationcomplete", () => {
+            otherPlayerSpeechBubble.setVisible(false)
+          })
+        }
+      }
+    })
   }
 
   resize(gameSize: Phaser.Structs.Size) {

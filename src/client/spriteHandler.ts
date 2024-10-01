@@ -52,12 +52,30 @@ export class SpriteHandler {
           this.spriteInfo[spriteType]!.add(animation.toLowerCase())
         })
       })
+      this.scene.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
+        frameWidth: 11,
+        frameHeight: 11,
+      })
     })
   }
 
   createAnimations() {
     Object.entries(this.spriteInfo).forEach(([spriteType, animations]) => {
       this.createAnimationForCharacter(spriteType as SpriteType, animations!)
+    })
+
+    this.scene.anims.create({
+      key: "speech-bubble-animation",
+      frames: this.scene.anims.generateFrameNumbers("speech-bubble", { start: 0, end: 7 }),
+      frameRate: 30,
+      repeat: 0,
+    })
+
+    this.scene.anims.create({
+      key: "speech-bubble-animation-reverse",
+      frames: this.scene.anims.generateFrameNumbers("speech-bubble", { start: 7, end: 0, first: 7 }),
+      frameRate: 30,
+      repeat: 0,
     })
   }
 
@@ -106,6 +124,16 @@ export class SpriteHandler {
         repeat,
       })
     }
+  }
+
+  public createSpeechBubble(): Phaser.GameObjects.Sprite {
+    const speechBubble = this.scene.add.sprite(0, 0, "speech-bubble")
+    speechBubble.anims.play("speech-bubble-animation")
+    speechBubble.setVisible(false)
+    speechBubble.setInteractive()
+    speechBubble.setScale(1)
+    speechBubble.setDepth(1)
+    return speechBubble
   }
 
   public setupPlayer(player: Phaser.Physics.Arcade.Sprite, spriteType: SpriteType) {
