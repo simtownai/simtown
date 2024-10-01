@@ -11,7 +11,7 @@ class MainScene extends Phaser.Scene {
   private socket: Socket
   private map!: Phaser.Tilemaps.Tilemap
   private collisionLayer!: Phaser.Tilemaps.TilemapLayer
-  private player!: Phaser.Physics.Arcade.Sprite
+  private playerSprite!: Phaser.Physics.Arcade.Sprite
   private playerSpriteType: SpriteType
   private spriteHandler!: SpriteHandler
   private otherPlayers: Map<string, Phaser.Physics.Arcade.Sprite> = new Map()
@@ -183,22 +183,22 @@ class MainScene extends Phaser.Scene {
     if (!this.isAttacking) {
       this.isAttacking = true
       const attackAnimation = `${this.playerSpriteType}-attack1`
-      this.player.anims.play(attackAnimation, true)
+      this.playerSprite.anims.play(attackAnimation, true)
     }
   }
 
   private setupPlayer(playerInfo: PlayerData) {
     this.playerSpriteType = playerInfo.spriteType
-    this.player = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
-    this.physics.add.existing(this.player)
-    this.player.setCollideWorldBounds(true)
-    this.physics.add.collider(this.player, this.collisionLayer)
-    this.physics.add.collider(this.player, this.otherPlayersGroup)
-    this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
-    this.spriteHandler.setupPlayer(this.player, this.playerSpriteType)
+    this.playerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
+    this.physics.add.existing(this.playerSprite)
+    this.playerSprite.setCollideWorldBounds(true)
+    this.physics.add.collider(this.playerSprite, this.collisionLayer)
+    this.physics.add.collider(this.playerSprite, this.otherPlayersGroup)
+    this.cameras.main.startFollow(this.playerSprite, true, 0.09, 0.09)
+    this.spriteHandler.setupPlayer(this.playerSprite, this.playerSpriteType)
     this.resize(this.scale.gameSize)
 
-    this.player.on(
+    this.playerSprite.on(
       "animationcomplete",
       (animation: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
         if (animation.key === `${this.playerSpriteType}-attack1`) {
@@ -207,7 +207,7 @@ class MainScene extends Phaser.Scene {
       },
     )
 
-    this.playerContainer.add(this.player)
+    this.playerContainer.add(this.playerSprite)
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
@@ -247,14 +247,14 @@ class MainScene extends Phaser.Scene {
     this.socket.on("playerDataChanged", (player: PlayerData) => {
       const otherPlayer = this.otherPlayers.get(player.id)
       if (otherPlayer) {
-        otherPlayer.body.reset(player.x, player.y)
+        otherPlayer.body!.reset(player.x, player.y)
         otherPlayer.setFlipX(player.flipX)
         otherPlayer.anims.play(player.animation, true)
       }
     })
 
     this.socket.on("positionRejected", (correctPosition: PlayerData) => {
-      this.player.body.reset(correctPosition.x, correctPosition.y)
+      this.playerSprite.body!.reset(correctPosition.x, correctPosition.y)
     })
 
     this.socket.on("playerLeft", (playerId: string) => {
@@ -268,10 +268,10 @@ class MainScene extends Phaser.Scene {
   }
 
   update() {
-    if (!this.player) return
+    if (!this.playerSprite) return
 
     if (this.isAttacking) {
-      this.player.setVelocity(0, 0)
+      this.playerSprite.setVelocity(0, 0)
     } else {
       let dx = 0
       let dy = 0
@@ -287,15 +287,15 @@ class MainScene extends Phaser.Scene {
         }
 
         if (Math.abs(dx) > 0.2) {
-          this.player.setFlipX(dx < 0)
+          this.playerSprite.setFlipX(dx < 0)
         }
       } else {
         if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
           dx = -1
-          this.player.setFlipX(true)
+          this.playerSprite.setFlipX(true)
         } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
           dx = 1
-          this.player.setFlipX(false)
+          this.playerSprite.setFlipX(false)
         }
 
         if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
@@ -306,32 +306,32 @@ class MainScene extends Phaser.Scene {
       }
 
       const speed = 80
-      this.player.setVelocity(dx * speed, dy * speed)
+      this.playerSprite.setVelocity(dx * speed, dy * speed)
 
       let animation = `${this.playerSpriteType}-idle`
       if (dx !== 0 || dy !== 0) {
         animation = `${this.playerSpriteType}-walk`
       }
 
-      if (this.player.anims.getName() !== animation) {
-        this.player.anims.play(animation, true)
+      if (this.playerSprite.anims.getName() !== animation) {
+        this.playerSprite.anims.play(animation, true)
       }
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && !this.isAttacking) {
       this.isAttacking = true
       const attackAnimation = `${this.playerSpriteType}-attack1`
-      this.player.setVelocity(0, 0) // Stop movement during attack
-      this.player.anims.play(attackAnimation, true)
+      this.playerSprite.setVelocity(0, 0) // Stop movement during attack
+      this.playerSprite.anims.play(attackAnimation, true)
     }
 
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
       spriteType: this.playerSpriteType,
-      x: this.player.x,
-      y: this.player.y,
-      animation: this.player.anims.getName(),
-      flipX: this.player.flipX,
+      x: this.playerSprite.x,
+      y: this.playerSprite.y,
+      animation: this.playerSprite.anims.getName(),
+      flipX: this.playerSprite.flipX,
     }
 
     if (
@@ -351,8 +351,8 @@ class MainScene extends Phaser.Scene {
     const height = gameSize.height
 
     this.cameras.main.setViewport(0, 0, width, height)
-    if (this.player) {
-      this.cameras.main.centerOn(this.player.x, this.player.y)
+    if (this.playerSprite) {
+      this.cameras.main.centerOn(this.playerSprite.x, this.playerSprite.y)
     }
 
     if (this.uiCamera) {
