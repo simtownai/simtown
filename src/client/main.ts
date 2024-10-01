@@ -15,6 +15,7 @@ class MainScene extends Phaser.Scene {
   private playerSpriteType: SpriteType
   private spriteHandler!: SpriteHandler
   private otherPlayers: Map<string, Phaser.Physics.Arcade.Sprite> = new Map()
+  private otherPlayersGroup!: Phaser.Physics.Arcade.Group
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys
   private keys: {
     W: Phaser.Input.Keyboard.Key
@@ -79,6 +80,8 @@ class MainScene extends Phaser.Scene {
     this.collisionLayer = this.map.createLayer("Collisions", tileset)!
     this.collisionLayer.setCollisionByExclusion([-1])
     this.collisionLayer.setVisible(false)
+
+    this.otherPlayersGroup = this.physics.add.group()
 
     this.gameContainer.add([grassLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
     this.gameContainer.add([this.otherPlayersContainer, this.playerContainer])
@@ -190,6 +193,7 @@ class MainScene extends Phaser.Scene {
     this.physics.add.existing(this.player)
     this.player.setCollideWorldBounds(true)
     this.physics.add.collider(this.player, this.collisionLayer)
+    this.physics.add.collider(this.player, this.otherPlayersGroup)
     this.cameras.main.startFollow(this.player, true, 0.09, 0.09)
     this.spriteHandler.setupPlayer(this.player, this.playerSpriteType)
     this.resize(this.scale.gameSize)
@@ -207,14 +211,16 @@ class MainScene extends Phaser.Scene {
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
-    // const otherPlayer = this.physics.add.sprite(playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
     const otherPlayer = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
     this.physics.add.existing(otherPlayer)
     this.spriteHandler.setupPlayer(otherPlayer, playerInfo.spriteType)
 
     otherPlayer.setFlipX(playerInfo.flipX)
-    otherPlayer.anims.play(playerInfo.animation)
+    otherPlayer.anims.play(playerInfo.animation, true)
     this.otherPlayers.set(playerInfo.id, otherPlayer)
+
+    this.otherPlayersGroup.add(otherPlayer)
+    otherPlayer.body!.immovable = true
 
     this.otherPlayersContainer.add(otherPlayer)
   }
@@ -241,19 +247,20 @@ class MainScene extends Phaser.Scene {
     this.socket.on("playerDataChanged", (player: PlayerData) => {
       const otherPlayer = this.otherPlayers.get(player.id)
       if (otherPlayer) {
-        otherPlayer.setPosition(player.x, player.y)
+        otherPlayer.body.reset(player.x, player.y)
         otherPlayer.setFlipX(player.flipX)
         otherPlayer.anims.play(player.animation, true)
       }
     })
 
     this.socket.on("positionRejected", (correctPosition: PlayerData) => {
-      this.player.setPosition(correctPosition.x, correctPosition.y)
+      this.player.body.reset(correctPosition.x, correctPosition.y)
     })
 
     this.socket.on("playerLeft", (playerId: string) => {
       const otherPlayer = this.otherPlayers.get(playerId)
       if (otherPlayer) {
+        this.otherPlayersGroup.remove(otherPlayer, true, true)
         otherPlayer.destroy()
         this.otherPlayers.delete(playerId)
       }
