@@ -33,6 +33,8 @@ class MainScene extends Phaser.Scene {
   private uiCamera!: Phaser.Cameras.Scene2D.Camera
   private gameContainer!: Phaser.GameObjects.Container
   private uiContainer!: Phaser.GameObjects.Container
+  private playerContainer!: Phaser.GameObjects.Container
+  private otherPlayersContainer!: Phaser.GameObjects.Container
 
   private touchStartX: number = 0
   private touchStartY: number = 0
@@ -54,6 +56,8 @@ class MainScene extends Phaser.Scene {
   create() {
     this.gameContainer = this.add.container(0, 0)
     this.uiContainer = this.add.container(0, 0)
+    this.otherPlayersContainer = this.add.container(0, 0)
+    this.playerContainer = this.add.container(0, 0)
 
     this.setupMap()
     this.spriteHandler.createAnimations()
@@ -63,6 +67,8 @@ class MainScene extends Phaser.Scene {
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
+
+    this.gameContainer.add([this.otherPlayersContainer, this.playerContainer])
   }
 
   private setupMap() {
@@ -198,7 +204,7 @@ class MainScene extends Phaser.Scene {
       },
     )
 
-    this.gameContainer.add(this.player)
+    this.playerContainer.add(this.player)
   }
 
   update() {
@@ -329,7 +335,7 @@ class MainScene extends Phaser.Scene {
     otherPlayer.anims.play(playerInfo.animation)
     this.otherPlayers.set(playerInfo.id, otherPlayer)
 
-    this.gameContainer.add(otherPlayer)
+    this.otherPlayersContainer.add(otherPlayer)
   }
 
   resize(gameSize: Phaser.Structs.Size) {
