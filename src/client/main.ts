@@ -211,18 +211,18 @@ class MainScene extends Phaser.Scene {
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
-    const otherPlayer = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
-    this.physics.add.existing(otherPlayer)
-    this.spriteHandler.setupPlayer(otherPlayer, playerInfo.spriteType)
+    const otherPlayerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    this.physics.add.existing(otherPlayerSprite)
+    this.spriteHandler.setupPlayer(otherPlayerSprite, playerInfo.spriteType)
 
-    otherPlayer.setFlipX(playerInfo.flipX)
-    otherPlayer.anims.play(playerInfo.animation, true)
-    this.otherPlayers.set(playerInfo.id, otherPlayer)
+    otherPlayerSprite.setFlipX(playerInfo.flipX)
+    otherPlayerSprite.anims.play(playerInfo.animation, true)
+    this.otherPlayers.set(playerInfo.id, otherPlayerSprite)
 
-    this.otherPlayersGroup.add(otherPlayer)
-    otherPlayer.body!.immovable = true
+    this.otherPlayersGroup.add(otherPlayerSprite)
+    otherPlayerSprite.body!.immovable = true
 
-    this.otherPlayersContainer.add(otherPlayer)
+    this.otherPlayersContainer.add(otherPlayerSprite)
   }
 
   private setupSocketListeners() {
