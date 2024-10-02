@@ -49,7 +49,7 @@ export default function Compose({
           onChange={(e) => setComposeValue(e.target.value)}
           placeholder={localizations[configuration.lang].inputPlaceholder}
           className={styles.input}
-          ref={inputRef}
+          ref={!isMobile ? inputRef : undefined}
         />
         <button
           aria-label={localizations[configuration.lang].send}
