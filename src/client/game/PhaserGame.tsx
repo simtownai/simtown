@@ -9,9 +9,14 @@ export interface IRefPhaserGame {
 
 interface IProps {
   currentActiveScene?: (scene_instance: Phaser.Scene) => void
+  isChatCollapsed: boolean
+  setIsChatCollapsed: (value: boolean) => void
 }
 
-export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame({ currentActiveScene }, ref) {
+export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
+  { currentActiveScene, isChatCollapsed, setIsChatCollapsed },
+  ref,
+) {
   const game = useRef<Phaser.Game | null>(null!)
 
   useLayoutEffect(() => {
@@ -51,6 +56,19 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
       EventBus.removeListener("current-scene-ready")
     }
   }, [currentActiveScene, ref])
+
+  useEffect(() => {
+    EventBus.on("chat-collapse", (value: boolean) => {
+      setIsChatCollapsed(value)
+    })
+    return () => {
+      EventBus.removeListener("chat-collapse")
+    }
+  }, [setIsChatCollapsed])
+
+  useEffect(() => {
+    EventBus.emit("input-enabled", isChatCollapsed)
+  }, [isChatCollapsed])
 
   return <div id="game-container"></div>
 })

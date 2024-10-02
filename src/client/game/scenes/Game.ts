@@ -30,6 +30,7 @@ export class Game extends Phaser.Scene {
     J: Phaser.Input.Keyboard.Key
     K: Phaser.Input.Keyboard.Key
     L: Phaser.Input.Keyboard.Key
+    C: Phaser.Input.Keyboard.Key
     SPACE: Phaser.Input.Keyboard.Key
   }
   private lastSentPlayerData: PlayerData | null = null
@@ -110,7 +111,7 @@ export class Game extends Phaser.Scene {
 
   private setupInput() {
     this.cursors = this.input.keyboard!.createCursorKeys()
-    this.keys = this.input.keyboard!.addKeys("W,A,S,D,H,J,K,L,SPACE") as {
+    this.keys = this.input.keyboard!.addKeys("W,A,S,D,H,J,K,L,C,SPACE") as {
       W: Phaser.Input.Keyboard.Key
       A: Phaser.Input.Keyboard.Key
       S: Phaser.Input.Keyboard.Key
@@ -119,6 +120,7 @@ export class Game extends Phaser.Scene {
       J: Phaser.Input.Keyboard.Key
       K: Phaser.Input.Keyboard.Key
       L: Phaser.Input.Keyboard.Key
+      C: Phaser.Input.Keyboard.Key
       SPACE: Phaser.Input.Keyboard.Key
     }
     this.input.on("pointerdown", this.onPointerDown, this)
@@ -193,6 +195,24 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  private setInputEnabled(enabled: boolean) {
+    if (!enabled) {
+      this.input.keyboard!.enabled = false
+      this.input.enabled = false
+      if (this.joystick) {
+        this.joystick.setEnable(false)
+      }
+      this.input.keyboard!.manager.preventDefault = false
+    } else {
+      this.input.keyboard!.enabled = true
+      this.input.enabled = true
+      if (this.joystick) {
+        this.joystick.setEnable(true)
+      }
+      this.input.keyboard!.manager.preventDefault = true
+    }
+  }
+
   private setupPlayer(playerInfo: PlayerData) {
     this.playerSpriteType = playerInfo.spriteType
     this.playerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
@@ -227,7 +247,8 @@ export class Game extends Phaser.Scene {
 
     const speechBubble = this.spriteHandler.createSpeechBubble()
     speechBubble.on("pointerdown", () => {
-      console.log(`Speech bubble clicked for player ${playerInfo.id}`)
+      console.log(`Opening chat with player ID: ${playerInfo.id}`)
+      EventBus.emit("chat-collapse", false)
     })
 
     this.otherPlayersContainer.add([otherPlayerSprite, speechBubble])
@@ -235,6 +256,47 @@ export class Game extends Phaser.Scene {
       sprite: otherPlayerSprite,
       speechBubble,
     })
+  }
+
+  private getClosestPlayer(): PlayerData | null {
+    let closestPlayer: PlayerData | null = null
+    let minDistance = CONFIG.INTERACTION_PROXIMITY_THRESHOLD
+
+    this.otherPlayers.forEach((data, id) => {
+      const distance = Phaser.Math.Distance.Between(
+        this.playerSprite.x,
+        this.playerSprite.y,
+        data.sprite.x,
+        data.sprite.y,
+      )
+
+      if (distance < minDistance) {
+        minDistance = distance
+        closestPlayer = {
+          id: id,
+          spriteType: data.sprite.anims.getName() as SpriteType, // Adjust based on your SpriteType definition
+          x: data.sprite.x,
+          y: data.sprite.y,
+          animation: data.sprite.anims.getName(),
+          flipX: data.sprite.flipX,
+        }
+      }
+    })
+
+    return closestPlayer
+  }
+
+  private openChatWithClosestPlayer() {
+    const closestPlayer = this.getClosestPlayer()
+
+    if (closestPlayer) {
+      // Emit an event to open chat with the closest player
+      EventBus.emit("chat-collapse", false)
+      console.log(`Opening chat with player ID: ${closestPlayer.id}`)
+    } else {
+      // Optionally, notify the player that no one is nearby
+      console.log("No player in range to chat with.")
+    }
   }
 
   private setupSocketListeners() {
@@ -280,6 +342,8 @@ export class Game extends Phaser.Scene {
         this.otherPlayers.delete(playerId)
       }
     })
+
+    EventBus.on("input-enabled", this.setInputEnabled, this)
   }
 
   update() {
@@ -338,6 +402,11 @@ export class Game extends Phaser.Scene {
       const attackAnimation = `${this.playerSpriteType}-attack1`
       this.playerSprite.setVelocity(0, 0) // Stop movement during attack
       this.playerSprite.anims.play(attackAnimation, true)
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.C)) {
+      this.openChatWithClosestPlayer()
+      this.keys.C.reset()
     }
 
     const currentPlayerData: PlayerData = {

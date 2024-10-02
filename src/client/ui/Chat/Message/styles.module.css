@@ -1,0 +1,47 @@
+.messageContainer {
+  width: 100%;
+  height: auto;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+}
+
+.message {
+  border-radius: 8px;
+  max-width: 80%;
+  width: fit-content;
+  margin-left: 8px;
+  margin-right: 8px;
+  background-color: #fff;
+  color: #333;
+  padding: 8px 12px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message p {
+  margin: 0px;
+}
+
+.messageRating {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.messageFeedbackThanks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+  gap: 6px;
+  margin-top: 8px;
+}

@@ -1,0 +1,25 @@
+.chat {
+  position: fixed;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 12px;
+  opacity: 1;
+  transition: all 0.25s ease-in-out 0s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 12px 8px;
+  box-sizing: border-box;
+  overflow: scroll;
+  background-color: #f6f6f7;
+  gap: 8px;
+}
+
+.content::-webkit-scrollbar {
+  display: none;
+}

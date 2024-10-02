@@ -1,0 +1,31 @@
+.header {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.heading {
+  color: #333;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.headerTooltip {
+  left: -25px;
+}
