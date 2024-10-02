@@ -1,6 +1,5 @@
-import { CONFIG } from "../shared/config"
-import { SpriteType } from "../shared/types"
-import Phaser from "phaser"
+import { CONFIG } from "../../../shared/config"
+import { SpriteType } from "../../../shared/types"
 
 const animationsConfig: { [key in SpriteType]?: string[] } = {
   Archer: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],

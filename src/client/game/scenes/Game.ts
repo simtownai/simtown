@@ -1,9 +1,8 @@
-import { CONFIG } from "../shared/config"
-import { PlayerData, SpriteType } from "../shared/types"
+import { CONFIG } from "../../../shared/config"
+import { PlayerData, SpriteType } from "../../../shared/types"
+import { EventBus } from "../EventBus"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
-import "./style.css"
-import Phaser from "phaser"
 import VirtualJoystick from "phaser3-rex-plugins/plugins/virtualjoystick.js"
 import { Socket, io } from "socket.io-client"
 
@@ -12,7 +11,7 @@ interface OtherPlayerData {
   speechBubble: Phaser.GameObjects.Sprite
 }
 
-class MainScene extends Phaser.Scene {
+export class Game extends Phaser.Scene {
   private socket: Socket
   private map!: Phaser.Tilemaps.Tilemap
   private collisionLayer!: Phaser.Tilemaps.TilemapLayer
@@ -48,7 +47,7 @@ class MainScene extends Phaser.Scene {
   private touchMoved: boolean = false
 
   constructor() {
-    super({ key: "MainScene" })
+    super({ key: "Game" })
     this.socket = io(CONFIG.SERVER_URL, { autoConnect: false })
   }
 
@@ -68,6 +67,8 @@ class MainScene extends Phaser.Scene {
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
+
+    EventBus.emit("current-scene-ready", this)
   }
 
   private setupMap() {
@@ -408,30 +409,3 @@ class MainScene extends Phaser.Scene {
     }
   }
 }
-
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: "game-container",
-  width: "100%",
-  height: "100%",
-  scale: {
-    mode: Phaser.Scale.RESIZE,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-  },
-  physics: {
-    default: "arcade",
-    arcade: {
-      gravity: { x: 0, y: 0 },
-    },
-  },
-  scene: [MainScene],
-  audio: {
-    disableWebAudio: false,
-  },
-  pixelArt: true,
-  autoRound: true,
-  autoFocus: true,
-  roundPixels: true,
-}
-
-new Phaser.Game(config)
