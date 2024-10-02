@@ -406,7 +406,8 @@ export class Game extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.C)) {
       this.openChatWithClosestPlayer()
-      this.keys.C.reset()
+      // this.keys.C.reset()
+      this.input.keyboard!.resetKeys()
     }
 
     const currentPlayerData: PlayerData = {
