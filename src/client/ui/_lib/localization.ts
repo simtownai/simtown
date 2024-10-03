@@ -6,7 +6,7 @@ const localizations: Localizations = {
     collapse: "Collapse",
     resize: "Resize",
     send: "Send",
-    inputPlaceholder: "What's your question?",
+    inputPlaceholder: "Write a message...",
     errorMessage: "Something went wrong. Please try again later!",
   },
   "ru-RU": {
@@ -14,7 +14,7 @@ const localizations: Localizations = {
     collapse: "Свернуть",
     resize: "Изменить размер",
     send: "Отправить",
-    inputPlaceholder: "Введите ваш вопрос...",
+    inputPlaceholder: "Введите сообщение...",
     errorMessage: "Что-то пошло не так. Пожалуйста, попробуйте позже!",
   },
 }
