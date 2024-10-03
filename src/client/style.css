@@ -1,3 +1,10 @@
+@font-face {
+  font-family: "Monogram Extended";
+  src: url("./assets/fonts/monogram/monogram-extended.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 html,
 body,
 #root {
@@ -10,7 +17,7 @@ body,
 
 body {
   display: flex;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Monogram Extended", Arial, Helvetica, sans-serif;
 }
 
 #game-container {
@@ -28,8 +35,19 @@ canvas {
 }
 
 #askguru-chat-popup-container {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
-    "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family:
+    "Monogram Extended",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Roboto",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
   line-height: 1.5;
 }
 
