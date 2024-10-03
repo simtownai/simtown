@@ -1,6 +1,7 @@
 import { EventBus } from "./EventBus"
 import StartGame from "./main"
 import React, { forwardRef, useEffect, useLayoutEffect, useRef } from "react"
+import { Socket } from "socket.io-client"
 
 export interface IRefPhaserGame {
   game: Phaser.Game | null
@@ -8,20 +9,22 @@ export interface IRefPhaserGame {
 }
 
 interface IProps {
+  socket: Socket
   currentActiveScene?: (scene_instance: Phaser.Scene) => void
   isChatCollapsed: boolean
   setIsChatCollapsed: (value: boolean) => void
+  setChatmate: (value: string) => void
 }
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
-  { currentActiveScene, isChatCollapsed, setIsChatCollapsed },
+  { socket, currentActiveScene, isChatCollapsed, setIsChatCollapsed, setChatmate },
   ref,
 ) {
   const game = useRef<Phaser.Game | null>(null!)
 
   useLayoutEffect(() => {
     if (game.current === null) {
-      game.current = StartGame("game-container")
+      game.current = StartGame("game-container", socket)
 
       if (typeof ref === "function") {
         ref({ game: game.current, scene: null })
@@ -65,6 +68,15 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
       EventBus.removeListener("chat-collapse")
     }
   }, [setIsChatCollapsed])
+
+  useEffect(() => {
+    EventBus.on("set-chatmate", (value: string) => {
+      setChatmate(value)
+    })
+    return () => {
+      EventBus.removeListener("set-chatmate")
+    }
+  }, [setChatmate])
 
   useEffect(() => {
     EventBus.emit("input-enabled", isChatCollapsed)

@@ -12,7 +12,7 @@ export default function Header({
   onCollapseButtonClick,
 }: {
   configuration: Configuration
-  onClearButtonClick: () => void
+  onClearButtonClick: (() => void) | null
   isMobile: boolean
   onCollapseButtonClick: () => void
 }) {
@@ -23,16 +23,18 @@ export default function Header({
         {configuration.windowHeading}
       </div>
       <div className={styles.buttons}>
-        <button
-          className="askguru-small-btn"
-          onClick={() => onClearButtonClick()}
-          aria-label={localizations[configuration.lang].clear}
-        >
-          <RefreshIcon height={18} width={18} />
-          {!isMobile && (
-            <div className={`askguru-tooltip ${styles.headerTooltip}`}>{localizations[configuration.lang].clear}</div>
-          )}
-        </button>
+        {onClearButtonClick && (
+          <button
+            className="askguru-small-btn"
+            onClick={() => onClearButtonClick()}
+            aria-label={localizations[configuration.lang].clear}
+          >
+            <RefreshIcon height={18} width={18} />
+            {!isMobile && (
+              <div className={`askguru-tooltip ${styles.headerTooltip}`}>{localizations[configuration.lang].clear}</div>
+            )}
+          </button>
+        )}
         <button
           className="askguru-small-btn"
           onClick={() => onCollapseButtonClick()}

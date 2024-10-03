@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { PlayerData, SpriteType, UpdatePlayerData, spriteTypes } from "../shared/types"
+import { ChatMessage, PlayerData, SpriteType, UpdatePlayerData, spriteTypes } from "../shared/types"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -122,6 +122,22 @@ io.on("connection", (socket) => {
     } else {
       // If collision detected, send the current (non-updated) position back to the client
       socket.emit("positionRejected", currentPlayerData)
+    }
+  })
+
+  socket.on("sendMessage", (message: ChatMessage) => {
+    logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
+
+    if (message.to === "all") {
+      io.emit("newMessage", message)
+    } else {
+      const recipientSocket = io.sockets.sockets.get(message.to)
+      if (recipientSocket) {
+        recipientSocket.emit("newMessage", message)
+        // socket.emit("newMessage", message)
+      } else {
+        socket.emit("messageError", { error: "Recipient not found" })
+      }
     }
   })
 

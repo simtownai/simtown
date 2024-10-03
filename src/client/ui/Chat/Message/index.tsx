@@ -67,21 +67,21 @@ export default function Message({
       >
         <div dangerouslySetInnerHTML={{ __html: marked(message.content) }} />
         {message.role === "assistant" && isLoading && isLast && <TripleDots />}
-        {message.role === "assistant" && isLast && !isLoading && !isFirst && (
-          <>
-            {currentReaction === null ? (
-              <div className={styles.messageRating}>
-                <ReactionButton reaction="LIKE" hoverColor={selectedColor} onButtonClick={handleReaction} />
-                <ReactionButton reaction="DISLIKE" hoverColor={selectedColor} onButtonClick={handleReaction} />
-              </div>
-            ) : (
-              <div className={styles.messageFeedbackThanks}>
-                <SubmitTickIcon width={18} height={18} />
-                Thanks for submitting your feedback!
-              </div>
-            )}
-          </>
-        )}
+        {/* {message.role === "assistant" && isLast && !isLoading && !isFirst && ( */}
+        {/*   <> */}
+        {/*     {currentReaction === null ? ( */}
+        {/*       <div className={styles.messageRating}> */}
+        {/*         <ReactionButton reaction="LIKE" hoverColor={selectedColor} onButtonClick={handleReaction} /> */}
+        {/*         <ReactionButton reaction="DISLIKE" hoverColor={selectedColor} onButtonClick={handleReaction} /> */}
+        {/*       </div> */}
+        {/*     ) : ( */}
+        {/*       <div className={styles.messageFeedbackThanks}> */}
+        {/*         <SubmitTickIcon width={18} height={18} /> */}
+        {/*         Thanks for submitting your feedback! */}
+        {/*       </div> */}
+        {/*     )} */}
+        {/*   </> */}
+        {/* )} */}
       </div>
     </div>
   )

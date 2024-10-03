@@ -36,3 +36,9 @@ export interface UpdatePlayerData {
   animation: string
   flipX: boolean
 }
+
+export interface ChatMessage {
+  from: string
+  to: string
+  message: string
+}

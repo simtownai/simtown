@@ -47,9 +47,9 @@ export class Game extends Phaser.Scene {
   private isTouching: boolean = false
   private touchMoved: boolean = false
 
-  constructor() {
+  constructor(socket: Socket) {
     super({ key: "Game" })
-    this.socket = io(CONFIG.SERVER_URL, { autoConnect: false })
+    this.socket = socket
   }
 
   preload() {
@@ -249,6 +249,7 @@ export class Game extends Phaser.Scene {
     speechBubble.on("pointerdown", () => {
       console.log(`Opening chat with player ID: ${playerInfo.id}`)
       EventBus.emit("chat-collapse", false)
+      EventBus.emit("set-chatmate", playerInfo.id)
     })
 
     this.otherPlayersContainer.add([otherPlayerSprite, speechBubble])
@@ -290,11 +291,10 @@ export class Game extends Phaser.Scene {
     const closestPlayer = this.getClosestPlayer()
 
     if (closestPlayer) {
-      // Emit an event to open chat with the closest player
-      EventBus.emit("chat-collapse", false)
       console.log(`Opening chat with player ID: ${closestPlayer.id}`)
+      EventBus.emit("chat-collapse", false)
+      EventBus.emit("set-chatmate", closestPlayer.id)
     } else {
-      // Optionally, notify the player that no one is nearby
       console.log("No player in range to chat with.")
     }
   }

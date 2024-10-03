@@ -1,6 +1,8 @@
+import { CONFIG } from "../shared/config"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import Chat from "./ui/Chat"
-import React, { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import io, { Socket } from "socket.io-client"
 
 type Role = "system" | "user" | "assistant"
 
@@ -13,10 +15,12 @@ export interface MessageType {
 }
 
 function App() {
+  const [socket, setSocket] = useState<Socket | null>(null)
+  const [chatmate, setChatmate] = useState<string | null>(null)
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [messages, setMessages] = useState<MessageType[]>([])
+  const [messages, setMessages] = useState<Map<string, MessageType[]>>(new Map())
   const [composeValue, setComposeValue] = useState("")
   const [isMessageLoading, setIsMessageLoading] = useState(false)
 
@@ -25,56 +29,94 @@ function App() {
     console.log(scene)
   }
 
-  const messagesInitialState: MessageType[] = [{ role: "assistant", content: "lol" }]
+  useEffect(() => {
+    // We will be connecting in a Game Scene after
+    // initializing listening methods
+    const newSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
+    setSocket(newSocket)
+
+    newSocket.on("connect", () => {
+      console.log(`Connected to server with id: ${newSocket.id}`)
+    })
+
+    newSocket.on("newMessage", (message: { from: string; to: string; message: string }) => {
+      const newMessage: MessageType = {
+        role: "assistant",
+        content: message.message,
+      }
+      setMessages((prevMessages) => {
+        const oldMessages = prevMessages.get(message.from) || []
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(message.from, newMessages)
+      })
+    })
+
+    return () => {
+      newSocket.off("newMessage")
+      newSocket.disconnect()
+    }
+  }, [])
 
   function handleResize() {
     setIsMobile(window.innerWidth < mobileWindowWidthThreshold)
   }
 
-  function handleClearConversation() {
-    setMessages(messagesInitialState)
-    localStorage.setItem(`askguru-chat-history-TODO`, JSON.stringify(messagesInitialState))
-  }
+  useEffect(() => {
+    if (socket) {
+      localStorage.setItem(`chat-history-${socket.id}`, JSON.stringify(Array.from(messages.entries())))
+    }
+  }, [messages])
 
   useEffect(() => {
-    const messagesHistory = localStorage.getItem(`askguru-chat-history-TODO`)
-    if (messagesHistory) {
-      setMessages(JSON.parse(messagesHistory))
-    } else {
-      setMessages(messagesInitialState)
+    if (socket) {
+      const messagesHistory = localStorage.getItem(`chat-history-${socket.id}`)
+      if (messagesHistory) {
+        setMessages(new Map(JSON.parse(messagesHistory)))
+      }
     }
+  }, [socket])
 
+  useEffect(() => {
     handleResize()
-    window.addEventListener("resize", () => handleResize())
+    const resizeListener = () => handleResize()
+    window.addEventListener("resize", resizeListener)
     return () => {
-      window.removeEventListener("resize", () => handleResize())
+      window.removeEventListener("resize", resizeListener)
     }
   }, [])
 
   return (
     <>
-      <div id="app">
+      {socket && (
         <PhaserGame
           ref={phaserRef}
+          socket={socket}
           currentActiveScene={currentScene}
           isChatCollapsed={isChatCollapsed}
           setIsChatCollapsed={setIsChatCollapsed}
+          setChatmate={setChatmate}
         />
-      </div>
-      {!isChatCollapsed && (
+      )}
+      {socket && !isChatCollapsed && chatmate && (
         <Chat
-          isCollapsed={isChatCollapsed}
+          socket={socket}
+          chatmate={chatmate}
           setIsCollapsed={setIsChatCollapsed}
           isMobile={isMobile}
           isExpanded={isExpanded}
           setIsExpanded={setIsExpanded}
-          messages={messages}
-          setMessages={setMessages}
+          messages={messages.get(chatmate) || []}
+          setMessages={(newMessages) =>
+            setMessages((prevMessages) => {
+              prevMessages.set(chatmate, newMessages)
+              return new Map(prevMessages)
+            })
+          }
           composeValue={composeValue}
           setComposeValue={setComposeValue}
           isMessageLoading={isMessageLoading}
           setIsMessageLoading={setIsMessageLoading}
-          handleClearConversation={handleClearConversation}
+          handleClearConversation={null}
         />
       )}
     </>

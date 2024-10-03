@@ -1,21 +1,20 @@
+import { ChatMessage } from "../../../shared/types"
 import { MessageType } from "../_interfaces"
 import AskguruApi from "../_lib/api"
-import localizations from "../_lib/localization"
-import {
-  defaultAskguruConfiguration as askguruConfiguration,
-  defaultConfiguration as configuration,
-} from "../configuration"
+import { defaultAskguruConfiguration as askguruConfiguration, defaultConfiguration } from "../configuration"
 import Compose from "./Compose"
 import Footer from "./Footer"
 import Header from "./Header"
 import Message from "./Message"
 import styles from "./styles.module.css"
 import { FormEvent, useEffect, useRef } from "react"
+import { Socket } from "socket.io-client"
 
 const chatScreenIndent = 20
 
 export default function Chat({
-  isCollapsed,
+  socket,
+  chatmate,
   setIsCollapsed,
   isMobile,
   isExpanded,
@@ -28,7 +27,8 @@ export default function Chat({
   setIsMessageLoading,
   handleClearConversation,
 }: {
-  isCollapsed: boolean
+  socket: Socket
+  chatmate: string
   setIsCollapsed: (value: boolean) => void
   isMobile: boolean
   isExpanded: boolean
@@ -39,18 +39,22 @@ export default function Chat({
   setComposeValue: (value: string) => void
   isMessageLoading: boolean
   setIsMessageLoading: (value: boolean) => void
-  handleClearConversation: () => void
+  handleClearConversation: (() => void) | null
 }) {
+  const configuration = {
+    ...defaultConfiguration,
+    windowHeading: chatmate,
+  }
   const askguruAPI = new AskguruApi({ askguruConfiguration })
   const regexPattern = new RegExp(askguruAPI.sourcePattern)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!isCollapsed && inputRef.current) {
+    if (inputRef.current) {
       inputRef.current.focus()
     }
-  }, [isCollapsed])
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
@@ -58,19 +62,17 @@ export default function Chat({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isCollapsed) {
+      if (event.key === "Escape") {
         setIsCollapsed(true)
       }
     }
 
-    if (!isCollapsed) {
-      window.addEventListener("keydown", handleKeyDown)
-    }
+    window.addEventListener("keydown", handleKeyDown)
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isCollapsed, setIsCollapsed])
+  }, [setIsCollapsed])
 
   function scrollToBottom() {
     if (messagesEndRef.current) {
@@ -86,99 +88,27 @@ export default function Chat({
     setIsExpanded(!isExpanded)
   }
 
-  function checkForHumanHelp(messageText: string) {
-    if (messageText.includes("live") && messageText.includes("agent")) {
-      return true
-    }
-    return false
-  }
-
   function handleSubmitUserMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (checkForHumanHelp(composeValue)) {
-      askguruAPI.logEvent({
-        eventType: "POPUP_NO_ANSWER_CLIENT",
-        eventContext: { chat: messages },
-      })
-    }
-
-    const newMessagesUser: MessageType[] = [...messages, { role: "user", content: composeValue }]
-    const answerStream = askguruAPI.getAnswer({ chat: newMessagesUser })
-    const newMessagesAssistant: MessageType[] = [...newMessagesUser, { role: "assistant", content: "" }]
-
     setComposeValue("")
-    setMessages(newMessagesAssistant)
-    setIsMessageLoading(true)
+    const newMessagesUser: MessageType[] = [...messages, { role: "user", content: composeValue }]
+    setMessages(newMessagesUser)
+    socket.emit("sendMessage", { from: socket.id, to: chatmate, message: composeValue } as ChatMessage)
 
-    let completeAnswer = ""
-    let retrievedSources: any[] = []
+    // const newMessagesAssistant: MessageType[] = [...newMessagesUser, { role: "assistant", content: "" }]
+    // setMessages(newMessagesAssistant)
+    // setIsMessageLoading(true)
+    // let completeAnswer = ""
+    // let newMessages: MessageType[] = [...newMessagesAssistant]
+    // newMessages[newMessagesAssistant.length - 1].content = completeAnswer
+    // setMessages(newMessages)
+    // setIsMessageLoading(false)
 
-    answerStream.addEventListener("open", (_event) => {
-      try {
-        // non used opening
-      } catch (e) {
-        console.log("Error on 'open' event of 'getAnswer':", e)
-      }
-    })
-    answerStream.addEventListener("message", (event) => {
-      try {
-        const messageData = JSON.parse(event.data)
-        if (messageData.answer) {
-          const { request_id, sources, answer } = messageData
-          if (sources.length === 0) {
-            askguruAPI.logEvent({
-              eventType: "POPUP_NO_ANSWER_SERVER",
-              eventContext: { chat: newMessagesUser },
-            })
-          }
-
-          completeAnswer += answer
-
-          const match = completeAnswer.match(regexPattern)
-          if (match) {
-            const docIdx = match[1]
-            const source = sources[docIdx]
-
-            const link = source.id
-            source.link = link
-
-            var idx =
-              retrievedSources.findIndex(
-                (existingSource) => existingSource.id === source.id && existingSource.collection === source.collection,
-              ) + 1
-            if (idx === 0) {
-              retrievedSources.push(source)
-              idx = retrievedSources.length
-            }
-
-            completeAnswer = completeAnswer.replace(regexPattern, `[[${idx}]](${link})`)
-          }
-
-          let newMessages: MessageType[] = [...newMessagesAssistant]
-          newMessages[newMessagesAssistant.length - 1].content = completeAnswer
-          newMessages[newMessagesAssistant.length - 1].requestId = request_id
-          setMessages(newMessages)
-        }
-      } catch (e) {
-        console.log(e)
-      }
-    })
-    answerStream.addEventListener("error", (_event) => {
-      let newMessages: MessageType[] = [...newMessagesAssistant]
-      if (!completeAnswer) {
-        newMessages[newMessagesAssistant.length - 1].content = localizations[configuration.lang].errorMessage
-        setMessages(newMessages)
-      } else {
-        newMessages[newMessagesAssistant.length - 1].content = completeAnswer
-      }
-      setIsMessageLoading(false)
-      answerStream.close()
-      localStorage.setItem(`askguru-chat-history-${configuration.token}`, JSON.stringify(newMessages))
-      setTimeout(() => {
-        scrollToBottom()
-      }, 25)
-    })
+    // localStorage.setItem(`askguru-chat-history-${configuration.token}`, JSON.stringify(newMessagesUser))
+    setTimeout(() => {
+      scrollToBottom()
+    }, 25)
   }
 
   return (
