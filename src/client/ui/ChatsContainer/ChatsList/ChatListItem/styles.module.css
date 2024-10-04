@@ -32,17 +32,17 @@
 
 .chatName {
   /* font-weight: bold; */
-  font-size: 18px;
+  font-size: 24px;
   color: #ffffff; /* Ensure the name stands out */
 }
 
 .chatDate {
-  font-size: 14px;
+  font-size: 22px;
   color: rgba(255, 255, 255, 0.7); /* Faded effect */
 }
 
 .lastMessage {
-  font-size: 16px;
+  font-size: 22px;
   color: rgba(255, 255, 255, 0.7); /* Faded effect */
   white-space: nowrap;
   overflow: hidden;
