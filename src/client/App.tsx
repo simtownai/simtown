@@ -1,22 +1,16 @@
 import { CONFIG } from "../shared/config"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
-import Chat from "./ui/Chat"
+import ChatsContainer from "./ui/ChatsContainer"
+import { MessageType } from "./ui/_interfaces"
 import { useEffect, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
 
-type Role = "system" | "user" | "assistant"
-
 const mobileWindowWidthThreshold = 450
-
-export interface MessageType {
-  role: Role
-  content: string
-  requestId?: string
-}
 
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [chatmate, setChatmate] = useState<string | null>(null)
+  const [isChatsContainerCollapsed, setIsChatsContainerCollapsed] = useState(true)
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -92,26 +86,25 @@ function App() {
           ref={phaserRef}
           socket={socket}
           currentActiveScene={currentScene}
-          isChatCollapsed={isChatCollapsed}
+          isChatContainerCollapsed={isChatsContainerCollapsed}
+          setIsChatContainerCollapsed={setIsChatsContainerCollapsed}
           setIsChatCollapsed={setIsChatCollapsed}
           setChatmate={setChatmate}
         />
       )}
-      {socket && !isChatCollapsed && chatmate && (
-        <Chat
+      {socket && !isChatsContainerCollapsed && (
+        <ChatsContainer
           socket={socket}
           chatmate={chatmate}
-          setIsCollapsed={setIsChatCollapsed}
+          setChatmate={setChatmate}
+          setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}
+          isChatCollapsed={isChatCollapsed}
+          setIsChatCollapsed={setIsChatCollapsed}
           isMobile={isMobile}
           isExpanded={isExpanded}
           setIsExpanded={setIsExpanded}
-          messages={messages.get(chatmate) || []}
-          setMessages={(newMessages) =>
-            setMessages((prevMessages) => {
-              prevMessages.set(chatmate, newMessages)
-              return new Map(prevMessages)
-            })
-          }
+          messages={messages}
+          setMessages={setMessages}
           composeValue={composeValue}
           setComposeValue={setComposeValue}
           isMessageLoading={isMessageLoading}

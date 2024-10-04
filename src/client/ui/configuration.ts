@@ -8,7 +8,7 @@ export const defaultConfiguration: Configuration = {
   popupIcon: "", // if empty, /images/popup/icon-default.svg will be used
   popupMessage: "Try <b>AI-powered</b> search!",
   addUnreadDot: true,
-  whitelabel: false,
+  whitelabel: true,
   lang: "en-US",
   windowHeading: "Chat with AI Assistant",
   welcomeMessage: "👋 Hi! Ask me anything...",

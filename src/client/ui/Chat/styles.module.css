@@ -1,11 +1,8 @@
 .chat {
-  position: fixed;
-  box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 12px;
-  opacity: 1;
-  transition: all 0.25s ease-in-out 0s;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 
 .content {
@@ -16,10 +13,21 @@
   padding: 12px 8px;
   box-sizing: border-box;
   overflow: scroll;
-  background-color: #f6f6f7;
+  background-color: #6c4a2b;
   gap: 8px;
 }
 
 .content::-webkit-scrollbar {
   display: none;
+}
+
+.placeholder {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.2rem;
+  text-align: center;
+  padding: 20px;
 }

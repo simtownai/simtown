@@ -1,48 +1,42 @@
-import AskguruLogo from "../../_images/chat/header/askguru-logo.svg?react"
 import CloseIcon from "../../_images/chat/header/close-icon.svg?react"
 import RefreshIcon from "../../_images/chat/header/refresh-icon.svg?react"
-import { Configuration } from "../../_interfaces"
-import localizations from "../../_lib/localization"
 import styles from "./styles.module.css"
 
 export default function Header({
-  configuration,
-  onClearButtonClick,
   isMobile,
+  text,
   onCollapseButtonClick,
+  onBackButtonClick,
+  onClearButtonClick,
 }: {
-  configuration: Configuration
-  onClearButtonClick: (() => void) | null
   isMobile: boolean
-  onCollapseButtonClick: () => void
+  text: string
+  onCollapseButtonClick: (() => void) | null
+  onBackButtonClick: (() => void) | null
+  onClearButtonClick: (() => void) | null
 }) {
   return (
     <div className={styles.header}>
-      <div className={styles.heading}>
-        {!configuration.whitelabel && <AskguruLogo height={36} width={36} style={{ objectFit: "contain" }} />}
-        {configuration.windowHeading}
-      </div>
+      {onBackButtonClick && (
+        <button className="askguru-small-btn" onClick={() => onBackButtonClick()} aria-label="Back">
+          <CloseIcon height={18} width={18} />
+          {!isMobile && <div className={`askguru-tooltip ${styles.headerTooltip}`}>Back</div>}
+        </button>
+      )}
+      <div className={styles.heading}>{text}</div>
       <div className={styles.buttons}>
         {onClearButtonClick && (
-          <button
-            className="askguru-small-btn"
-            onClick={() => onClearButtonClick()}
-            aria-label={localizations[configuration.lang].clear}
-          >
+          <button className="askguru-small-btn" onClick={() => onClearButtonClick()} aria-label="Clear conversation">
             <RefreshIcon height={18} width={18} />
-            {!isMobile && (
-              <div className={`askguru-tooltip ${styles.headerTooltip}`}>{localizations[configuration.lang].clear}</div>
-            )}
+            {!isMobile && <div className={`askguru-tooltip ${styles.headerTooltip}`}>"Clear conversation"</div>}
           </button>
         )}
-        <button
-          className="askguru-small-btn"
-          onClick={() => onCollapseButtonClick()}
-          aria-label={localizations[configuration.lang].collapse}
-        >
-          <CloseIcon height={18} width={18} />
-          {/* <div className={`askguru-tooltip ${styles.headerTooltip}`}>{localizations[configuration.lang].collapse}</div> */}
-        </button>
+        {onCollapseButtonClick && (
+          <button className="askguru-small-btn" onClick={() => onCollapseButtonClick()} aria-label="Collapse">
+            <CloseIcon height={18} width={18} />
+            {/* <div className={`askguru-tooltip ${styles.headerTooltip}`}>{localizations[configuration.lang].collapse}</div> */}
+          </button>
+        )}
       </div>
     </div>
   )

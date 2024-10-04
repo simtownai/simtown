@@ -9,10 +9,11 @@
   padding-right: 16px;
   box-sizing: border-box;
   background: #fff;
+  background-color: #e1af74;
 }
 
 .heading {
-  color: #333;
+  color: #522e02;
   font-size: 28px;
   display: flex;
   align-items: center;

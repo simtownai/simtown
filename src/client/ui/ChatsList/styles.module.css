@@ -1,0 +1,54 @@
+.chatList {
+  display: flex;
+  flex-direction: column;
+  background-color: #6c4a2b;
+  background-color: #48331c;
+  transition: width 0.3s ease-in-out;
+  overflow: hidden;
+  box-sizing: border-box; /* Include padding in width and height */
+}
+
+.chatListDesktop {
+  width: 300px;
+  flex-shrink: 0; /* Prevent shrinking */
+  height: 100%;
+}
+
+.chatListMobile {
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1001; /* Higher than container */
+  height: 100%;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #fff;
+  font-size: 18px;
+  user-select: none;
+  border-bottom: 1px solid #6c4a2b;
+}
+
+.item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.itemActive {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.itemActive:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}

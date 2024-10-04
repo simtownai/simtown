@@ -10,12 +10,12 @@ import styles from "./styles.module.css"
 import { FormEvent, useEffect, useRef } from "react"
 import { Socket } from "socket.io-client"
 
-const chatScreenIndent = 20
-
 export default function Chat({
   socket,
   chatmate,
-  setIsCollapsed,
+  setChatmate,
+  setIsChatsContainerCollapsed,
+  setIsChatCollapsed,
   isMobile,
   isExpanded,
   setIsExpanded,
@@ -28,8 +28,10 @@ export default function Chat({
   handleClearConversation,
 }: {
   socket: Socket
-  chatmate: string
-  setIsCollapsed: (value: boolean) => void
+  chatmate: string | null
+  setChatmate: (value: string | null) => void
+  setIsChatsContainerCollapsed: (value: boolean) => void
+  setIsChatCollapsed: (value: boolean) => void
   isMobile: boolean
   isExpanded: boolean
   setIsExpanded: (value: boolean) => void
@@ -43,7 +45,7 @@ export default function Chat({
 }) {
   const configuration = {
     ...defaultConfiguration,
-    windowHeading: chatmate,
+    windowHeading: chatmate || "",
   }
   const askguruAPI = new AskguruApi({ askguruConfiguration })
   const regexPattern = new RegExp(askguruAPI.sourcePattern)
@@ -60,20 +62,6 @@ export default function Chat({
     scrollToBottom()
   }, [messages])
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsCollapsed(true)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [setIsCollapsed])
-
   function scrollToBottom() {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
@@ -81,7 +69,7 @@ export default function Chat({
   }
 
   function handleCollapseButtonClick() {
-    setIsCollapsed(true)
+    setIsChatsContainerCollapsed(true)
   }
 
   function handleResizeClick() {
@@ -112,69 +100,55 @@ export default function Chat({
   }
 
   return (
-    <div
-      className={`${styles.chat} ${
-        isMobile
-          ? styles.chatMobile
-          : `${styles.chatDesktop} ${isExpanded ? styles.chatDesktopExpanded : styles.chatDesktopNormal}`
-      }`}
-      style={{
-        bottom: isMobile ? 0 : configuration.bottomIndent + configuration.buttonSize + configuration.buttonSize / 8,
-        right: isMobile ? 0 : configuration.rightIndent,
-        borderRadius: isMobile ? "0px" : "16px",
-        zIndex: configuration.zIndex,
-        width: isMobile
-          ? "100%"
-          : isExpanded
-            ? `calc(100vw - ${configuration.rightIndent + chatScreenIndent}px)`
-            : "450px",
-        height: isMobile
-          ? "100%"
-          : isExpanded
-            ? `calc(100vh - ${
-                configuration.bottomIndent + configuration.buttonSize + configuration.buttonSize / 8 + chatScreenIndent
-              }px)`
-            : "650px",
-        maxWidth: isMobile ? "unset" : `calc(100vw - ${configuration.rightIndent + chatScreenIndent}px)`,
-        maxHeight: isMobile
-          ? "unset"
-          : `calc(100vh - ${
-              configuration.bottomIndent + configuration.buttonSize + configuration.buttonSize / 8 + chatScreenIndent
-            }px)`,
-      }}
-    >
+    <div className={styles.chat}>
       <Header
-        configuration={configuration}
-        onClearButtonClick={handleClearConversation}
         isMobile={isMobile}
+        text={configuration.windowHeading}
         onCollapseButtonClick={handleCollapseButtonClick}
+        onBackButtonClick={
+          isMobile
+            ? () => {
+                setIsChatCollapsed(true)
+                setChatmate(null)
+              }
+            : null
+        }
+        onClearButtonClick={handleClearConversation}
       />
       <div className={styles.content}>
-        {messages.map((message, index) => {
-          return (
-            <Message
-              key={index}
-              message={message}
-              selectedColor={"#" + configuration.color}
-              isFirst={index === 0}
-              isLast={messages.length - 1 === index}
-              isLoading={isMessageLoading}
-              askguruAPI={askguruAPI}
-            />
-          )
-        })}
-        <div ref={messagesEndRef} />
+        {chatmate ? (
+          <>
+            {messages.map((message, index) => (
+              <Message
+                key={index}
+                message={message}
+                selectedColor={"#" + configuration.color}
+                isFirst={index === 0}
+                isLast={messages.length - 1 === index}
+                isLoading={isMessageLoading}
+                askguruAPI={askguruAPI}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </>
+        ) : (
+          <div className={styles.placeholder}>Select a chat to start messaging</div>
+        )}
       </div>
-      <Compose
-        inputRef={inputRef}
-        configuration={configuration}
-        composeValue={composeValue}
-        setComposeValue={setComposeValue}
-        isLoading={isMessageLoading}
-        onSubmitUserMessage={handleSubmitUserMessage}
-        onResizeClick={handleResizeClick}
-        isMobile={isMobile}
-      />
+      {chatmate && (
+        <>
+          <Compose
+            inputRef={inputRef}
+            configuration={configuration}
+            composeValue={composeValue}
+            setComposeValue={setComposeValue}
+            isLoading={isMessageLoading}
+            onSubmitUserMessage={handleSubmitUserMessage}
+            onResizeClick={handleResizeClick}
+            isMobile={isMobile}
+          />
+        </>
+      )}
       {!configuration.whitelabel && <Footer />}
     </div>
   )
