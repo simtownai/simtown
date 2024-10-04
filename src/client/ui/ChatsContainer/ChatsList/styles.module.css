@@ -30,25 +30,3 @@
   overflow-y: auto;
   flex-grow: 1;
 }
-
-.item {
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  color: #fff;
-  font-size: 18px;
-  user-select: none;
-  border-bottom: 1px solid #6c4a2b;
-}
-
-.item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.itemActive {
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-.itemActive:hover {
-  background-color: rgba(0, 0, 0, 0.2);
-}

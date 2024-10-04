@@ -48,7 +48,6 @@ export default function Chat({
     windowHeading: chatmate || "",
   }
   const askguruAPI = new AskguruApi({ askguruConfiguration })
-  const regexPattern = new RegExp(askguruAPI.sourcePattern)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -80,9 +79,15 @@ export default function Chat({
     event.preventDefault()
 
     setComposeValue("")
-    const newMessagesUser: MessageType[] = [...messages, { role: "user", content: composeValue }]
+    const newMessage = { role: "user", content: composeValue, date: new Date().toISOString() } as MessageType
+    const newMessagesUser: MessageType[] = [...messages, newMessage]
     setMessages(newMessagesUser)
-    socket.emit("sendMessage", { from: socket.id, to: chatmate, message: composeValue } as ChatMessage)
+    socket.emit("sendMessage", {
+      from: socket.id,
+      to: chatmate,
+      message: composeValue,
+      date: newMessage.date,
+    } as ChatMessage)
 
     // const newMessagesAssistant: MessageType[] = [...newMessagesUser, { role: "assistant", content: "" }]
     // setMessages(newMessagesAssistant)

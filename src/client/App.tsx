@@ -1,4 +1,5 @@
 import { CONFIG } from "../shared/config"
+import { ChatMessage } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import { MessageType } from "./ui/_interfaces"
@@ -33,10 +34,11 @@ function App() {
       console.log(`Connected to server with id: ${newSocket.id}`)
     })
 
-    newSocket.on("newMessage", (message: { from: string; to: string; message: string }) => {
+    newSocket.on("newMessage", (message: ChatMessage) => {
       const newMessage: MessageType = {
         role: "assistant",
         content: message.message,
+        date: message.date,
       }
       setMessages((prevMessages) => {
         const oldMessages = prevMessages.get(message.from) || []

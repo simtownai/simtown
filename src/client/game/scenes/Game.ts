@@ -4,7 +4,7 @@ import { EventBus } from "../EventBus"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
 import VirtualJoystick from "phaser3-rex-plugins/plugins/virtualjoystick.js"
-import { Socket, io } from "socket.io-client"
+import { Socket } from "socket.io-client"
 
 interface OtherPlayerData {
   sprite: Phaser.Physics.Arcade.Sprite
@@ -174,7 +174,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  private onPointerUp(pointer: Phaser.Input.Pointer) {
+  private onPointerUp(_pointer: Phaser.Input.Pointer) {
     if (!this.joystick) return
 
     if (!this.touchMoved) {
@@ -226,7 +226,7 @@ export class Game extends Phaser.Scene {
 
     this.playerSprite.on(
       "animationcomplete",
-      (animation: Phaser.Animations.Animation, frame: Phaser.Animations.AnimationFrame) => {
+      (animation: Phaser.Animations.Animation, _frame: Phaser.Animations.AnimationFrame) => {
         if (animation.key === `${this.playerSpriteType}-attack1`) {
           this.isAttacking = false
         }
@@ -430,7 +430,7 @@ export class Game extends Phaser.Scene {
       this.lastSentPlayerData = { ...currentPlayerData }
     }
 
-    this.otherPlayers.forEach((otherPlayerData, playerId) => {
+    this.otherPlayers.forEach((otherPlayerData, _playerId) => {
       const otherPlayerSprite = otherPlayerData.sprite
       const otherPlayerSpeechBubble = otherPlayerData.speechBubble
 

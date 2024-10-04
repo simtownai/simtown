@@ -31,6 +31,7 @@ type Role = "system" | "user" | "assistant"
 export interface MessageType {
   role: Role
   content: string
+  date: string
   requestId?: string
 }
 
