@@ -1,7 +1,7 @@
-import RecizeIcon from "../../_images/chat/message/compose-resize.svg?react"
-import SendIcon from "../../_images/chat/message/compose-send.svg?react"
-import { Configuration } from "../../_interfaces"
-import localizations from "../../_lib/localization"
+import RecizeIcon from "../../../_images/chat/message/compose-resize.svg?react"
+import SendIcon from "../../../_images/chat/message/compose-send.svg?react"
+import { Configuration } from "../../../_interfaces"
+import localizations from "../../../_lib/localization"
 import styles from "./styles.module.css"
 import React, { FormEvent } from "react"
 

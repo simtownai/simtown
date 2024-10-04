@@ -1,6 +1,6 @@
-import Chat from "../Chat"
-import ChatsList from "../ChatsList"
 import { MessageType } from "../_interfaces"
+import Chat from "./Chat"
+import ChatsList from "./ChatsList"
 import styles from "./styles.module.css"
 import React, { useEffect, useMemo } from "react"
 import { Socket } from "socket.io-client"

@@ -1,5 +1,5 @@
+import { MessageType } from "../../_interfaces"
 import Header from "../Chat/Header"
-import { MessageType } from "../_interfaces"
 import styles from "./styles.module.css"
 
 interface ChatsListProps {

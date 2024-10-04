@@ -1,6 +1,5 @@
-import AskguruLogoFull from "../../_images/chat/footer/askguru-logo-full.svg?react"
+import AskguruLogoFull from "../../../_images/chat/footer/askguru-logo-full.svg?react"
 import styles from "./styles.module.css"
-import React from "react"
 
 export default function Footer() {
   return (

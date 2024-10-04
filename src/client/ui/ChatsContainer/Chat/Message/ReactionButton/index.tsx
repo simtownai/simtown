@@ -1,6 +1,6 @@
-import DislikeIcon from "../../../_images/chat/message/feedback-dislike.svg?react"
-import LikeIcon from "../../../_images/chat/message/feedback-like.svg?react"
-import { ReactionType } from "../../../_interfaces"
+import DislikeIcon from "../../../../_images/chat/message/feedback-dislike.svg?react"
+import LikeIcon from "../../../../_images/chat/message/feedback-like.svg?react"
+import { ReactionType } from "../../../../_interfaces"
 import styles from "./styles.module.css"
 import React, { useState } from "react"
 

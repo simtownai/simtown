@@ -1,5 +1,5 @@
-import CloseIcon from "../../_images/chat/header/close-icon.svg?react"
-import RefreshIcon from "../../_images/chat/header/refresh-icon.svg?react"
+import CloseIcon from "../../../_images/chat/header/close-icon.svg?react"
+import RefreshIcon from "../../../_images/chat/header/refresh-icon.svg?react"
 import styles from "./styles.module.css"
 
 export default function Header({
