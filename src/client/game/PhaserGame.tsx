@@ -69,6 +69,15 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
   }, [currentActiveScene, ref])
 
   useEffect(() => {
+    EventBus.on("chats-container-collapse", (value: boolean) => {
+      setIsChatContainerCollapsed(value)
+    })
+    return () => {
+      EventBus.removeListener("chats-container-collapse")
+    }
+  }, [setIsChatContainerCollapsed])
+
+  useEffect(() => {
     EventBus.on("chat-collapse", (value: boolean) => {
       setIsChatContainerCollapsed(value)
       setIsChatCollapsed(value)
