@@ -49,13 +49,6 @@ export default function Chat({
   }
   const askguruAPI = new AskguruApi({ askguruConfiguration })
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [])
 
   useEffect(() => {
     scrollToBottom()
@@ -143,7 +136,6 @@ export default function Chat({
       {chatmate && (
         <>
           <Compose
-            inputRef={inputRef}
             configuration={configuration}
             composeValue={composeValue}
             setComposeValue={setComposeValue}

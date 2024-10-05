@@ -295,7 +295,8 @@ export class Game extends Phaser.Scene {
       EventBus.emit("chat-collapse", false)
       EventBus.emit("set-chatmate", closestPlayer.id)
     } else {
-      console.log("No player in range to chat with.")
+      console.log("No player in range to chat with, just opening chat")
+      EventBus.emit("chat-collapse", false)
     }
   }
 

@@ -3,10 +3,9 @@ import SendIcon from "../../../_images/chat/message/compose-send.svg?react"
 import { Configuration } from "../../../_interfaces"
 import localizations from "../../../_lib/localization"
 import styles from "./styles.module.css"
-import React, { FormEvent } from "react"
+import { FormEvent, useEffect, useRef } from "react"
 
 export default function Compose({
-  inputRef,
   configuration,
   composeValue,
   setComposeValue,
@@ -15,7 +14,6 @@ export default function Compose({
   onSubmitUserMessage,
   isMobile,
 }: {
-  inputRef: React.RefObject<HTMLInputElement>
   configuration: Configuration
   composeValue: string
   setComposeValue: (value: string) => void
@@ -24,6 +22,14 @@ export default function Compose({
   onSubmitUserMessage: (event: FormEvent<HTMLFormElement>) => void
   isMobile: boolean
 }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [])
+
   return (
     <div className={styles.compose}>
       {!isMobile && (
