@@ -62,21 +62,25 @@ const ChatsList: React.FC<ChatsListProps> = ({
         onBackButtonClick={null}
         onClearButtonClick={null}
       />
-      <ul className={styles.list}>
-        {chatmatesWithLastMessage.map(({ name, lastMessage, date }, index) => (
-          <ChatListItem
-            key={name}
-            name={name}
-            lastMessage={lastMessage}
-            date={date}
-            isActive={chatmate === name}
-            onClick={() => {
-              setChatmate(name)
-              setIsChatCollapsed(false)
-            }}
-          />
-        ))}
-      </ul>
+      {chatmatesWithLastMessage.length !== 0 ? (
+        <ul className={styles.list}>
+          {chatmatesWithLastMessage.map(({ name, lastMessage, date }, index) => (
+            <ChatListItem
+              key={name}
+              name={name}
+              lastMessage={lastMessage}
+              date={date}
+              isActive={chatmate === name}
+              onClick={() => {
+                setChatmate(name)
+                setIsChatCollapsed(false)
+              }}
+            />
+          ))}
+        </ul>
+      ) : (
+        <div className={styles.placeholder}>You don't have any messages yet</div>
+      )}
     </div>
   )
 }
