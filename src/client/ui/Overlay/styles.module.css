@@ -1,0 +1,72 @@
+.overlay {
+  position: fixed;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  transition: all 0.3s ease-in-out;
+  background-color: transparent;
+  z-index: 1000;
+  overflow: hidden;
+
+  overflow: visible; /* Changed from hidden to visible */
+  gap: 12px;
+}
+
+.overlayTop {
+  bottom: 20px;
+  left: 20px;
+}
+
+.overlayBottom {
+  bottom: 20px;
+  right: 20px;
+}
+
+.buttonImage {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: transform 0.1s;
+  overflow: visible;
+}
+
+.iconButton:focus,
+.iconButton:active {
+  outline: none;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .iconButton:hover {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes clickAnimation {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.iconButton.clicked {
+  animation: clickAnimation 0.1s ease-out;
+}

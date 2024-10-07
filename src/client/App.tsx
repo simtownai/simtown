@@ -2,6 +2,7 @@ import { CONFIG } from "../shared/config"
 import { ChatMessage } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
+import Overlay from "./ui/Overlay"
 import { MessageType } from "./ui/_interfaces"
 import { useEffect, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
@@ -92,6 +93,13 @@ function App() {
           setIsChatContainerCollapsed={setIsChatsContainerCollapsed}
           setIsChatCollapsed={setIsChatCollapsed}
           setChatmate={setChatmate}
+        />
+      )}
+      {socket && (
+        <Overlay
+          isMobile={isMobile}
+          isChatsContainerCollapsed={isChatsContainerCollapsed}
+          setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}
         />
       )}
       {socket && !isChatsContainerCollapsed && (
