@@ -1,4 +1,4 @@
-import { MessageType } from "../../_interfaces"
+import { ChatMessage } from "../../../../shared/types"
 import Header from "../Chat/Header"
 import ChatListItem from "./ChatListItem"
 import styles from "./styles.module.css"
@@ -6,7 +6,7 @@ import React, { useEffect, useMemo } from "react"
 
 interface ChatsListProps {
   isMobile: boolean
-  messages: Map<string, MessageType[]>
+  messages: Map<string, ChatMessage[]>
   chatmate: string | null
   setChatmate: (value: string) => void
   setIsChatCollapsed: (value: boolean) => void
@@ -27,7 +27,7 @@ const ChatsList: React.FC<ChatsListProps> = ({
         const lastMessage = msgs[msgs.length - 1]
         return {
           name,
-          lastMessage: lastMessage ? lastMessage.content : "No messages yet",
+          lastMessage: lastMessage ? lastMessage.message : "No messages yet",
           date: lastMessage ? lastMessage.date : new Date().toISOString(),
         }
       })

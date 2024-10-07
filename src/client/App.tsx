@@ -3,7 +3,6 @@ import { ChatMessage } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import Overlay from "./ui/Overlay"
-import { MessageType } from "./ui/_interfaces"
 import { useEffect, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
 
@@ -16,7 +15,7 @@ function App() {
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [messages, setMessages] = useState<Map<string, MessageType[]>>(new Map())
+  const [messages, setMessages] = useState<Map<string, ChatMessage[]>>(new Map())
   const [composeValue, setComposeValue] = useState("")
   const [isMessageLoading, setIsMessageLoading] = useState(false)
 
@@ -36,14 +35,9 @@ function App() {
     })
 
     newSocket.on("newMessage", (message: ChatMessage) => {
-      const newMessage: MessageType = {
-        role: "assistant",
-        content: message.message,
-        date: message.date,
-      }
       setMessages((prevMessages) => {
         const oldMessages = prevMessages.get(message.from) || []
-        const newMessages = [...oldMessages, newMessage]
+        const newMessages = [...oldMessages, message]
         return new Map(prevMessages).set(message.from, newMessages)
       })
     })

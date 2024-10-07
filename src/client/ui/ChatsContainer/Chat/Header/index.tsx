@@ -19,7 +19,9 @@ export default function Header({
     <div className={styles.header}>
       {onBackButtonClick && (
         <button className="askguru-small-btn" onClick={() => onBackButtonClick()} aria-label="Back">
-          <CloseIcon height={18} width={18} />
+          <span className={styles.rotatedIcon}>
+            <CloseIcon height={18} width={18} />
+          </span>
           {!isMobile && <div className={`askguru-tooltip ${styles.headerTooltip}`}>Back</div>}
         </button>
       )}

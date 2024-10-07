@@ -1,7 +1,5 @@
 import { ChatMessage } from "../../../../shared/types"
-import { MessageType } from "../../_interfaces"
-import AskguruApi from "../../_lib/api"
-import { defaultAskguruConfiguration as askguruConfiguration, defaultConfiguration } from "../../configuration"
+import { defaultConfiguration } from "../../configuration"
 import Compose from "./Compose"
 import Footer from "./Footer"
 import Header from "./Header"
@@ -35,8 +33,8 @@ export default function Chat({
   isMobile: boolean
   isExpanded: boolean
   setIsExpanded: (value: boolean) => void
-  messages: MessageType[]
-  setMessages: (value: MessageType[]) => void
+  messages: ChatMessage[]
+  setMessages: (value: ChatMessage[]) => void
   composeValue: string
   setComposeValue: (value: string) => void
   isMessageLoading: boolean
@@ -47,7 +45,6 @@ export default function Chat({
     ...defaultConfiguration,
     windowHeading: chatmate || "",
   }
-  const askguruAPI = new AskguruApi({ askguruConfiguration })
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -72,26 +69,15 @@ export default function Chat({
     event.preventDefault()
 
     setComposeValue("")
-    const newMessage = { role: "user", content: composeValue, date: new Date().toISOString() } as MessageType
-    const newMessagesUser: MessageType[] = [...messages, newMessage]
-    setMessages(newMessagesUser)
-    socket.emit("sendMessage", {
+    const newMessage = {
       from: socket.id,
       to: chatmate,
       message: composeValue,
-      date: newMessage.date,
-    } as ChatMessage)
-
-    // const newMessagesAssistant: MessageType[] = [...newMessagesUser, { role: "assistant", content: "" }]
-    // setMessages(newMessagesAssistant)
-    // setIsMessageLoading(true)
-    // let completeAnswer = ""
-    // let newMessages: MessageType[] = [...newMessagesAssistant]
-    // newMessages[newMessagesAssistant.length - 1].content = completeAnswer
-    // setMessages(newMessages)
-    // setIsMessageLoading(false)
-
-    // localStorage.setItem(`askguru-chat-history-${configuration.token}`, JSON.stringify(newMessagesUser))
+      date: new Date().toISOString(),
+    } as ChatMessage
+    const newMessagesUser: ChatMessage[] = [...messages, newMessage]
+    setMessages(newMessagesUser)
+    socket.emit("sendMessage", newMessage)
     setTimeout(() => {
       scrollToBottom()
     }, 25)
@@ -116,17 +102,19 @@ export default function Chat({
       <div className={styles.content}>
         {chatmate ? (
           <>
-            {messages.map((message, index) => (
-              <Message
-                key={index}
-                message={message}
-                selectedColor={"#" + configuration.color}
-                isFirst={index === 0}
-                isLast={messages.length - 1 === index}
-                isLoading={isMessageLoading}
-                askguruAPI={askguruAPI}
-              />
-            ))}
+            {messages.map((message, index) => {
+              const previousMessage = messages[index - 1]
+              const isFirstInGroup = !previousMessage || previousMessage.from !== message.from
+              return (
+                <Message
+                  key={index}
+                  message={message}
+                  isLoading={isMessageLoading}
+                  isFirstInGroup={isFirstInGroup}
+                  ifMessageIsFromUser={message.from === socket.id}
+                />
+              )
+            })}
             <div ref={messagesEndRef} />
           </>
         ) : (

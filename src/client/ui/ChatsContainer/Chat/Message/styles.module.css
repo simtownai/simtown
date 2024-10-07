@@ -6,21 +6,29 @@
   background-color: transparent;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .message {
-  border-radius: 8px;
-  max-width: 80%;
-  width: fit-content;
-  margin-left: 8px;
-  margin-right: 8px;
-  background-color: #fff;
-  color: #333;
-  padding: 8px 12px;
+  max-width: 100%;
+  width: 100%;
+  color: #fff;
   font-size: 22px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.messageSender {
+  font-size: 24px;
+}
+
+.senderWe {
+  color: #e2b57e;
+}
+
+.senderNotWe {
+  color: #b49f86;
 }
 
 .message p {
@@ -44,4 +52,15 @@
   white-space: nowrap;
   gap: 6px;
   margin-top: 8px;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.messageDate {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.7); /* Faded effect */
 }

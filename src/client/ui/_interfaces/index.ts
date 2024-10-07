@@ -28,13 +28,6 @@ export interface AskguruConfiguration {
 
 type Role = "system" | "user" | "assistant"
 
-export interface MessageType {
-  role: Role
-  content: string
-  date: string
-  requestId?: string
-}
-
 export type EventType = "TEST" | "POPUP_SEEN" | "POPUP_CALLED" | "POPUP_NO_ANSWER_CLIENT" | "POPUP_NO_ANSWER_SERVER"
 
 export type LikeStatus = "good_answer" | "wrong_answer"

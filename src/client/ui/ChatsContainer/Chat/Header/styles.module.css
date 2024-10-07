@@ -30,3 +30,8 @@
 .headerTooltip {
   left: -25px;
 }
+
+.rotatedIcon {
+  display: inline-block;
+  transform: rotate(90deg);
+}

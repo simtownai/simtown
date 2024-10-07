@@ -1,4 +1,4 @@
-import { MessageType } from "../_interfaces"
+import { ChatMessage } from "../../../shared/types"
 import Chat from "./Chat"
 import ChatsList from "./ChatsList"
 import styles from "./styles.module.css"
@@ -15,8 +15,8 @@ interface ChatsContainerProps {
   isMobile: boolean
   isExpanded: boolean
   setIsExpanded: (value: boolean) => void
-  messages: Map<string, MessageType[]>
-  setMessages: React.Dispatch<React.SetStateAction<Map<string, MessageType[]>>>
+  messages: Map<string, ChatMessage[]>
+  setMessages: React.Dispatch<React.SetStateAction<Map<string, ChatMessage[]>>>
   composeValue: string
   setComposeValue: (value: string) => void
   isMessageLoading: boolean
