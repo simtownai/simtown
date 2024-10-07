@@ -21,19 +21,20 @@ export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChat
     }, 100)
   }
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "?") {
-        setIsHelpContainerCollapsed((prev) => !prev)
-      }
-    }
+  // Disable when chat opened
+  // useEffect(() => {
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     if (event.key === "?") {
+  //       setIsHelpContainerCollapsed((prev) => !prev)
+  //     }
+  //   }
 
-    window.addEventListener("keydown", handleKeyDown)
+  //   window.addEventListener("keydown", handleKeyDown)
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [setIsHelpContainerCollapsed])
+  //   return () => {
+  //     window.removeEventListener("keydown", handleKeyDown)
+  //   }
+  // }, [setIsHelpContainerCollapsed])
 
   return (
     <>
