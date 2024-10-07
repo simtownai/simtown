@@ -48,12 +48,12 @@ export default function Chat({
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    scrollToBottom()
+    scrollToBottom("instant")
   }, [messages])
 
-  function scrollToBottom() {
+  function scrollToBottom(behavior: ScrollBehavior) {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      messagesEndRef.current.scrollIntoView({ behavior })
     }
   }
 
@@ -79,7 +79,7 @@ export default function Chat({
     setMessages(newMessagesUser)
     socket.emit("sendMessage", newMessage)
     setTimeout(() => {
-      scrollToBottom()
+      scrollToBottom("instant")
     }, 25)
   }
 
