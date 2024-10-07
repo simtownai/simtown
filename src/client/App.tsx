@@ -58,13 +58,13 @@ function App() {
   }
 
   useEffect(() => {
-    if (socket) {
+    if (socket && socket.id !== undefined) {
       localStorage.setItem(`chat-history-${socket.id}`, JSON.stringify(Array.from(messages.entries())))
     }
   }, [messages])
 
   useEffect(() => {
-    if (socket) {
+    if (socket && socket.id !== undefined) {
       const messagesHistory = localStorage.getItem(`chat-history-${socket.id}`)
       if (messagesHistory) {
         setMessages(new Map(JSON.parse(messagesHistory)))
