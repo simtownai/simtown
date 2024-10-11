@@ -3,15 +3,17 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\"",
-    "dev:client": "vite --port 3001",
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\" \"bun run dev:npc\"",
     "dev:server": "bun run --watch src/server/server.ts",
+    "dev:client": "vite --port 3001",
+    "dev:npc": "bun run --watch src/npc/client.ts",
     "build": "vite build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "easystarjs": "^0.4.4",
     "event-source-polyfill": "^1.0.31",
     "express": "^4.17.1",
     "marked": "^14.1.2",
