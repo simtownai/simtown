@@ -292,11 +292,27 @@ class MovementController {
               // Try to recalculate the path again in the next move cycle
               return
             } else {
-              // 5 seconds have passed, reset blocking info
+              // 5 seconds have passed, NPC gives up on reaching the target
               this.blockedByPlayerInfo = null
               this.sentMoveMessage = false
-              // Optionally, implement alternative behavior here
-              console.log("Blocked for 5 seconds, giving up or trying alternative action.")
+
+              // Clear the path to stop movement
+              this.path = []
+              this.pathIndex = 0
+
+              // Update NPC's state to idle
+              this.playerData.animation = `${this.playerData.spriteType}-idle`
+
+              const updateData: UpdatePlayerData = {
+                x: this.playerData.x,
+                y: this.playerData.y,
+                animation: this.playerData.animation,
+                flipX: this.playerData.flipX,
+              }
+
+              this.socket.emit("updatePlayerData", updateData)
+
+              console.log("Blocked for 5 seconds, giving up on reaching the target.")
             }
           } else {
             // Path is blocked by an obstacle
