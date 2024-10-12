@@ -1,6 +1,7 @@
 {
   "name": "simtown",
   "version": "0.0.1",
+  "type": "module",
   "description": "",
   "scripts": {
     "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\" \"bun run dev:npc\"",
