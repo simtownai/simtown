@@ -4,8 +4,7 @@ import EasyStar from "easystarjs"
 import { Socket, io } from "socket.io-client"
 import { Brain } from "./brain"
 import { npcConfig, tools } from "./npcConfig"
-import client from "./openai"
-import { ChatCompletionMessageParam } from "openai/src/resources/index.js"
+import { AiBrain, FunctionSchema } from "./AiBrain"
 
 class NPC {
   private collisionLayer: any
@@ -19,6 +18,8 @@ class NPC {
   private movementController: MovementController
   private lastUpdateTime: number
   private brain: Brain
+  private aiBrain: AiBrain
+
 
   constructor(backstory: string[], planForTheDay: string[]) {
     this.collisionLayer = mapData.layers.find((layer: any) => layer.name === "Collisions")!
@@ -28,15 +29,22 @@ class NPC {
     this.targetPosition = { x: 0, y: 0 }
     this.tileSize = 16
     this.lastUpdateTime = Date.now()
-
     this.initializeCollisionGrid()
     this.setupSocketEvents()
     this.startMovementLoop()
     this.socket.connect()
 
- 
-
     this.brain = new Brain(backstory, planForTheDay);
+
+    this.aiBrain = new AiBrain({
+      systemMessage: backstory.join("\n"),
+      tools: tools as FunctionSchema[],
+      functionMap: {
+        move_to: this.move_to.bind(this),
+        say: this.say.bind(this),
+      }
+  
+    })
 
 
   }
@@ -88,8 +96,15 @@ class NPC {
       // Listen for incoming messages
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.playerId) {
-
-          await this.handleMessage(message);
+          try {
+            const response = await this.aiBrain.handleMessage(message.message)
+            if (response) {
+              // Send the assistant's response back to the player
+              await this.say({ message: response, to: message.from })
+            }
+          } catch (error) {
+            console.error("Error handling message:", error)
+          }
         }
       })
     })
@@ -150,51 +165,17 @@ class NPC {
 
 
   async handleMessage(chatMessage: ChatMessage) {
-    const messages = [
-      {
-        role: "system",
-        content: `You are an NPC in a game. Your role is to interact with the player and decide what action to take based on the player's messages. You can perform actions like moving to a location or sending a message.`,
-      },
-      {
-        role: "user",
-        content: chatMessage.message,
-      },
-    ];
-
     try {
-      const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: messages as ChatCompletionMessageParam[],
-        tools:  tools.map(tool => ({
-          ...tool,
-          type: "function" as const
-        })),
-        tool_choice: "auto",
-      });
-
-      const responseMessage = completion.choices[0].message;
-
-      if (responseMessage.tool_calls) {
-        const toolCall = responseMessage.tool_calls[0].function;
-        // The model wants to call a function
-        const functionName = toolCall.name;
-        const functionArgs = JSON.parse(toolCall.arguments);
-
-        if (functionName === "move_to") {
-          const { x, y } = functionArgs;
-          await this.move_to(x, y, chatMessage.from);
-        } else if (functionName === "say") {
-          const { message } = functionArgs;
-          await this.say(message, chatMessage.from);
-        }
-      } else if (responseMessage.content) {
-        // The model returned a message directly
-        await this.say(responseMessage.content, chatMessage.from);
+      const response = await this.aiBrain.handleMessage(chatMessage.message)
+      if (response) {
+        // Send the assistant's response back to the player
+        await this.say({ message: response, to: chatMessage.from })
       }
     } catch (error) {
-      console.error("Error handling message:", error);
+      console.error("Error handling message:", error)
     }
   }
+
 
   calculatePath(considerPlayers: boolean, callback: (foundPath: { x: number; y: number }[] | null) => void) {
     const start = this.worldToGrid(this.playerData.x, this.playerData.y)
@@ -242,7 +223,7 @@ class NPC {
     return this.brain;
   }
 
-  async move_to(x: number, y: number, from:string) {
+  async move_to({x, y, from}: {x: number, y: number, from:string}) {
     this.targetPosition.x = x;
     this.targetPosition.y = y;
     console.log(`Received command to move to position: (${x}, ${y})`);
@@ -251,6 +232,7 @@ class NPC {
     this.calculatePath(false, (foundPath) => {
       if (foundPath) {
         this.movementController.setPath(foundPath);
+        return "Moving to target position"
       } else {
         const replyMessage = {
           from: this.playerId,
@@ -259,12 +241,13 @@ class NPC {
           date: new Date().toISOString(),
         } as ChatMessage
         this.socket.emit("sendMessage", replyMessage)
+        return "Couldn't move there, those numbers are not valid coordinates"
         
       }
     });
   }
 
-  async say(message: string, to: string) {
+  async say({message, to}: {message: string, to: string}) {
     const replyMessage = {
       from: this.playerId,
       to: to,
@@ -273,11 +256,6 @@ class NPC {
     } as ChatMessage;
     this.socket.emit("sendMessage", replyMessage);
   }
-
-
-
-
-
 
 
 }
