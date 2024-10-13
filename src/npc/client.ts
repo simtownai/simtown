@@ -3,8 +3,10 @@ import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
 import EasyStar from "easystarjs"
 import { Socket, io } from "socket.io-client"
 import { Brain } from "./brain"
-import { npcConfig, tools } from "./npcConfig"
-import { AiBrain, FunctionSchema } from "./AiBrain"
+import { move_to_args, npcConfig } from "./npcConfig"
+import { AiBrain } from "./AiBrain"
+import { functionToSchema } from "./aihelper"
+import { z } from "zod"
 
 class NPC {
   private collisionLayer: any
@@ -19,6 +21,7 @@ class NPC {
   private lastUpdateTime: number
   private brain: Brain
   private aiBrain: AiBrain
+  private lastMessageFrom: string | null = null
 
 
   constructor(backstory: string[], planForTheDay: string[]) {
@@ -35,13 +38,15 @@ class NPC {
     this.socket.connect()
 
     this.brain = new Brain(backstory, planForTheDay);
+    this.lastMessageFrom = null;
 
     this.aiBrain = new AiBrain({
       systemMessage: backstory.join("\n"),
-      tools: tools as FunctionSchema[],
+      tools: [
+        functionToSchema(this.move_to, move_to_args, "Move the NPC to the specified coordinates.")
+      ],
       functionMap: {
         move_to: this.move_to.bind(this),
-        say: this.say.bind(this),
       }
   
     })
@@ -95,8 +100,10 @@ class NPC {
 
       // Listen for incoming messages
       this.socket.on("newMessage", async (message: ChatMessage) => {
+
         if (message.to === this.playerId) {
           try {
+            this.lastMessageFrom = message.from;
             const response = await this.aiBrain.handleMessage(message.message)
             if (response) {
               // Send the assistant's response back to the player
@@ -223,29 +230,47 @@ class NPC {
     return this.brain;
   }
 
-  async move_to({x, y, from}: {x: number, y: number, from:string}) {
-    this.targetPosition.x = x;
-    this.targetPosition.y = y;
-    console.log(`Received command to move to position: (${x}, ${y})`);
+ 
+async move_to(args: z.infer<typeof move_to_args>) {
+  const { x, y } = args;
+  this.targetPosition.x = x;
+  this.targetPosition.y = y;
+  console.log(`Received command to move to position: (${x}, ${y})`);
 
-    // Calculate path and start moving
-    this.calculatePath(false, (foundPath) => {
-      if (foundPath) {
-        this.movementController.setPath(foundPath);
-        return "Moving to target position"
-      } else {
-        const replyMessage = {
-          from: this.playerId,
-          to: from,
-          message: "Please provide two numbers as coordinates",
-          date: new Date().toISOString(),
-        } as ChatMessage
-        this.socket.emit("sendMessage", replyMessage)
-        return "Couldn't move there, those numbers are not valid coordinates"
-        
-      }
+  try {
+    // Wrap the callback-based function into a Promise
+    const foundPath = await new Promise((resolve, reject) => {
+      this.calculatePath(false, (foundPath) => {
+        if (foundPath) {
+          resolve(foundPath);
+        } else {
+          reject(new Error("Couldn't find path"));
+        }
+      });
     });
+
+    // Proceed if path is found
+    // @ts-ignore
+    this.movementController.setPath(foundPath);
+    return "Moving to target position";
+
+  } catch (error) {
+    // Handle the error case
+    if (!this.lastMessageFrom) {
+      console.error("No message from to send reply to");
+      throw new Error("No message from to send reply to");
+    }
+    const replyMessage = {
+      from: this.playerId,
+      to: this.lastMessageFrom,
+      message: "Please provide two numbers as coordinates",
+      date: new Date().toISOString(),
+    } as ChatMessage;
+    this.socket.emit("sendMessage", replyMessage);
+    return "Couldn't move there, those numbers are not valid coordinates";
   }
+}
+
 
   async say({message, to}: {message: string, to: string}) {
     const replyMessage = {

@@ -65,6 +65,10 @@ export class AiBrain {
             const functionName = toolCall.function.name
             const functionArgs = JSON.parse(toolCall.function.arguments)
             const functionResult = await this.executeFunction(functionName, functionArgs)
+            if (!functionResult) {
+              throw new Error(`Function ${functionName} returned undefined`)
+            }
+            console.log(`Function ${functionName} returned: ${functionResult}`);
 
             // Add function result to conversation
             this.messages.push({

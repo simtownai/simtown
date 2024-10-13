@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const npcConfig = [
     {
     backstory: [
@@ -17,34 +19,7 @@ export const npcConfig = [
 }
 ]
 
-export const tools = [
-    {
-        type: "function",
-        "function": {
-            name: "move_to",
-            description: "Move the NPC to the specified coordinates.",
-            parameters: {
-                type: "object",
-                properties: {
-                    x: { type: "number", description: "The X coordinate to move to." },
-                    y: { type: "number", description: "The Y coordinate to move to." },
-                },
-                required: ["x", "y"],
-            }
-        }
-    },
-    {
-        type: "function",
-        "function": {
-            name: "say",
-            description: "Send a message to the player.",
-            parameters: {
-                type: "object",
-                properties: {
-                    message: { type: "string", description: "The message to send." },
-                },
-                required: ["message"],
-            },
-        },
-    }
-  ];
+export const move_to_args = z.object({
+    x: z.number(),
+    y: z.number(),
+  });
