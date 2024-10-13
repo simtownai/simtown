@@ -1,6 +1,11 @@
 // AiBrain.ts
-import client from "./openai" // Import your OpenAI client
-import { ChatCompletionMessageParam } from "openai/src/resources/index.js"
+import { getTime } from "../shared/functions"
+import { ChatMessage, PlayerData } from "../shared/types"
+import { Action, Memory, PlanAction } from "./memory"
+import client from "./openai"
+import OpenAI from "openai"
+// Import your OpenAI client
+import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/src/resources/index.js"
 
 export interface FunctionSchema {
   type: string
@@ -16,48 +21,89 @@ export interface FunctionSchema {
 }
 
 interface AiBrainOptions {
-  systemMessage: string
+  backstory: string
   tools: FunctionSchema[]
   functionMap: { [functionName: string]: Function }
+  playerData: PlayerData
 }
 
 export class AiBrain {
-  private client: any
-  private systemMessage: string
+  private backstory: string
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
-  private messages: ChatCompletionMessageParam[]
+  public memory: Memory
+  public currentAction: PlanAction
+  private playerData: PlayerData
 
   constructor(options: AiBrainOptions) {
-    this.client = client
-    this.systemMessage = options.systemMessage
+    this.backstory = options.backstory
     this.tools = options.tools
     this.functionMap = options.functionMap
-    this.messages = []
+    this.memory = new Memory(options.backstory)
+    this.currentAction = { duration: 30, start: getTime(), action: { type: "idle" } }
+    this.playerData = options.playerData
   }
 
-  async handleMessage(chatMessage: string): Promise<string> {
+  async plan() {}
+
+  async startConversation(targetPlayer: string) {
+    if (!this.memory.conversations.has(targetPlayer)) {
+      this.memory.conversations.set(targetPlayer, [])
+    }
+    const message = {
+      role: "system",
+      content: `You are an NPC with a backstory of ${this.backstory}. Generate a conversation starter with another player.`,
+    } as ChatCompletionMessageParam
+    const response =
+      (
+        await client.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [message],
+        })
+      ).choices[0].message.content || ""
+    // TODO: create new thread
+    return response
+  }
+
+  async handleMessage(chatMessage: ChatMessage): Promise<string> {
+    // TODO: we should be retrieving the thread from the memory, not the whole conversation
+
+    if (!this.memory.conversations.has(chatMessage.from)) {
+      this.memory.conversations.set(chatMessage.from, [])
+    }
+    console.log("Handling message", chatMessage)
+    console.log("Memory", this.memory.conversations.get(chatMessage.from))
+    this.memory.conversations.get(chatMessage.from)?.push(chatMessage)
+
     // Add user message to conversation
-    this.messages.push({ role: "user", content: chatMessage })
+    let messagesToSubmitted: ChatCompletionMessageParam[] = [
+      {
+        role: "system",
+        content: `You are an NPC with a backstory of ${this.backstory}. Respond to the other player.`,
+      },
+      ...(this.memory.conversations.get(chatMessage.from)?.map((message) => ({
+        role: message.from === this.playerData.id ? "assistant" : "user",
+        content: message.message,
+      })) as ChatCompletionMessageParam[]),
+    ]
 
     let responseContent = ""
 
     while (true) {
       try {
         // Call the OpenAI API
-        console.log(`Sending messages: ${JSON.stringify(this.messages)}`);
+        console.log(messagesToSubmitted)
 
-        const completion = await this.client.chat.completions.create({
+        const completion = await client.chat.completions.create({
           model: "gpt-4o-mini",
-          messages: [{ role: "system", content: this.systemMessage }, ...this.messages],
-          tools: this.tools,
+          messages: messagesToSubmitted as ChatCompletionMessageParam[],
+          tools: this.tools as ChatCompletionTool[],
           tool_choice: "auto",
         })
 
         const responseMessage = completion.choices[0].message
 
-        // Add assistant response to conversation
-        this.messages.push(responseMessage)
+        messagesToSubmitted.push(responseMessage)
 
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
           // Handle function calls
@@ -68,10 +114,10 @@ export class AiBrain {
             if (!functionResult) {
               throw new Error(`Function ${functionName} returned undefined`)
             }
-            console.log(`Function ${functionName} returned: ${functionResult}`);
+            console.log(`Function ${functionName} returned: ${functionResult}`)
 
             // Add function result to conversation
-            this.messages.push({
+            messagesToSubmitted.push({
               role: "tool",
               tool_call_id: toolCall.id,
               content: functionResult,

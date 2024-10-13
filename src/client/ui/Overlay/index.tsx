@@ -1,3 +1,4 @@
+import { getTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import HelpContainer from "./HelpContainer"
@@ -12,6 +13,19 @@ interface OverlayProps {
 
 export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChatsContainerCollapsed }: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
+  const [currentTime, setCurrentTime] = useState(getTime())
+
+  // ... existing handleClick function ...
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getTime())
+    }, 1000)
+
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const button = e.currentTarget
@@ -38,7 +52,10 @@ export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChat
 
   return (
     <>
-      <div className={`${styles.overlay} ${styles.overlayTop}`}>
+      <div className={`${styles.overlay} ${styles.overlayTopRight}`}>
+        <div className={styles.timeDisplay}>{currentTime.toISOString()}</div>
+      </div>
+      <div className={`${styles.overlay} ${styles.overlayBottomLeft}`}>
         <button
           className={`${styles.iconButton}`}
           onClick={(e) => {
@@ -49,7 +66,7 @@ export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChat
           <img src={hintsIcon} className={styles.buttonImage} />
         </button>
       </div>
-      <div className={`${styles.overlay} ${styles.overlayBottom}`}>
+      <div className={`${styles.overlay} ${styles.overlayBottomRight}`}>
         {isChatsContainerCollapsed && (
           <button
             className={`${styles.iconButton}`}

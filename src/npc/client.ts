@@ -1,11 +1,10 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
-import EasyStar from "easystarjs"
-import { Socket, io } from "socket.io-client"
-import { Brain } from "./brain"
-import { move_to_args, npcConfig } from "./npcConfig"
 import { AiBrain } from "./AiBrain"
 import { functionToSchema } from "./aihelper"
+import { move_to_args, npcConfig } from "./npcConfig"
+import EasyStar from "easystarjs"
+import { Socket, io } from "socket.io-client"
 import { z } from "zod"
 
 class NPC {
@@ -19,12 +18,12 @@ class NPC {
   private tileSize: number
   private movementController: MovementController
   private lastUpdateTime: number
-  private brain: Brain
   private aiBrain: AiBrain
   private lastMessageFrom: string | null = null
+  private backstory: string[]
 
-
-  constructor(backstory: string[], planForTheDay: string[]) {
+  constructor(backstory: string[]) {
+    this.backstory = backstory
     this.collisionLayer = mapData.layers.find((layer: any) => layer.name === "Collisions")!
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
@@ -37,21 +36,9 @@ class NPC {
     this.startMovementLoop()
     this.socket.connect()
 
-    this.brain = new Brain(backstory, planForTheDay);
-    this.lastMessageFrom = null;
-
-    this.aiBrain = new AiBrain({
-      systemMessage: backstory.join("\n"),
-      tools: [
-        functionToSchema(this.move_to, move_to_args, "Move the NPC to the specified coordinates.")
-      ],
-      functionMap: {
-        move_to: this.move_to.bind(this),
-      }
-  
-    })
-
-
+    setTimeout(() => {
+      this.startNextAction()
+    }, 4000)
   }
 
   private initializeCollisionGrid() {
@@ -66,7 +53,6 @@ class NPC {
     }
   }
 
-
   private setupSocketEvents() {
     this.socket.on("connect", () => {
       this.playerId = this.socket.id!
@@ -76,6 +62,14 @@ class NPC {
           if (player.id === this.playerId) {
             this.playerData = player
             this.movementController = new MovementController(this.playerData, this.socket, this)
+            this.aiBrain = new AiBrain({
+              backstory: this.backstory.join("\n"),
+              tools: [functionToSchema(this.move_to, move_to_args, "Move the NPC to the specified coordinates.")],
+              functionMap: {
+                move_to: this.move_to.bind(this),
+              },
+              playerData: this.playerData,
+            })
           } else {
             this.otherPlayers.set(player.id, player)
           }
@@ -100,15 +94,19 @@ class NPC {
 
       // Listen for incoming messages
       this.socket.on("newMessage", async (message: ChatMessage) => {
-
         if (message.to === this.playerId) {
           try {
-            this.lastMessageFrom = message.from;
-            const response = await this.aiBrain.handleMessage(message.message)
-            if (response) {
-              // Send the assistant's response back to the player
-              await this.say({ message: response, to: message.from })
+            const response = await this.aiBrain.handleMessage(message)
+            const replyMessage = {
+              from: this.playerId,
+              message: response,
+              to: message.from,
+              date: new Date().toISOString(),
             }
+
+            this.aiBrain.memory.conversations.get(message.from)!.push(replyMessage)
+            // Send the assistant's response back to the player
+            this.socket.emit("sendMessage", replyMessage)
           } catch (error) {
             console.error("Error handling message:", error)
           }
@@ -123,10 +121,67 @@ class NPC {
 
       const now = Date.now()
       const deltaTime = now - this.lastUpdateTime
+
       this.lastUpdateTime = now
 
       this.movementController.move(deltaTime)
     }, 1000 / 30)
+
+    // setInterval(() => {
+    //   console.log(getTime())
+    // }, 1000)
+  }
+
+  private getPlayerPosition(playerId: string): { x: number; y: number } | null {
+    const player = this.otherPlayers.get(playerId)
+    return player ? { x: player.x, y: player.y } : null
+  }
+
+  private async startNextAction() {
+    //const currentAction = this.aiBrain.currentAction
+
+    console.log("shifting")
+    const temp = this.aiBrain.memory.planForTheDay.shift()
+    if (!temp) {
+      console.log("no action to perform")
+      return
+    }
+    this.aiBrain.currentAction = temp
+    console.log("shifr result is", temp)
+    const targetPlayerId = this.otherPlayers.keys().next().value
+    const playerPosition = this.getPlayerPosition(targetPlayerId)
+
+    switch (this.aiBrain.currentAction.action.type) {
+      case "move":
+        //const playerPosition = this.getPlayerPosition(this.aiBrain.currentAction.action.target)
+
+        if (playerPosition) {
+          console.log("Moving to player")
+          await this.move_to({ x: playerPosition.x, y: playerPosition.y })
+        }
+        break
+      case "talk":
+        console.log("Talking to player")
+        if (playerPosition) {
+          console.log("Moving to player")
+          await this.move_to({ x: playerPosition.x, y: playerPosition.y })
+        }
+        const response = await this.aiBrain.startConversation(targetPlayerId)
+        console.log("response", response)
+        const message = {
+          from: this.playerData.id,
+          message: response,
+          to: targetPlayerId,
+          date: new Date().toISOString(),
+        }
+        this.aiBrain.memory.conversations.get(targetPlayerId)?.push(message)
+
+        this.socket.emit("sendMessage", message)
+
+        break
+    }
+
+    this.startNextAction()
   }
 
   worldToGrid(x: number, y: number) {
@@ -170,20 +225,6 @@ class NPC {
     return null
   }
 
-
-  async handleMessage(chatMessage: ChatMessage) {
-    try {
-      const response = await this.aiBrain.handleMessage(chatMessage.message)
-      if (response) {
-        // Send the assistant's response back to the player
-        await this.say({ message: response, to: chatMessage.from })
-      }
-    } catch (error) {
-      console.error("Error handling message:", error)
-    }
-  }
-
-
   calculatePath(considerPlayers: boolean, callback: (foundPath: { x: number; y: number }[] | null) => void) {
     const start = this.worldToGrid(this.playerData.x, this.playerData.y)
     const end = this.worldToGrid(this.targetPosition.x, this.targetPosition.y)
@@ -225,64 +266,44 @@ class NPC {
     return gridWithPlayers
   }
 
+  async move_to(args: z.infer<typeof move_to_args>) {
+    const { x, y } = args
+    this.targetPosition.x = x
+    this.targetPosition.y = y
+    console.log(`Received command to move to position: (${x}, ${y})`)
 
-  public getBrainData(): Brain {
-    return this.brain;
-  }
+    try {
+      // Wrap the callback-based function into a Promise
+      const foundPath = await new Promise((resolve, reject) => {
+        this.calculatePath(false, (foundPath) => {
+          if (foundPath) {
+            resolve(foundPath)
+          } else {
+            reject(new Error("Couldn't find path"))
+          }
+        })
+      })
 
- 
-async move_to(args: z.infer<typeof move_to_args>) {
-  const { x, y } = args;
-  this.targetPosition.x = x;
-  this.targetPosition.y = y;
-  console.log(`Received command to move to position: (${x}, ${y})`);
-
-  try {
-    // Wrap the callback-based function into a Promise
-    const foundPath = await new Promise((resolve, reject) => {
-      this.calculatePath(false, (foundPath) => {
-        if (foundPath) {
-          resolve(foundPath);
-        } else {
-          reject(new Error("Couldn't find path"));
-        }
-      });
-    });
-
-    // Proceed if path is found
-    // @ts-ignore
-    this.movementController.setPath(foundPath);
-    return "Moving to target position";
-
-  } catch (error) {
-    // Handle the error case
-    if (!this.lastMessageFrom) {
-      console.error("No message from to send reply to");
-      throw new Error("No message from to send reply to");
+      // Proceed if path is found
+      // @ts-ignore
+      this.movementController.setPath(foundPath)
+      return "Moving to target position"
+    } catch (error) {
+      // Handle the error case
+      if (!this.lastMessageFrom) {
+        console.error("No message from to send reply to")
+        throw new Error("No message from to send reply to")
+      }
+      const replyMessage = {
+        from: this.playerId,
+        to: this.lastMessageFrom,
+        message: "Please provide two numbers as coordinates",
+        date: new Date().toISOString(),
+      } as ChatMessage
+      this.socket.emit("sendMessage", replyMessage)
+      return "Couldn't move there, those numbers are not valid coordinates"
     }
-    const replyMessage = {
-      from: this.playerId,
-      to: this.lastMessageFrom,
-      message: "Please provide two numbers as coordinates",
-      date: new Date().toISOString(),
-    } as ChatMessage;
-    this.socket.emit("sendMessage", replyMessage);
-    return "Couldn't move there, those numbers are not valid coordinates";
   }
-}
-
-
-  async say({message, to}: {message: string, to: string}) {
-    const replyMessage = {
-      from: this.playerId,
-      to: to,
-      message: message,
-      date: new Date().toISOString(),
-    } as ChatMessage;
-    this.socket.emit("sendMessage", replyMessage);
-  }
-
-
 }
 
 class MovementController {
@@ -303,13 +324,6 @@ class MovementController {
     this.pathIndex = 0
     this.blockedByPlayerInfo = null
     this.sentMoveMessage = false
-
-// do we want to add this to observation when it's starting or when it's ending?
-    this.npc.getBrainData().addObservation({
-      event: 'moving',
-      details: `Path set to ${JSON.stringify(newPath)}`,
-      timestamp: new Date(),
-    });
   }
 
   move(deltaTime: number) {
@@ -454,9 +468,6 @@ class MovementController {
   }
 }
 
-
-
-
 for (const config of npcConfig) {
-  new NPC(config.backstory, config.planForTheDay)
+  new NPC(config.backstory)
 }
