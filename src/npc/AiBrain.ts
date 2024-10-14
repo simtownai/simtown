@@ -1,9 +1,8 @@
 // AiBrain.ts
 import { getTime } from "../shared/functions"
 import { ChatMessage, PlayerData } from "../shared/types"
-import { Action, Memory, PlanAction } from "./memory"
+import { Memory, PlanAction } from "./memory"
 import client from "./openai"
-import OpenAI from "openai"
 // Import your OpenAI client
 import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/src/resources/index.js"
 
@@ -46,10 +45,7 @@ export class AiBrain {
 
   async plan() {}
 
-  async startConversation(targetPlayer: string) {
-    if (!this.memory.conversations.has(targetPlayer)) {
-      this.memory.conversations.set(targetPlayer, [])
-    }
+  async startConversation(targetPlayerId: string) {
     const message = {
       role: "system",
       content: `You are an NPC with a backstory of ${this.backstory}. Generate a conversation starter with another player.`,
@@ -61,39 +57,51 @@ export class AiBrain {
           messages: [message],
         })
       ).choices[0].message.content || ""
-    // TODO: create new thread
-    return response
+
+    const newMessage = {
+      from: this.playerData.id,
+      message: response,
+      to: targetPlayerId,
+      date: new Date().toISOString(),
+    }
+    const newAIMessage = {
+      role: "assistant",
+      content: response,
+    } as ChatCompletionMessageParam
+
+    this.memory.conversations.addChatMessage(newMessage)
+    this.memory.conversations.addAIMessage(targetPlayerId, newAIMessage)
+
+    console.log("NPC id is", this.playerData.id)
+    console.log("Target player id is", targetPlayerId)
+    console.log("We are at the end of startConversation with keys")
+    console.log(this.memory.conversations.threads.keys())
+    console.log("Conversation memory ai")
+    console.log(this.memory.conversations.getNewestActiveThread(targetPlayerId).aiMessages)
+    console.log("Conversation memory chat")
+    console.log(this.memory.conversations.getNewestActiveThread(targetPlayerId).messages)
+
+    return newMessage
   }
 
-  async handleMessage(chatMessage: ChatMessage): Promise<string> {
-    // TODO: we should be retrieving the thread from the memory, not the whole conversation
-
-    if (!this.memory.conversations.has(chatMessage.from)) {
-      this.memory.conversations.set(chatMessage.from, [])
-    }
-    console.log("Handling message", chatMessage)
-    console.log("Memory", this.memory.conversations.get(chatMessage.from))
-    this.memory.conversations.get(chatMessage.from)?.push(chatMessage)
-
-    // Add user message to conversation
-    let messagesToSubmitted: ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: `You are an NPC with a backstory of ${this.backstory}. Respond to the other player.`,
-      },
-      ...(this.memory.conversations.get(chatMessage.from)?.map((message) => ({
-        role: message.from === this.playerData.id ? "assistant" : "user",
-        content: message.message,
-      })) as ChatCompletionMessageParam[]),
-    ]
+  async handleMessage(chatMessage: ChatMessage): Promise<ChatMessage> {
+    this.memory.conversations.addChatMessage(chatMessage)
+    this.memory.conversations.addAIMessage(chatMessage.from, { role: "user", content: chatMessage.message })
 
     let responseContent = ""
 
     while (true) {
+      let messagesToSubmitted: ChatCompletionMessageParam[] = [
+        {
+          role: "system",
+          content: `You are an NPC with a backstory of ${this.backstory}. Respond to the other player.`,
+        },
+        ...this.memory.conversations.getNewestActiveThread(chatMessage.from).aiMessages,
+      ]
+      console.log("We are submitting to openai")
+      console.log(messagesToSubmitted)
       try {
         // Call the OpenAI API
-        console.log(messagesToSubmitted)
-
         const completion = await client.chat.completions.create({
           model: "gpt-4o-mini",
           messages: messagesToSubmitted as ChatCompletionMessageParam[],
@@ -103,7 +111,7 @@ export class AiBrain {
 
         const responseMessage = completion.choices[0].message
 
-        messagesToSubmitted.push(responseMessage)
+        this.memory.conversations.addAIMessage(chatMessage.from, responseMessage)
 
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
           // Handle function calls
@@ -116,8 +124,7 @@ export class AiBrain {
             }
             console.log(`Function ${functionName} returned: ${functionResult}`)
 
-            // Add function result to conversation
-            messagesToSubmitted.push({
+            this.memory.conversations.addAIMessage(chatMessage.from, {
               role: "tool",
               tool_call_id: toolCall.id,
               content: functionResult,
@@ -138,7 +145,15 @@ export class AiBrain {
         throw error
       }
     }
-    return responseContent
+    const replyMessage = {
+      from: this.playerData.id,
+      message: responseContent,
+      to: chatMessage.from,
+      date: new Date().toISOString(),
+    }
+    this.memory.conversations.addChatMessage(replyMessage)
+    this.memory.conversations.addAIMessage(chatMessage.from, { role: "assistant", content: responseContent })
+    return replyMessage
   }
 
   private async executeFunction(functionName: string, args: any): Promise<any> {

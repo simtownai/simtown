@@ -96,15 +96,8 @@ class NPC {
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.playerId) {
           try {
-            const response = await this.aiBrain.handleMessage(message)
-            const replyMessage = {
-              from: this.playerId,
-              message: response,
-              to: message.from,
-              date: new Date().toISOString(),
-            }
+            const replyMessage: ChatMessage = await this.aiBrain.handleMessage(message)
 
-            this.aiBrain.memory.conversations.get(message.from)!.push(replyMessage)
             // Send the assistant's response back to the player
             this.socket.emit("sendMessage", replyMessage)
           } catch (error) {
@@ -138,9 +131,6 @@ class NPC {
   }
 
   private async startNextAction() {
-    //const currentAction = this.aiBrain.currentAction
-
-    console.log("shifting")
     const temp = this.aiBrain.memory.planForTheDay.shift()
     if (!temp) {
       console.log("no action to perform")
@@ -166,15 +156,7 @@ class NPC {
           console.log("Moving to player")
           await this.move_to({ x: playerPosition.x, y: playerPosition.y })
         }
-        const response = await this.aiBrain.startConversation(targetPlayerId)
-        console.log("response", response)
-        const message = {
-          from: this.playerData.id,
-          message: response,
-          to: targetPlayerId,
-          date: new Date().toISOString(),
-        }
-        this.aiBrain.memory.conversations.get(targetPlayerId)?.push(message)
+        const message = await this.aiBrain.startConversation(targetPlayerId)
 
         this.socket.emit("sendMessage", message)
 

@@ -1,5 +1,5 @@
 // Brain.ts
-import { ChatMessage } from "../shared/types"
+import { ConversationMemory } from "./ConversationMemory"
 
 export type EventType = "talking" | "walking" | "listening" | "broadcasting" | "moving" | "idle"
 
@@ -41,14 +41,14 @@ class Memory {
   observationState: Observation[]
   reflectionState: Reflection[]
   planForTheDay: PlanAction[]
-  conversations: Map<string, ChatMessage[]>
+  conversations: ConversationMemory
 
   constructor(backstory: string) {
     this.backstory = backstory
     this.observationState = []
     this.reflectionState = []
     this.planForTheDay = [{ action: { type: "talk", name: "player1" }, duration: 30, start: new Date() }]
-    this.conversations = new Map()
+    this.conversations = new ConversationMemory()
   }
 
   addObservation(observation: Observation) {
