@@ -157,6 +157,7 @@ jobs:
             set -x
             cd /${{ secrets.USERNAME }}/simtown/
             echo "IMAGE_NAME=ghcr.io/${{ github.repository }}:latest" > .env
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker-compose pull
             docker-compose up -d

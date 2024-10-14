@@ -13,6 +13,8 @@ services:
     image: ${IMAGE_NAME:-simtown}
     build:
       context: .
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     network_mode: "host"
     restart: always
     tty: true
