@@ -154,18 +154,16 @@ export class AiBrain {
             if (!functionResult) {
               throw new Error(`Function ${functionName} returned undefined`)
             }
-            console.log(`Function ${functionName} returned: ${functionResult}`)
-
             this.memory.conversations.addAIMessage(chatMessage.from, {
               role: "tool",
               tool_call_id: toolCall.id,
               content: functionResult,
             })
             if (functionName === "endConversation") {
+              this.clearConversationTimeout()
               console.log("Ending conversation for player", this.memory.backstory)
               const response = this.handleFinalChatResponse(functionResult, chatMessage.from)
               this.socket.emit("endConversation", response)
-              this.clearConversationTimeout()
               this.memory.conversations.closeThread(chatMessage.from)
               return response
             }

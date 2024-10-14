@@ -90,9 +90,11 @@ class NPC {
       })
 
       this.socket.on("endConversation", (message: ChatMessage) => {
-        this.aiBrain.memory.conversations.addChatMessage(message)
-        this.aiBrain.memory.conversations.addAIMessage(message.from, { role: "user", content: message.message })
-        this.aiBrain.memory.conversations.closeThread(message.from)
+        if (message.to === this.playerId) {
+          this.aiBrain.memory.conversations.addChatMessage(message)
+          this.aiBrain.memory.conversations.addAIMessage(message.from, { role: "user", content: message.message })
+          this.aiBrain.memory.conversations.closeThread(message.from)
+        }
       })
 
       this.socket.on("playerLeft", (playerId: string) => {

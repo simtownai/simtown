@@ -125,6 +125,11 @@ io.on("connection", (socket) => {
     }
   })
 
+  socket.on("endConversation", (message: ChatMessage) => {
+    logger.info(`endConversation received from ${message.from}: ${message.message}`)
+    io.emit("endConversation", message)
+  })
+
   socket.on("sendMessage", (message: ChatMessage) => {
     logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
 

@@ -41,6 +41,13 @@ function App() {
         return new Map(prevMessages).set(message.from, newMessages)
       })
     })
+    newSocket.on("endConversation", (message: ChatMessage) => {
+      setMessages((prevMessages) => {
+        const oldMessages = prevMessages.get(message.from) || []
+        const newMessages = [...oldMessages, message]
+        return new Map(prevMessages).set(message.from, newMessages)
+      })
+    })
 
     return () => {
       newSocket.off("newMessage")
