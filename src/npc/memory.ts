@@ -1,5 +1,6 @@
 // Brain.ts
 import { ConversationMemory } from "./ConversationMemory"
+import { NpcConfig } from "./npcConfig"
 
 export type EventType = "talking" | "walking" | "listening" | "broadcasting" | "moving" | "idle"
 
@@ -36,6 +37,25 @@ export interface PlanAction {
   action: Action
 }
 
+const generatePlanForTheday = (npcConfig: NpcConfig): PlanAction[] => {
+  if (npcConfig.id === "1") {
+    console.log("Generating plan for talkative player 1")
+    return [{ action: { type: "talk", name: "player1" }, duration: 30, start: new Date() }]
+  } else {
+    console.log("Generating plan for silent player 2")
+    return [{ action: { type: "idle" }, duration: 30, start: new Date() }]
+  }
+  // TODO implement this using openai and strcutured output
+  // const completion = await client.chat.completions.create({
+  //   model: "gpt-4o-mini",
+  //   messages: [
+  //     { role: "system", content: `You are an NPC with a backstory of ${backstory}. Generate a plan for the day.` },
+  //   ],
+  //   response_format: { type: "json_object" },
+  // })
+  // return completion.choices[0].message.content
+}
+
 class Memory {
   backstory: string
   observationState: Observation[]
@@ -43,11 +63,11 @@ class Memory {
   planForTheDay: PlanAction[]
   conversations: ConversationMemory
 
-  constructor(backstory: string) {
-    this.backstory = backstory
+  constructor(npcConfig: NpcConfig) {
+    this.backstory = npcConfig.backstory.join("/n")
     this.observationState = []
     this.reflectionState = []
-    this.planForTheDay = [{ action: { type: "talk", name: "player1" }, duration: 30, start: new Date() }]
+    this.planForTheDay = generatePlanForTheday(npcConfig)
     this.conversations = new ConversationMemory()
   }
 

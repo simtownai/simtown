@@ -2,7 +2,7 @@ import mapData from "../../public/assets/maps/simple-map.json"
 import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
 import { AiBrain } from "./AiBrain"
 import { functionToSchema } from "./aihelper"
-import { move_to_args, npcConfig } from "./npcConfig"
+import { NpcConfig, move_to_args, npcConfig } from "./npcConfig"
 import EasyStar from "easystarjs"
 import { Socket, io } from "socket.io-client"
 import { z } from "zod"
@@ -18,12 +18,12 @@ class NPC {
   private tileSize: number
   private movementController: MovementController
   private lastUpdateTime: number
-  private aiBrain: AiBrain
+  aiBrain: AiBrain
   private lastMessageFrom: string | null = null
-  private backstory: string[]
+  private npcConfig: NpcConfig
 
-  constructor(backstory: string[]) {
-    this.backstory = backstory
+  constructor(npcConfig: NpcConfig) {
+    this.npcConfig = npcConfig
     this.collisionLayer = mapData.layers.find((layer: any) => layer.name === "Collisions")!
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
@@ -63,12 +63,13 @@ class NPC {
             this.playerData = player
             this.movementController = new MovementController(this.playerData, this.socket, this)
             this.aiBrain = new AiBrain({
-              backstory: this.backstory.join("\n"),
+              npcConfig: this.npcConfig,
               tools: [functionToSchema(this.move_to, move_to_args, "Move the NPC to the specified coordinates.")],
               functionMap: {
                 move_to: this.move_to.bind(this),
               },
               playerData: this.playerData,
+              socket: this.socket,
             })
           } else {
             this.otherPlayers.set(player.id, player)
@@ -88,6 +89,12 @@ class NPC {
         }
       })
 
+      this.socket.on("endConversation", (message: ChatMessage) => {
+        this.aiBrain.memory.conversations.addChatMessage(message)
+        this.aiBrain.memory.conversations.addAIMessage(message.from, { role: "user", content: message.message })
+        this.aiBrain.memory.conversations.closeThread(message.from)
+      })
+
       this.socket.on("playerLeft", (playerId: string) => {
         this.otherPlayers.delete(playerId)
       })
@@ -96,10 +103,8 @@ class NPC {
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.playerId) {
           try {
-            const replyMessage: ChatMessage = await this.aiBrain.handleMessage(message)
-
+            await this.aiBrain.handleMessage(message)
             // Send the assistant's response back to the player
-            this.socket.emit("sendMessage", replyMessage)
           } catch (error) {
             console.error("Error handling message:", error)
           }
@@ -137,11 +142,16 @@ class NPC {
       return
     }
     this.aiBrain.currentAction = temp
-    console.log("shifr result is", temp)
+
     const targetPlayerId = this.otherPlayers.keys().next().value
     const playerPosition = this.getPlayerPosition(targetPlayerId)
 
     switch (this.aiBrain.currentAction.action.type) {
+      case "idle":
+        console.log("Idling for 10 minutes")
+
+        await new Promise((resolve) => setTimeout(resolve, 600000)) // 10 minutes in milliseconds
+        break
       case "move":
         //const playerPosition = this.getPlayerPosition(this.aiBrain.currentAction.action.target)
 
@@ -151,15 +161,10 @@ class NPC {
         }
         break
       case "talk":
-        console.log("Talking to player")
         if (playerPosition) {
-          console.log("Moving to player")
           await this.move_to({ x: playerPosition.x, y: playerPosition.y })
         }
-        const message = await this.aiBrain.startConversation(targetPlayerId)
-
-        this.socket.emit("sendMessage", message)
-
+        await this.aiBrain.startConversation(targetPlayerId)
         break
     }
 
@@ -353,6 +358,11 @@ class MovementController {
                   message: "Please move, you're blocking my path.",
                   date: new Date().toISOString(),
                 } as ChatMessage
+                this.npc.aiBrain.memory.conversations.addChatMessage(replyMessage)
+                this.npc.aiBrain.memory.conversations.addAIMessage(blockingPlayerId, {
+                  role: "assistant",
+                  content: "Please move, you're blocking my path.",
+                })
                 this.socket.emit("sendMessage", replyMessage)
                 this.sentMoveMessage = true
               }
@@ -451,5 +461,5 @@ class MovementController {
 }
 
 for (const config of npcConfig) {
-  new NPC(config.backstory)
+  new NPC(config)
 }
