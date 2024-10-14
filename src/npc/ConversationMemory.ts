@@ -18,13 +18,21 @@ export class ConversationMemory {
   constructor() {
     this.threads = new Map()
   }
+
+  isLatestThreadActive(targetPlayerId: string): boolean {
+    const threads = this.threads.get(targetPlayerId)
+    if (!threads) {
+      return false
+    }
+    return !threads[threads.length - 1].finished
+  }
+
   addAIMessage(targetPlayerId: string, message: ChatCompletionMessageParam) {
     const thread = this.getNewestActiveThread(targetPlayerId)
     thread.aiMessages.push(message)
   }
 
-  addChatMessage(message: ChatMessage) {
-    const targetPlayerId = message.to
+  addChatMessage(targetPlayerId: string, message: ChatMessage) {
     const thread = this.getNewestActiveThread(targetPlayerId)
 
     thread.messages.push(message)

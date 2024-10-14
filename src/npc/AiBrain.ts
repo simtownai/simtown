@@ -1,8 +1,7 @@
 // AiBrain.ts
-import { getTime } from "../shared/functions"
 import { ChatMessage, PlayerData } from "../shared/types"
 import { functionToSchema } from "./aihelper"
-import { Memory, PlanAction } from "./memory"
+import { Memory } from "./memory"
 import { ConversationTimeoutThreshold, NpcConfig } from "./npcConfig"
 import client from "./openai"
 import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/src/resources/index.js"
@@ -35,7 +34,6 @@ export class AiBrain {
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
   public memory: Memory
-  public currentAction: PlanAction
   private playerData: PlayerData
   private conversationTimeout: NodeJS.Timeout | null = null
 
@@ -52,7 +50,6 @@ export class AiBrain {
       endConversation: (args: { targetPlayerId: string; reason: string }) => this.endConversation(args.reason),
     }
     this.memory = new Memory(options.npcConfig)
-    this.currentAction = { duration: 30, start: getTime(), action: { type: "idle" } }
     this.playerData = options.playerData
     this.socket = options.socket
   }
@@ -64,6 +61,8 @@ export class AiBrain {
   async plan() {}
 
   async startConversation(targetPlayerId: string) {
+    // we need to create a new thread but dont need to save it
+    this.memory.conversations.getNewestActiveThread(targetPlayerId)
     // Clear any existing timeout
     this.clearConversationTimeout()
 
@@ -90,13 +89,12 @@ export class AiBrain {
       content: response,
     } as ChatCompletionMessageParam
 
-    this.memory.conversations.addChatMessage(newMessage)
-    this.memory.conversations.addAIMessage(targetPlayerId, newAIMessage)
-
-    this.socket.emit("sendMessage", newMessage)
-    // Set the conversation timeout
-    this.setConversationTimeout(targetPlayerId)
-
+    if (this.memory.conversations.isLatestThreadActive(targetPlayerId)) {
+      this.memory.conversations.addChatMessage(targetPlayerId, newMessage)
+      this.memory.conversations.addAIMessage(targetPlayerId, newAIMessage)
+      this.socket.emit("sendMessage", newMessage)
+      this.setConversationTimeout(targetPlayerId)
+    }
     return newMessage
   }
 
@@ -107,17 +105,17 @@ export class AiBrain {
       to: targetPlayerId,
       date: new Date().toISOString(),
     }
-    this.memory.conversations.addChatMessage(response)
+    this.memory.conversations.addChatMessage(targetPlayerId, response)
 
     return response
   }
 
-  async handleMessage(chatMessage: ChatMessage): Promise<ChatMessage> {
+  async handleMessage(chatMessage: ChatMessage) {
     // Clear and reset the conversation timeout
     this.clearConversationTimeout()
     this.setConversationTimeout(chatMessage.from)
 
-    this.memory.conversations.addChatMessage(chatMessage)
+    this.memory.conversations.addChatMessage(chatMessage.from, chatMessage)
     this.memory.conversations.addAIMessage(chatMessage.from, { role: "user", content: chatMessage.message })
 
     let responseContent = ""
@@ -130,8 +128,6 @@ export class AiBrain {
         },
         ...this.memory.conversations.getNewestActiveThread(chatMessage.from).aiMessages,
       ]
-      console.log("We are submitting to openai")
-      console.log(messagesToSubmitted)
       try {
         // Call the OpenAI API
         const completion = await client.chat.completions.create({
@@ -161,20 +157,18 @@ export class AiBrain {
             })
             if (functionName === "endConversation") {
               this.clearConversationTimeout()
-              console.log("Ending conversation for player", this.memory.backstory)
               const response = this.handleFinalChatResponse(functionResult, chatMessage.from)
               this.socket.emit("endConversation", response)
               this.memory.conversations.closeThread(chatMessage.from)
+
               return response
             }
           }
           // Continue the loop to get the next assistant response
           continue
         } else if (responseMessage.content) {
-          // Assistant provided a final response
-          this.memory.conversations.addAIMessage(chatMessage.from, responseMessage)
-
           responseContent = responseMessage.content
+          this.memory.conversations.addAIMessage(chatMessage.from, responseMessage)
 
           break
         } else {
@@ -187,9 +181,10 @@ export class AiBrain {
       }
     }
 
-    const response = this.handleFinalChatResponse(responseContent, chatMessage.from)
-    this.socket.emit("sendMessage", response)
-    return response
+    if (this.memory.conversations.isLatestThreadActive(chatMessage.from)) {
+      const response = this.handleFinalChatResponse(responseContent, chatMessage.from)
+      this.socket.emit("sendMessage", response)
+    }
   }
 
   private async executeFunction(functionName: string, args: any): Promise<any> {
@@ -220,6 +215,5 @@ export class AiBrain {
     const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerId)
     this.memory.conversations.closeThread(targetPlayerId)
     this.socket.emit("endConversation", response)
-    console.log("Conversation ended due to timeout:")
   }
 }

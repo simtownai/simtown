@@ -1,4 +1,5 @@
 import mapData from "../../public/assets/maps/simple-map.json"
+import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
 import { AiBrain } from "./AiBrain"
 import { functionToSchema } from "./aihelper"
@@ -91,7 +92,7 @@ class NPC {
 
       this.socket.on("endConversation", (message: ChatMessage) => {
         if (message.to === this.playerId) {
-          this.aiBrain.memory.conversations.addChatMessage(message)
+          this.aiBrain.memory.conversations.addChatMessage(message.from, message)
           this.aiBrain.memory.conversations.addAIMessage(message.from, { role: "user", content: message.message })
           this.aiBrain.memory.conversations.closeThread(message.from)
         }
@@ -126,10 +127,6 @@ class NPC {
 
       this.movementController.move(deltaTime)
     }, 1000 / 30)
-
-    // setInterval(() => {
-    //   console.log(getTime())
-    // }, 1000)
   }
 
   private getPlayerPosition(playerId: string): { x: number; y: number } | null {
@@ -138,17 +135,16 @@ class NPC {
   }
 
   private async startNextAction() {
-    const temp = this.aiBrain.memory.planForTheDay.shift()
-    if (!temp) {
+    const currentAction = this.aiBrain.memory.planForTheDay.shift()
+    if (!currentAction) {
       console.log("no action to perform")
       return
     }
-    this.aiBrain.currentAction = temp
 
     const targetPlayerId = this.otherPlayers.keys().next().value
     const playerPosition = this.getPlayerPosition(targetPlayerId)
 
-    switch (this.aiBrain.currentAction.action.type) {
+    switch (currentAction.action.type) {
       case "idle":
         console.log("Idling for 10 minutes")
 
@@ -158,13 +154,15 @@ class NPC {
         //const playerPosition = this.getPlayerPosition(this.aiBrain.currentAction.action.target)
 
         if (playerPosition) {
-          console.log("Moving to player")
           await this.move_to({ x: playerPosition.x, y: playerPosition.y })
         }
         break
       case "talk":
         if (playerPosition) {
-          await this.move_to({ x: playerPosition.x, y: playerPosition.y })
+          await this.move_to({
+            x: playerPosition.x + CONFIG.SPRITE_CHARACTER_WIDTH,
+            y: playerPosition.y + CONFIG.SPRITE_CHARACTER_WIDTH,
+          })
         }
         await this.aiBrain.startConversation(targetPlayerId)
         break
@@ -360,7 +358,7 @@ class MovementController {
                   message: "Please move, you're blocking my path.",
                   date: new Date().toISOString(),
                 } as ChatMessage
-                this.npc.aiBrain.memory.conversations.addChatMessage(replyMessage)
+                this.npc.aiBrain.memory.conversations.addChatMessage(blockingPlayerId, replyMessage)
                 this.npc.aiBrain.memory.conversations.addAIMessage(blockingPlayerId, {
                   role: "assistant",
                   content: "Please move, you're blocking my path.",

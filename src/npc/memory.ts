@@ -39,10 +39,8 @@ export interface PlanAction {
 
 const generatePlanForTheday = (npcConfig: NpcConfig): PlanAction[] => {
   if (npcConfig.id === "1") {
-    console.log("Generating plan for talkative player 1")
     return [{ action: { type: "talk", name: "player1" }, duration: 30, start: new Date() }]
   } else {
-    console.log("Generating plan for silent player 2")
     return [{ action: { type: "idle" }, duration: 30, start: new Date() }]
   }
   // TODO implement this using openai and strcutured output
