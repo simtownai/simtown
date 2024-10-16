@@ -46,8 +46,9 @@ const ChatsContainer: React.FC<ChatsContainerProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (chatmate && !isChatCollapsed) {
-          setIsChatCollapsed(true)
-          setChatmate(null)
+          // setIsChatCollapsed(true)
+          // setChatmate(null)
+          setIsChatsContainerCollapsed(true)
         } else {
           setIsChatsContainerCollapsed(true)
         }
