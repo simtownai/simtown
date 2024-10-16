@@ -209,7 +209,7 @@ export class Game extends Phaser.Scene {
   private handleTap() {
     if (!this.isAttacking) {
       this.isAttacking = true
-      const attackAnimation = `${this.username}-attack`
+      const attackAnimation = `${this.username}-attack-${this.lastDirection}`
       this.playerSprite.anims.play(attackAnimation, true)
     }
   }
