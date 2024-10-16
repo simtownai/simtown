@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { PlayerData, SpriteType } from "../../../shared/types"
+import { PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
@@ -16,7 +16,8 @@ export class Game extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap
   private collisionLayer!: Phaser.Tilemaps.TilemapLayer
   private playerSprite!: Phaser.Physics.Arcade.Sprite
-  private playerSpriteType: SpriteType
+  private username: string
+  private spriteDefinition: PlayerSpriteDefinition
   private spriteHandler!: SpriteHandler
   private otherPlayers: Map<string, OtherPlayerData> = new Map()
   private otherPlayersGroup!: Phaser.Physics.Arcade.Group
@@ -46,17 +47,33 @@ export class Game extends Phaser.Scene {
   private touchStartY: number = 0
   private isTouching: boolean = false
   private touchMoved: boolean = false
+  private lastDirection: "up" | "down" | "left" | "right" = "down"
 
-  constructor(socket: Socket) {
+  constructor(socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition) {
     super({ key: "Game" })
     this.socket = socket
+    this.username = username
+    this.spriteDefinition = spriteDefinition
   }
 
   preload() {
+    this.load.json("componentManifest", "assets/sprites/Character_Generator/componentManifest.json")
     this.load.tilemapTiledJSON("map", "assets/maps/simple-map.json")
     this.load.image("tiles", "assets/tiles/cute-fantasy-rpg-free.png")
+
+    this.load.once("filecomplete-json-componentManifest", this.onManifestLoaded, this)
+  }
+
+  onManifestLoaded() {
     this.spriteHandler = new SpriteHandler(this)
+
     this.spriteHandler.preloadSprites()
+
+    // Listen for when the new assets are loaded
+    // this.load.once("complete", this.onSpritesLoaded, this)
+
+    // Start the loader again
+    this.load.start()
   }
 
   create() {
@@ -68,6 +85,8 @@ export class Game extends Phaser.Scene {
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
+
+    this.socket.emit("joinGame", this.username, this.spriteDefinition)
 
     EventBus.emit("current-scene-ready", this)
   }
@@ -190,7 +209,7 @@ export class Game extends Phaser.Scene {
   private handleTap() {
     if (!this.isAttacking) {
       this.isAttacking = true
-      const attackAnimation = `${this.playerSpriteType}-attack1`
+      const attackAnimation = `${this.username}-attack-${this.lastDirection}`
       this.playerSprite.anims.play(attackAnimation, true)
     }
   }
@@ -214,20 +233,20 @@ export class Game extends Phaser.Scene {
   }
 
   private setupPlayer(playerInfo: PlayerData) {
-    this.playerSpriteType = playerInfo.spriteType
-    this.playerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.playerSpriteType}-idle`)
+    this.spriteHandler.createPlayerAnimations(playerInfo.username, playerInfo.spriteDefinition)
+    this.playerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${this.username}-idle-down`)
     this.physics.add.existing(this.playerSprite)
     this.playerSprite.setCollideWorldBounds(true)
     this.physics.add.collider(this.playerSprite, this.collisionLayer)
     this.physics.add.collider(this.playerSprite, this.otherPlayersGroup)
     this.cameras.main.startFollow(this.playerSprite, true, 0.09, 0.09)
-    this.spriteHandler.setupPlayer(this.playerSprite, this.playerSpriteType)
+    this.spriteHandler.setupPlayer(this.playerSprite, this.username)
     this.resize(this.scale.gameSize)
 
     this.playerSprite.on(
       "animationcomplete",
       (animation: Phaser.Animations.Animation, _frame: Phaser.Animations.AnimationFrame) => {
-        if (animation.key === `${this.playerSpriteType}-attack1`) {
+        if (animation.key.startsWith(`${this.username}-attack`)) {
           this.isAttacking = false
         }
       },
@@ -237,10 +256,15 @@ export class Game extends Phaser.Scene {
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
-    const otherPlayerSprite = new PixelPerfectSprite(this, playerInfo.x, playerInfo.y, `${playerInfo.spriteType}-idle`)
+    this.spriteHandler.createPlayerAnimations(playerInfo.username, playerInfo.spriteDefinition)
+    const otherPlayerSprite = new PixelPerfectSprite(
+      this,
+      playerInfo.x,
+      playerInfo.y,
+      `${playerInfo.username}-idle-down`,
+    )
     this.physics.add.existing(otherPlayerSprite)
-    this.spriteHandler.setupPlayer(otherPlayerSprite, playerInfo.spriteType)
-    otherPlayerSprite.setFlipX(playerInfo.flipX)
+    this.spriteHandler.setupPlayer(otherPlayerSprite, playerInfo.username)
     otherPlayerSprite.anims.play(playerInfo.animation, true)
     this.otherPlayersGroup.add(otherPlayerSprite)
     otherPlayerSprite.body!.immovable = true
@@ -259,8 +283,8 @@ export class Game extends Phaser.Scene {
     })
   }
 
-  private getClosestPlayer(): PlayerData | null {
-    let closestPlayer: PlayerData | null = null
+  private getClosestPlayer(): string | null {
+    let closestPlayer: string | null = null
     let minDistance = CONFIG.INTERACTION_PROXIMITY_THRESHOLD
 
     this.otherPlayers.forEach((data, id) => {
@@ -273,14 +297,7 @@ export class Game extends Phaser.Scene {
 
       if (distance < minDistance) {
         minDistance = distance
-        closestPlayer = {
-          id: id,
-          spriteType: data.sprite.anims.getName() as SpriteType, // Adjust based on your SpriteType definition
-          x: data.sprite.x,
-          y: data.sprite.y,
-          animation: data.sprite.anims.getName(),
-          flipX: data.sprite.flipX,
-        }
+        closestPlayer = id
       }
     })
 
@@ -288,12 +305,12 @@ export class Game extends Phaser.Scene {
   }
 
   private openChatWithClosestPlayer() {
-    const closestPlayer = this.getClosestPlayer()
+    const closestPlayerId = this.getClosestPlayer()
 
-    if (closestPlayer) {
-      console.log(`Opening chat with player ID: ${closestPlayer.id}`)
+    if (closestPlayerId) {
+      console.log(`Opening chat with player ID: ${closestPlayerId}`)
       EventBus.emit("chat-collapse", false)
-      EventBus.emit("set-chatmate", closestPlayer.id)
+      EventBus.emit("set-chatmate", closestPlayerId)
     } else {
       console.log("No player in range to chat with, just opening chat")
       EventBus.emit("chats-container-collapse", false)
@@ -304,6 +321,8 @@ export class Game extends Phaser.Scene {
     this.socket.on("existingPlayers", (players: PlayerData[]) => {
       console.log("Received existing players:", players)
       players.forEach((player) => {
+        console.log("Player:", player)
+        console.log("Player:", this.socket.id)
         if (player.id === this.socket.id) {
           this.setupPlayer(player)
         } else {
@@ -323,7 +342,6 @@ export class Game extends Phaser.Scene {
       const otherPlayerData = this.otherPlayers.get(player.id)
       if (otherPlayerData) {
         otherPlayerData.sprite.body!.reset(player.x, player.y)
-        otherPlayerData.sprite.setFlipX(player.flipX)
         otherPlayerData.sprite.anims.play(player.animation, true)
 
         otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_CHARACTER_WIDTH + 5))
@@ -366,31 +384,48 @@ export class Game extends Phaser.Scene {
           dy /= magnitude
         }
 
-        if (Math.abs(dx) > 0.2) {
-          this.playerSprite.setFlipX(dx < 0)
+        // Determine the last direction based on joystick input
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx > 0.2) {
+            this.lastDirection = "right"
+          } else if (dx < -0.2) {
+            this.lastDirection = "left"
+          }
+        } else {
+          if (dy > 0.2) {
+            this.lastDirection = "down"
+          } else if (dy < -0.2) {
+            this.lastDirection = "up"
+          }
         }
       } else {
+        // Keyboard input handling
         if (this.cursors.left.isDown || this.keys.A.isDown || this.keys.H.isDown) {
           dx = -1
-          this.playerSprite.setFlipX(true)
+          this.lastDirection = "left"
         } else if (this.cursors.right.isDown || this.keys.D.isDown || this.keys.L.isDown) {
           dx = 1
-          this.playerSprite.setFlipX(false)
+          this.lastDirection = "right"
         }
 
         if (this.cursors.up.isDown || this.keys.W.isDown || this.keys.K.isDown) {
           dy = -1
+          this.lastDirection = "up"
         } else if (this.cursors.down.isDown || this.keys.S.isDown || this.keys.J.isDown) {
           dy = 1
+          this.lastDirection = "down"
         }
       }
 
       const speed = 80
       this.playerSprite.setVelocity(dx * speed, dy * speed)
 
-      let animation = `${this.playerSpriteType}-idle`
+      // Choose the appropriate animation based on movement and direction
+      let animation
       if (dx !== 0 || dy !== 0) {
-        animation = `${this.playerSpriteType}-walk`
+        animation = `${this.username}-walk-${this.lastDirection}`
+      } else {
+        animation = `${this.username}-idle-${this.lastDirection}`
       }
 
       if (this.playerSprite.anims.getName() !== animation) {
@@ -400,32 +435,30 @@ export class Game extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && !this.isAttacking) {
       this.isAttacking = true
-      const attackAnimation = `${this.playerSpriteType}-attack1`
+      const attackAnimation = `${this.username}-attack-${this.lastDirection}`
       this.playerSprite.setVelocity(0, 0) // Stop movement during attack
       this.playerSprite.anims.play(attackAnimation, true)
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.C)) {
       this.openChatWithClosestPlayer()
-      // this.keys.C.reset()
       this.input.keyboard!.resetKeys()
     }
 
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
-      spriteType: this.playerSpriteType,
+      username: this.username,
+      spriteDefinition: this.spriteDefinition,
       x: this.playerSprite.x,
       y: this.playerSprite.y,
       animation: this.playerSprite.anims.getName(),
-      flipX: this.playerSprite.flipX,
     }
 
     if (
       !this.lastSentPlayerData ||
       this.lastSentPlayerData.x !== currentPlayerData.x ||
       this.lastSentPlayerData.y !== currentPlayerData.y ||
-      this.lastSentPlayerData.animation !== currentPlayerData.animation ||
-      this.lastSentPlayerData.flipX !== currentPlayerData.flipX
+      this.lastSentPlayerData.animation !== currentPlayerData.animation
     ) {
       this.socket.emit("updatePlayerData", currentPlayerData)
       this.lastSentPlayerData = { ...currentPlayerData }

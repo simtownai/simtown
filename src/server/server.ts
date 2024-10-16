@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { ChatMessage, PlayerData, SpriteType, UpdatePlayerData, spriteTypes } from "../shared/types"
+import { ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -31,10 +31,6 @@ const io = new Server(server, {
 })
 
 const players: Map<string, PlayerData> = new Map()
-
-function getNextAvailableSpriteType(): SpriteType {
-  return spriteTypes[Math.floor(Math.random() * spriteTypes.length)]
-}
 
 function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
   const characterWidth = CONFIG.SPRITE_CHARACTER_WIDTH
@@ -76,25 +72,26 @@ function findValidPosition(newPlayer: PlayerData): PlayerData {
 
 io.on("connection", (socket) => {
   const playerId = socket.id
-  const spriteType = getNextAvailableSpriteType()
-  let initialPosition: PlayerData = {
-    id: playerId,
-    spriteType: spriteType,
-    x: 300 + Math.random() * 100,
-    y: 250 + Math.random() * 50,
-    animation: `${spriteType}-idle`,
-    flipX: false,
-  }
+  socket.on("joinGame", (username: string, spriteDefinition: PlayerSpriteDefinition) => {
+    let playerData: PlayerData = {
+      id: playerId,
+      username: username,
+      spriteDefinition: spriteDefinition,
+      x: 300 + Math.random() * 100,
+      y: 250 + Math.random() * 50,
+      animation: `${username}-idle-down`,
+    }
 
-  // Find a valid initial position without collisions
-  initialPosition = findValidPosition(initialPosition)
+    // Find a valid initial position without collisions
+    playerData = findValidPosition(playerData)
 
-  players.set(playerId, initialPosition)
+    players.set(playerId, playerData)
 
-  logger.info(`User ${socket.id} connected. Assigned sprite: ${spriteType}. Number of players: ${players.size}`)
+    logger.info(`User ${socket.id} connected. Number of players: ${players.size}`)
 
-  socket.emit("existingPlayers", Array.from(players.values()))
-  socket.broadcast.emit("playerJoined", initialPosition)
+    socket.emit("existingPlayers", Array.from(players.values()))
+    socket.broadcast.emit("playerJoined", playerData)
+  })
 
   socket.on("updatePlayerData", (playerData: UpdatePlayerData) => {
     const currentPlayerData = players.get(playerId)

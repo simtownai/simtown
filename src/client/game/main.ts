@@ -1,3 +1,4 @@
+import { PlayerSpriteDefinition } from "../../shared/types"
 import { Game } from "./scenes/Game"
 import { Socket } from "socket.io-client"
 
@@ -26,8 +27,8 @@ const config: Phaser.Types.Core.GameConfig = {
   roundPixels: true,
 }
 
-const StartGame = (parent: string, socket: Socket) => {
-  const gameConfig = { ...config, parent, scene: [new Game(socket)] }
+const StartGame = (parent: string, socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition) => {
+  const gameConfig = { ...config, parent, scene: [new Game(socket, username, spriteDefinition)] }
   return new Phaser.Game(gameConfig)
 }
 
