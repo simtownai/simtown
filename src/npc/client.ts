@@ -40,6 +40,7 @@ export class NPC {
     this.setupSocketEvents()
     this.startUpdateLoop()
     this.socket.connect()
+    this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
     this.talkActionSchema = [
       functionToSchema(this.pushMoveToAction, move_to_args, "Move the NPC to the specified coordinates."),
     ]
@@ -85,7 +86,6 @@ export class NPC {
   private setupSocketEvents() {
     this.socket.on("connect", () => {
       this.playerId = this.socket.id!
-
       this.socket.on("existingPlayers", (players: PlayerData[]) => {
         players.forEach((player) => {
           if (player.id === this.playerId) {

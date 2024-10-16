@@ -19,7 +19,6 @@ export interface UpdatePlayerData {
   x: number
   y: number
   animation: string
-  flipX: boolean
 }
 
 export interface ChatMessage {

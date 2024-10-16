@@ -118,10 +118,9 @@ export class MovementController {
     const isMoving = Math.abs(deltaX) > threshold || Math.abs(deltaY) > threshold
 
     if (isMoving) {
-      this.playerData.flipX = deltaX < 0
-      this.playerData.animation = `${this.playerData.spriteType}-walk`
+      this.playerData.animation = `${this.playerData.username}-walk`
     } else {
-      this.playerData.animation = `${this.playerData.spriteType}-idle`
+      this.playerData.animation = `${this.playerData.username}-idle`
       // Optionally, you can maintain the last direction faced when idle
       // this.playerData.flipX = this.playerData.flipX
     }
@@ -130,8 +129,7 @@ export class MovementController {
   }
 
   private updateIdleState() {
-    this.playerData.animation = `${this.playerData.spriteType}-idle`
-    this.playerData.flipX = false // Reset flipX when idle
+    this.playerData.animation = `${this.playerData.username}-idle`
     this.emitUpdatePlayerData()
   }
 
@@ -234,7 +232,6 @@ export class MovementController {
       x: this.playerData.x,
       y: this.playerData.y,
       animation: this.playerData.animation,
-      flipX: this.playerData.flipX,
     }
 
     this.socket.emit("updatePlayerData", updateData)
