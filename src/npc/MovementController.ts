@@ -8,7 +8,7 @@ export class MovementController {
   private path: { x: number; y: number }[] = []
   private pathIndex = 0
   private speed = 50 // pixels per second
-  private blockedByPlayerInfo: { playerId: string; startTime: number } | null = null
+  private blockedByPlayerInfo: { username: string; startTime: number } | null = null
   private sentMoveMessage: boolean = false
   private isRecalculatingPath: boolean = false
   private isPaused: boolean = false
@@ -140,10 +140,10 @@ export class MovementController {
   }
 
   private handleBlockedPath(nextTile: { x: number; y: number }) {
-    const blockingPlayerId = this.npc.getBlockingPlayerId(nextTile.x, nextTile.y)
+    const blockingPlayer = this.npc.getBlockingPlayer(nextTile.x, nextTile.y)
 
-    if (blockingPlayerId) {
-      this.handleBlockedByPlayer(blockingPlayerId)
+    if (blockingPlayer) {
+      this.handleBlockedByPlayer(blockingPlayer)
     } else {
       this.recalculatePath()
     }
@@ -151,9 +151,9 @@ export class MovementController {
     this.updateIdleState()
   }
 
-  private async handleBlockedByPlayer(blockingPlayerId: string) {
-    if (!this.blockedByPlayerInfo || this.blockedByPlayerInfo.playerId !== blockingPlayerId) {
-      this.blockedByPlayerInfo = { playerId: blockingPlayerId, startTime: Date.now() }
+  private async handleBlockedByPlayer(blockingPlayer: PlayerData) {
+    if (!this.blockedByPlayerInfo || this.blockedByPlayerInfo.username !== blockingPlayer.username) {
+      this.blockedByPlayerInfo = { username: blockingPlayer.username, startTime: Date.now() }
       this.sentMoveMessage = false
 
       // Attempt to recalculate path when first blocked
@@ -168,7 +168,7 @@ export class MovementController {
     const elapsedTime = Date.now() - this.blockedByPlayerInfo.startTime
 
     if (elapsedTime < 5000) {
-      this.sendMoveMessageIfNeeded(blockingPlayerId)
+      this.sendMoveMessageIfNeeded(blockingPlayer)
     } else {
       this.giveUpOnTarget()
     }
@@ -191,17 +191,17 @@ export class MovementController {
     }
   }
 
-  private sendMoveMessageIfNeeded(blockingPlayerId: string) {
+  private sendMoveMessageIfNeeded(blockingPlayer: PlayerData) {
     if (!this.sentMoveMessage) {
       const replyMessage: ChatMessage = {
-        from: this.playerData.id,
-        to: blockingPlayerId,
+        from: this.playerData.username,
+        to: blockingPlayer.username,
         message: "Please move, you're blocking my path.",
         date: new Date().toISOString(),
       }
 
-      this.npc.aiBrain.memory.conversations.addChatMessage(blockingPlayerId, replyMessage)
-      this.npc.aiBrain.memory.conversations.addAIMessage(blockingPlayerId, {
+      this.npc.aiBrain.memory.conversations.addChatMessage(blockingPlayer.username, replyMessage)
+      this.npc.aiBrain.memory.conversations.addAIMessage(blockingPlayer.username, {
         role: "assistant",
         content: "Please move, you're blocking my path.",
       })

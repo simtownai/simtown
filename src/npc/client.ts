@@ -115,7 +115,7 @@ export class NPC {
       })
 
       this.socket.on("endConversation", (message: ChatMessage) => {
-        if (message.to === this.playerId) {
+        if (message.to === this.npcConfig.username) {
           this.aiBrain.memory.conversations.addChatMessage(message.from, message)
           this.aiBrain.memory.conversations.addAIMessage(message.from, {
             role: "user",
@@ -131,7 +131,7 @@ export class NPC {
 
       // Listen for incoming messages
       this.socket.on("newMessage", async (message: ChatMessage) => {
-        if (message.to === this.playerId) {
+        if (message.to === this.npcConfig.username) {
           // Create a new action to handle the message
           const action = new TalkAction(this, message.from, this.talkActionSchema, this.talkActionFunctionMap, {
             type: "existing",
@@ -265,11 +265,11 @@ export class NPC {
     return tileValue !== 0
   }
 
-  getBlockingPlayerId(x: number, y: number): string | null {
-    for (const [playerId, player] of this.otherPlayers.entries()) {
+  getBlockingPlayer(x: number, y: number): PlayerData | null {
+    for (const [_playerId, player] of this.otherPlayers.entries()) {
       const gridPos = this.worldToGrid(player.x, player.y)
       if (gridPos.x === x && gridPos.y === y) {
-        return playerId
+        return player
       }
     }
     return null

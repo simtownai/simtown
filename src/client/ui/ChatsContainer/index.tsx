@@ -7,6 +7,7 @@ import { Socket } from "socket.io-client"
 
 interface ChatsContainerProps {
   socket: Socket
+  username: string
   chatmate: string | null
   setChatmate: (value: string | null) => void
   setIsChatsContainerCollapsed: (value: boolean) => void
@@ -26,6 +27,7 @@ interface ChatsContainerProps {
 
 const ChatsContainer: React.FC<ChatsContainerProps> = ({
   socket,
+  username,
   chatmate,
   setChatmate,
   setIsChatsContainerCollapsed,
@@ -108,6 +110,7 @@ const ChatsContainer: React.FC<ChatsContainerProps> = ({
           >
             <Chat
               socket={socket}
+              username={username}
               chatmate={chatmate}
               setChatmate={setChatmate}
               setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}

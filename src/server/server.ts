@@ -139,13 +139,16 @@ io.on("connection", (socket) => {
     if (message.to === "all") {
       io.emit("newMessage", message)
     } else {
-      const recipientSocket = io.sockets.sockets.get(message.to)
-      if (recipientSocket) {
-        recipientSocket.emit("newMessage", message)
-        // socket.emit("newMessage", message)
-      } else {
-        socket.emit("messageError", { error: "Recipient not found" })
-      }
+      players.forEach((player) => {
+        if (player.username === message.to) {
+          const recipientSocket = io.sockets.sockets.get(player.id)
+          if (recipientSocket) {
+            recipientSocket.emit("newMessage", message)
+          } else {
+            socket.emit("messageError", { error: "Recipient not found" })
+          }
+        }
+      })
     }
   })
 

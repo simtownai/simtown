@@ -9,6 +9,7 @@ import { Socket } from "socket.io-client"
 interface OtherPlayerData {
   sprite: Phaser.Physics.Arcade.Sprite
   speechBubble: Phaser.GameObjects.Sprite
+  playerData: PlayerData
 }
 
 export class Game extends Phaser.Scene {
@@ -271,23 +272,24 @@ export class Game extends Phaser.Scene {
 
     const speechBubble = this.spriteHandler.createSpeechBubble()
     speechBubble.on("pointerdown", () => {
-      console.log(`Opening chat with player ID: ${playerInfo.id}`)
+      console.log(`Opening chat with player ID: ${playerInfo.username}`)
       EventBus.emit("chat-collapse", false)
-      EventBus.emit("set-chatmate", playerInfo.id)
+      EventBus.emit("set-chatmate", playerInfo.username)
     })
 
     this.otherPlayersContainer.add([otherPlayerSprite, speechBubble])
     this.otherPlayers.set(playerInfo.id, {
       sprite: otherPlayerSprite,
       speechBubble,
+      playerData: playerInfo,
     })
   }
 
-  private getClosestPlayer(): string | null {
-    let closestPlayer: string | null = null
+  private getClosestPlayer(): PlayerData | null {
+    let closestPlayer: PlayerData | null = null
     let minDistance = CONFIG.INTERACTION_PROXIMITY_THRESHOLD
 
-    this.otherPlayers.forEach((data, id) => {
+    this.otherPlayers.forEach((data, _id) => {
       const distance = Phaser.Math.Distance.Between(
         this.playerSprite.x,
         this.playerSprite.y,
@@ -297,7 +299,7 @@ export class Game extends Phaser.Scene {
 
       if (distance < minDistance) {
         minDistance = distance
-        closestPlayer = id
+        closestPlayer = data.playerData
       }
     })
 
@@ -305,12 +307,12 @@ export class Game extends Phaser.Scene {
   }
 
   private openChatWithClosestPlayer() {
-    const closestPlayerId = this.getClosestPlayer()
+    const closestPlayer = this.getClosestPlayer()
 
-    if (closestPlayerId) {
-      console.log(`Opening chat with player ID: ${closestPlayerId}`)
+    if (closestPlayer) {
+      console.log(`Opening chat with player ID: ${closestPlayer.username}`)
       EventBus.emit("chat-collapse", false)
-      EventBus.emit("set-chatmate", closestPlayerId)
+      EventBus.emit("set-chatmate", closestPlayer.username)
     } else {
       console.log("No player in range to chat with, just opening chat")
       EventBus.emit("chats-container-collapse", false)
@@ -343,8 +345,8 @@ export class Game extends Phaser.Scene {
       if (otherPlayerData) {
         otherPlayerData.sprite.body!.reset(player.x, player.y)
         otherPlayerData.sprite.anims.play(player.animation, true)
-
         otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5))
+        otherPlayerData.playerData = player
       }
     })
 

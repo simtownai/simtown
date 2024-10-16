@@ -15,7 +15,7 @@ type NewConversationType = { type: "new" }
 export type ConversationType = ExistingConversationType | NewConversationType
 
 export class TalkAction extends Action {
-  private targetPlayerId: string
+  private targetPlayerUsername: string
   private state: TalkActionState
   private targetPosition: { x: number; y: number } | null = null
   private moveAction: MoveAction | null = null
@@ -26,7 +26,7 @@ export class TalkAction extends Action {
 
   constructor(
     npc: NPC,
-    targetPlayerId: string,
+    targetPlayerUsername: string,
     tools: FunctionSchema[],
     functionMap: { [functionName: string]: Function },
     conversationType: ConversationType,
@@ -39,7 +39,7 @@ export class TalkAction extends Action {
     }
     const tempPlayer = this.npc.otherPlayers.keys().next().value
 
-    this.targetPlayerId = tempPlayer
+    this.targetPlayerUsername = tempPlayer
     this.conversationType = conversationType
     this.state = this.conversationType.type === "new" ? "moving" : "talking"
   }
@@ -49,18 +49,18 @@ export class TalkAction extends Action {
     return reason
   }
 
-  async startConversation(targetPlayerId: string) {
-    this.npc.aiBrain.memory.conversations.getNewestActiveThread(targetPlayerId)
+  async startConversation(targetPlayerUsername: string) {
+    this.npc.aiBrain.memory.conversations.getNewestActiveThread(targetPlayerUsername)
     this.clearConversationTimeout()
 
     const system_message = `You are an NPC with a backstory of ${this.npc.aiBrain.memory.backstory}. Generate a conversation starter with another player.`
 
-    const responseContent = await this.generateAssistantResponse(system_message, targetPlayerId)
+    const responseContent = await this.generateAssistantResponse(system_message, targetPlayerUsername)
 
-    if (this.npc.aiBrain.memory.conversations.isLatestThreadActive(targetPlayerId)) {
-      const response = this.handleFinalChatResponse(responseContent, targetPlayerId)
+    if (this.npc.aiBrain.memory.conversations.isLatestThreadActive(targetPlayerUsername)) {
+      const response = this.handleFinalChatResponse(responseContent, targetPlayerUsername)
       this.npc.socket.emit("sendMessage", response)
-      this.setConversationTimeout(targetPlayerId)
+      this.setConversationTimeout(targetPlayerUsername)
     }
   }
 
@@ -76,24 +76,24 @@ export class TalkAction extends Action {
       this.conversationTimeout = null
     }
   }
-  private handleFinalChatResponse(responseContent: string, targetPlayerId: string): ChatMessage {
+  private handleFinalChatResponse(responseContent: string, targetPlayerUsername: string): ChatMessage {
     const response: ChatMessage = {
-      from: this.npc.playerData.id,
+      from: this.npc.playerData.username,
       message: responseContent,
-      to: targetPlayerId,
+      to: targetPlayerUsername,
       date: new Date().toISOString(),
     }
-    this.npc.aiBrain.memory.conversations.addChatMessage(targetPlayerId, response)
+    this.npc.aiBrain.memory.conversations.addChatMessage(targetPlayerUsername, response)
 
     return response
   }
 
-  async generateAssistantResponse(system_message: string, targetPlayerId: string): Promise<string> {
+  async generateAssistantResponse(system_message: string, targetPlayerUsername: string): Promise<string> {
     let responseContent = ""
     while (true) {
       const toSubmit = [
         { role: "system", content: system_message } as ChatCompletionMessageParam,
-        ...this.npc.aiBrain.memory.conversations.getNewestActiveThread(targetPlayerId).aiMessages,
+        ...this.npc.aiBrain.memory.conversations.getNewestActiveThread(targetPlayerUsername).aiMessages,
       ]
 
       try {
@@ -108,7 +108,7 @@ export class TalkAction extends Action {
 
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
           for (const toolCall of responseMessage.tool_calls) {
-            this.npc.aiBrain.memory.conversations.addAIMessage(targetPlayerId, responseMessage)
+            this.npc.aiBrain.memory.conversations.addAIMessage(targetPlayerUsername, responseMessage)
 
             const functionName = toolCall.function.name
             const functionArgs = JSON.parse(toolCall.function.arguments)
@@ -118,7 +118,7 @@ export class TalkAction extends Action {
               throw new Error(`Function ${functionName} returned undefined`)
             }
 
-            this.npc.aiBrain.memory.conversations.addAIMessage(targetPlayerId, {
+            this.npc.aiBrain.memory.conversations.addAIMessage(targetPlayerUsername, {
               role: "tool",
               tool_call_id: toolCall.id,
               content: functionResult,
@@ -126,16 +126,16 @@ export class TalkAction extends Action {
 
             if (functionName === "endConversation") {
               this.clearConversationTimeout()
-              const response = this.handleFinalChatResponse(functionResult, targetPlayerId)
+              const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
               this.npc.socket.emit("endConversation", response)
-              this.npc.aiBrain.memory.conversations.closeThread(targetPlayerId)
+              this.npc.aiBrain.memory.conversations.closeThread(targetPlayerUsername)
               return ""
             }
           }
           continue
         } else if (responseMessage.content) {
           responseContent = responseMessage.content
-          this.npc.aiBrain.memory.conversations.addAIMessage(targetPlayerId, responseMessage)
+          this.npc.aiBrain.memory.conversations.addAIMessage(targetPlayerUsername, responseMessage)
           break
         } else {
           break
@@ -173,18 +173,18 @@ export class TalkAction extends Action {
       throw new Error(`Unknown function: ${functionName}`)
     }
   }
-  private setConversationTimeout(targetPlayerId: string) {
+  private setConversationTimeout(targetPlayerUsername: string) {
     this.conversationTimeout = setTimeout(() => {
-      this.endConversationDueToTimeout(targetPlayerId)
+      this.endConversationDueToTimeout(targetPlayerUsername)
     }, ConversationTimeoutThreshold)
   }
 
-  private endConversationDueToTimeout(targetPlayerId: string) {
+  private endConversationDueToTimeout(targetPlayerUsername: string) {
     console.log("ending conversation due to timeout")
     const timeoutMessage =
       "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
-    const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerId)
-    this.npc.aiBrain.memory.conversations.closeThread(targetPlayerId)
+    const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerUsername)
+    this.npc.aiBrain.memory.conversations.closeThread(targetPlayerUsername)
     this.npc.socket.emit("endConversation", response)
     this.isCompletedFlag = true
   }
@@ -195,7 +195,7 @@ export class TalkAction extends Action {
 
     if (this.conversationType.type === "new") {
       // Proceed with moving and starting a new conversation
-      const playerPosition = this.npc.getPlayerPosition(this.targetPlayerId)
+      const playerPosition = this.npc.getPlayerPosition(this.targetPlayerUsername)
 
       if (playerPosition) {
         console.log("Initiating movement towards the player at position:", playerPosition)
@@ -208,7 +208,7 @@ export class TalkAction extends Action {
         this.moveAction = new MoveAction(this.npc, this.targetPosition)
         await this.moveAction.start()
       } else {
-        console.warn(`Player with ID ${this.targetPlayerId} not found.`)
+        console.warn(`Player with ID ${this.targetPlayerUsername} not found.`)
         this.isCompletedFlag = true // Can't find player, mark action as completed
       }
     } else {
@@ -227,14 +227,14 @@ export class TalkAction extends Action {
 
           // Check if the movement is completed
           if (this.moveAction.isCompleted()) {
-            this.startConversation(this.targetPlayerId)
+            this.startConversation(this.targetPlayerUsername)
             this.state = "talking"
           }
         }
         break
 
       case "talking":
-        if (!this.npc.aiBrain.memory.conversations.isLatestThreadActive(this.targetPlayerId)) {
+        if (!this.npc.aiBrain.memory.conversations.isLatestThreadActive(this.targetPlayerUsername)) {
           console.log("Conversation completed.")
           this.isCompletedFlag = true
         }

@@ -10,6 +10,7 @@ import { Socket } from "socket.io-client"
 
 export default function Chat({
   socket,
+  username,
   chatmate,
   setChatmate,
   setIsChatsContainerCollapsed,
@@ -26,6 +27,7 @@ export default function Chat({
   handleClearConversation,
 }: {
   socket: Socket
+  username: string
   chatmate: string | null
   setChatmate: (value: string | null) => void
   setIsChatsContainerCollapsed: (value: boolean) => void
@@ -70,7 +72,7 @@ export default function Chat({
 
     setComposeValue("")
     const newMessage = {
-      from: socket.id,
+      from: username,
       to: chatmate,
       message: composeValue,
       date: new Date().toISOString(),
@@ -111,7 +113,7 @@ export default function Chat({
                   message={message}
                   isLoading={isMessageLoading}
                   isFirstInGroup={isFirstInGroup}
-                  ifMessageIsFromUser={message.from === socket.id}
+                  ifMessageIsFromUser={message.from === username}
                 />
               )
             })}

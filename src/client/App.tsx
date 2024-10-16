@@ -63,14 +63,14 @@ function App() {
   }
 
   useEffect(() => {
-    if (socket && socket.id !== undefined) {
-      localStorage.setItem(`chat-history-${socket.id}`, JSON.stringify(Array.from(messages.entries())))
+    if (username) {
+      localStorage.setItem(`chat-history-${username}`, JSON.stringify(Array.from(messages.entries())))
     }
   }, [messages])
 
   useEffect(() => {
-    if (socket && socket.id !== undefined) {
-      const messagesHistory = localStorage.getItem(`chat-history-${socket.id}`)
+    if (username) {
+      const messagesHistory = localStorage.getItem(`chat-history-${username}`)
       if (messagesHistory) {
         setMessages(new Map(JSON.parse(messagesHistory)))
       }
@@ -111,6 +111,7 @@ function App() {
       {socket && !isChatsContainerCollapsed && (
         <ChatsContainer
           socket={socket}
+          username={username}
           chatmate={chatmate}
           setChatmate={setChatmate}
           setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}
