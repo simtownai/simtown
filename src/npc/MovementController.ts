@@ -14,6 +14,7 @@ export class MovementController {
   private targetPosition: { x: number; y: number }
   private onMovementFailed: (() => void) | null = null
   private onMovementCompleted: (() => void) | null = null
+  private lastDirection: "left" | "right" | "up" | "down" = "down"
 
   constructor(
     private playerData: PlayerData,
@@ -114,22 +115,33 @@ export class MovementController {
 
   private updateAnimationAndEmit(deltaX: number, deltaY: number) {
     // Increased threshold to account for tiny movements
-
     const isMoving = Math.abs(deltaX) > threshold || Math.abs(deltaY) > threshold
 
     if (isMoving) {
-      this.playerData.animation = `${this.playerData.username}-walk`
+      const direction = this.getDirection(deltaX, deltaY)
+      this.playerData.animation = `${this.playerData.username}-walk-${direction}`
+      this.lastDirection = direction // Update lastDirection
     } else {
-      this.playerData.animation = `${this.playerData.username}-idle`
-      // Optionally, you can maintain the last direction faced when idle
-      // this.playerData.flipX = this.playerData.flipX
+      // Use the lastDirection for idle animation
+      this.playerData.animation = `${this.playerData.username}-idle-${this.lastDirection}`
     }
 
     this.emitUpdatePlayerData()
   }
 
+  private getDirection(deltaX: number, deltaY: number): "left" | "right" | "up" | "down" {
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal movement
+      return deltaX > 0 ? "right" : "left"
+    } else {
+      // Vertical movement
+      return deltaY > 0 ? "down" : "up"
+    }
+  }
+
   private updateIdleState() {
-    this.playerData.animation = `${this.playerData.username}-idle`
+    // Use the lastDirection for idle animation
+    this.playerData.animation = `${this.playerData.username}-idle-${this.lastDirection}`
     this.emitUpdatePlayerData()
   }
 
