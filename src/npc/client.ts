@@ -282,7 +282,7 @@ export class NPC {
 
     const easystar = new EasyStar.js()
     easystar.setAcceptableTiles([0])
-    easystar.enableDiagonals()
+    // easystar.enableDiagonals()
     easystar.disableCornerCutting()
 
     let grid: number[][]
