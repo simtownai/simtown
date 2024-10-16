@@ -50,7 +50,7 @@ export class NPC {
 
     setTimeout(() => {
       this.startNextAction()
-    }, 4000)
+    }, 7000)
   }
 
   pushMoveToAction(args: { x: number; y: number }) {

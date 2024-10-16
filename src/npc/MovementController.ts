@@ -145,10 +145,18 @@ export class MovementController {
     this.updateIdleState()
   }
 
-  private handleBlockedByPlayer(blockingPlayerId: string) {
+  private async handleBlockedByPlayer(blockingPlayerId: string) {
     if (!this.blockedByPlayerInfo || this.blockedByPlayerInfo.playerId !== blockingPlayerId) {
       this.blockedByPlayerInfo = { playerId: blockingPlayerId, startTime: Date.now() }
       this.sentMoveMessage = false
+
+      // Attempt to recalculate path when first blocked
+      const newPath = await this.attemptPathRecalculation()
+      if (newPath) {
+        // If a new path is found, update the path and return
+        this.setPath(newPath, this.targetPosition)
+        return
+      }
     }
 
     const elapsedTime = Date.now() - this.blockedByPlayerInfo.startTime
@@ -157,6 +165,23 @@ export class MovementController {
       this.sendMoveMessageIfNeeded(blockingPlayerId)
     } else {
       this.giveUpOnTarget()
+    }
+  }
+
+  private async attemptPathRecalculation(): Promise<{ x: number; y: number }[] | null> {
+    console.log("Attempting to recalculate path due to player blockage")
+    try {
+      const newPath = await this.npc.calculatePath(this.targetPosition, true)
+      if (newPath && newPath.length > 0) {
+        console.log("New path found after recalculation")
+        return newPath
+      } else {
+        console.log("No alternative path found after recalculating")
+        return null
+      }
+    } catch (error) {
+      console.error("Error recalculating path:", error)
+      return null
     }
   }
 
