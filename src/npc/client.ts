@@ -1,27 +1,32 @@
 import mapData from "../../public/assets/maps/simple-map.json"
-import { CONFIG } from "../shared/config"
-import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
-import { AiBrain } from "./AiBrain"
+import { ChatMessage, PlayerData } from "../shared/types"
+import { AiBrain, FunctionSchema } from "./AiBrain"
+import { MovementController } from "./MovementController"
+import { Action } from "./actions/Action"
+import { IdleAction } from "./actions/IdleAction"
+import { MoveAction } from "./actions/MoveAction"
+import { TalkAction } from "./actions/TalkAction"
 import { functionToSchema } from "./aihelper"
 import { NpcConfig, move_to_args, npcConfig } from "./npcConfig"
 import EasyStar from "easystarjs"
 import { Socket, io } from "socket.io-client"
-import { z } from "zod"
 
-class NPC {
+export class NPC {
   private collisionLayer: any
   private collisionGrid: number[][]
-  private socket: Socket
+  socket: Socket
   private playerId: string
-  private playerData: PlayerData
+  playerData: PlayerData
   public otherPlayers: Map<string, PlayerData>
-  private targetPosition: { x: number; y: number }
   private tileSize: number
-  private movementController: MovementController
+  movementController: MovementController
   private lastUpdateTime: number
   aiBrain: AiBrain
-  private lastMessageFrom: string | null = null
   private npcConfig: NpcConfig
+  private currentAction: Action | null = null
+  private actionStack: Action[] = []
+  private talkActionSchema: FunctionSchema[]
+  private talkActionFunctionMap: { [functionName: string]: Function }
 
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
@@ -29,17 +34,40 @@ class NPC {
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.otherPlayers = new Map()
-    this.targetPosition = { x: 0, y: 0 }
     this.tileSize = 16
     this.lastUpdateTime = Date.now()
     this.initializeCollisionGrid()
     this.setupSocketEvents()
-    this.startMovementLoop()
+    this.startUpdateLoop()
     this.socket.connect()
+    this.talkActionSchema = [
+      functionToSchema(this.pushMoveToAction, move_to_args, "Move the NPC to the specified coordinates."),
+    ]
+    this.talkActionFunctionMap = {
+      pushMoveToAction: this.pushMoveToAction.bind(this),
+    }
 
     setTimeout(() => {
       this.startNextAction()
     }, 4000)
+  }
+
+  pushMoveToAction(args: { x: number; y: number }) {
+    const action = new MoveAction(this, args)
+    return this.pushNewAction(action)
+  }
+  pushNewAction(action: Action) {
+    if (this.currentAction) {
+      console.log("Interrupting action", this.currentAction.constructor.name)
+      this.currentAction.interrupt()
+      this.actionStack.push(this.currentAction)
+    }
+
+    // Always create a new MoveAction, regardless of whether there was a current action
+    this.currentAction = action
+    console.log("Starting new action", action.constructor.name)
+    action.start()
+    return "Pushed new action to stack"
   }
 
   private initializeCollisionGrid() {
@@ -65,11 +93,6 @@ class NPC {
             this.movementController = new MovementController(this.playerData, this.socket, this)
             this.aiBrain = new AiBrain({
               npcConfig: this.npcConfig,
-              tools: [functionToSchema(this.move_to, move_to_args, "Move the NPC to the specified coordinates.")],
-              functionMap: {
-                move_to: this.move_to.bind(this),
-              },
-              playerData: this.playerData,
               socket: this.socket,
             })
           } else {
@@ -93,7 +116,10 @@ class NPC {
       this.socket.on("endConversation", (message: ChatMessage) => {
         if (message.to === this.playerId) {
           this.aiBrain.memory.conversations.addChatMessage(message.from, message)
-          this.aiBrain.memory.conversations.addAIMessage(message.from, { role: "user", content: message.message })
+          this.aiBrain.memory.conversations.addAIMessage(message.from, {
+            role: "user",
+            content: message.message,
+          })
           this.aiBrain.memory.conversations.closeThread(message.from)
         }
       })
@@ -105,70 +131,104 @@ class NPC {
       // Listen for incoming messages
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.playerId) {
-          try {
-            await this.aiBrain.handleMessage(message)
-            // Send the assistant's response back to the player
-          } catch (error) {
-            console.error("Error handling message:", error)
-          }
+          // Create a new action to handle the message
+          const action = new TalkAction(this, message.from, this.talkActionSchema, this.talkActionFunctionMap, {
+            type: "existing",
+            message: message,
+          })
+          this.pushNewAction(action)
         }
       })
     })
   }
 
-  private startMovementLoop() {
+  private startUpdateLoop() {
     setInterval(() => {
-      if (!this.playerData || !this.movementController) return
+      if (!this.playerData) return
 
       const now = Date.now()
       const deltaTime = now - this.lastUpdateTime
-
       this.lastUpdateTime = now
 
-      this.movementController.move(deltaTime)
+      if (this.currentAction) {
+        this.currentAction.update(deltaTime)
+
+        if (this.currentAction.isCompleted()) {
+          this.currentAction = this.actionStack.pop() || null
+          if (this.currentAction) {
+            this.currentAction.resume()
+          } else {
+            this.startNextAction()
+          }
+        }
+      }
     }, 1000 / 30)
   }
 
-  private getPlayerPosition(playerId: string): { x: number; y: number } | null {
-    const player = this.otherPlayers.get(playerId)
+  async move_to(args: { x: number; y: number }) {
+    const { x, y } = args
+    console.log(`Received command to move to position: (${x}, ${y})`)
+
+    try {
+      const foundPath = await this.calculatePath({ x, y }, false)
+      if (!foundPath || foundPath.length === 0) {
+        throw new Error("Couldn't find path")
+      }
+
+      this.movementController.setPath(foundPath, { x, y }) // Pass targetPosition
+      return "Moving to target position"
+    } catch (error) {
+      console.error("Error in move_to:", error)
+      return "Couldn't move there, those numbers are not valid coordinates"
+    }
+  }
+
+  getPlayerPosition(_playerId: string): { x: number; y: number } | null {
+    const temp_player = this.otherPlayers.keys().next().value
+    const player = this.otherPlayers.get(temp_player)
     return player ? { x: player.x, y: player.y } : null
   }
 
   private async startNextAction() {
-    const currentAction = this.aiBrain.memory.planForTheDay.shift()
-    if (!currentAction) {
-      console.log("no action to perform")
+    const nextActionData = this.aiBrain.memory.planForTheDay.shift()
+    if (!nextActionData) {
+      console.log("No action to perform")
       return
     }
 
-    const targetPlayerId = this.otherPlayers.keys().next().value
-    const playerPosition = this.getPlayerPosition(targetPlayerId)
+    let action: Action | null = null
 
-    switch (currentAction.action.type) {
+    let targetPlayerId: string | null = null
+
+    switch (nextActionData.action.type) {
       case "idle":
-        console.log("Idling for 10 minutes")
-
-        await new Promise((resolve) => setTimeout(resolve, 600000)) // 10 minutes in milliseconds
+        action = new IdleAction(this, 600000) // idle for 10 minutes
         break
       case "move":
-        //const playerPosition = this.getPlayerPosition(this.aiBrain.currentAction.action.target)
-
+        console.log("Moving to player")
+        targetPlayerId = nextActionData.action.target
+        const playerPosition = this.getPlayerPosition(targetPlayerId)
         if (playerPosition) {
-          await this.move_to({ x: playerPosition.x, y: playerPosition.y })
+          action = new MoveAction(this, playerPosition)
         }
         break
       case "talk":
-        if (playerPosition) {
-          await this.move_to({
-            x: playerPosition.x + CONFIG.SPRITE_CHARACTER_WIDTH,
-            y: playerPosition.y + CONFIG.SPRITE_CHARACTER_WIDTH,
-          })
-        }
-        await this.aiBrain.startConversation(targetPlayerId)
+        targetPlayerId = nextActionData.action.name
+        action = new TalkAction(this, targetPlayerId, this.talkActionSchema, this.talkActionFunctionMap, {
+          type: "new",
+        })
         break
     }
 
-    this.startNextAction()
+    if (action) {
+      if (this.currentAction) {
+        this.currentAction.interrupt()
+        this.actionStack.push(this.currentAction)
+      }
+      this.currentAction = action
+      console.log("Starting action: " + action.constructor.name)
+      action.start()
+    }
   }
 
   worldToGrid(x: number, y: number) {
@@ -212,9 +272,13 @@ class NPC {
     return null
   }
 
-  calculatePath(considerPlayers: boolean, callback: (foundPath: { x: number; y: number }[] | null) => void) {
+  // Refactored to return a Promise instead of using a callback
+  async calculatePath(
+    targetPosition: { x: number; y: number },
+    considerPlayers: boolean,
+  ): Promise<{ x: number; y: number }[] | null> {
     const start = this.worldToGrid(this.playerData.x, this.playerData.y)
-    const end = this.worldToGrid(this.targetPosition.x, this.targetPosition.y)
+    const end = this.worldToGrid(targetPosition.x, targetPosition.y)
 
     const easystar = new EasyStar.js()
     easystar.setAcceptableTiles([0])
@@ -231,10 +295,13 @@ class NPC {
     }
 
     easystar.setGrid(grid)
-    easystar.findPath(start.x, start.y, end.x, end.y, (foundPath) => {
-      callback(foundPath)
+
+    return new Promise((resolve) => {
+      easystar.findPath(start.x, start.y, end.x, end.y, (foundPath) => {
+        resolve(foundPath)
+      })
+      easystar.calculate()
     })
-    easystar.calculate()
   }
 
   getGridWithPlayers(): number[][] {
@@ -251,212 +318,6 @@ class NPC {
       }
     }
     return gridWithPlayers
-  }
-
-  async move_to(args: z.infer<typeof move_to_args>) {
-    const { x, y } = args
-    this.targetPosition.x = x
-    this.targetPosition.y = y
-    console.log(`Received command to move to position: (${x}, ${y})`)
-
-    try {
-      // Wrap the callback-based function into a Promise
-      const foundPath = await new Promise((resolve, reject) => {
-        this.calculatePath(false, (foundPath) => {
-          if (foundPath) {
-            resolve(foundPath)
-          } else {
-            reject(new Error("Couldn't find path"))
-          }
-        })
-      })
-
-      // Proceed if path is found
-      // @ts-ignore
-      this.movementController.setPath(foundPath)
-      return "Moving to target position"
-    } catch (error) {
-      // Handle the error case
-      if (!this.lastMessageFrom) {
-        console.error("No message from to send reply to")
-        throw new Error("No message from to send reply to")
-      }
-      const replyMessage = {
-        from: this.playerId,
-        to: this.lastMessageFrom,
-        message: "Please provide two numbers as coordinates",
-        date: new Date().toISOString(),
-      } as ChatMessage
-      this.socket.emit("sendMessage", replyMessage)
-      return "Couldn't move there, those numbers are not valid coordinates"
-    }
-  }
-}
-
-class MovementController {
-  private path: { x: number; y: number }[] = []
-  private pathIndex = 0
-  private speed = 50 // pixels per second
-  private blockedByPlayerInfo: { playerId: string; startTime: number } | null = null
-  private sentMoveMessage: boolean = false
-
-  constructor(
-    private playerData: PlayerData,
-    private socket: Socket,
-    private npc: NPC,
-  ) {}
-
-  setPath(newPath: { x: number; y: number }[]) {
-    this.path = newPath
-    this.pathIndex = 0
-    this.blockedByPlayerInfo = null
-    this.sentMoveMessage = false
-  }
-
-  move(deltaTime: number) {
-    if (this.pathIndex >= this.path.length) {
-      // NPC has reached the destination or waiting
-      this.playerData.animation = `${this.playerData.spriteType}-idle`
-
-      const updateData: UpdatePlayerData = {
-        x: this.playerData.x,
-        y: this.playerData.y,
-        animation: this.playerData.animation,
-        flipX: this.playerData.flipX,
-      }
-
-      this.socket.emit("updatePlayerData", updateData)
-      return
-    }
-
-    const nextTile = this.path[this.pathIndex]
-    const worldPos = this.npc.gridToWorld(nextTile.x, nextTile.y)
-
-    if (this.npc.isCellBlocked(nextTile.x, nextTile.y)) {
-      // Try to recalculate path considering players as obstacles
-      this.npc.calculatePath(true, (newPath) => {
-        if (newPath && newPath.length > 0) {
-          // Found an alternative path, update the path and continue
-          this.setPath(newPath)
-        } else {
-          // No alternative path found, handle blocking player
-          const blockingPlayerId = this.npc.getBlockingPlayerId(nextTile.x, nextTile.y)
-          if (blockingPlayerId) {
-            if (!this.blockedByPlayerInfo || this.blockedByPlayerInfo.playerId !== blockingPlayerId) {
-              this.blockedByPlayerInfo = { playerId: blockingPlayerId, startTime: Date.now() }
-              this.sentMoveMessage = false
-            }
-
-            const elapsedTime = Date.now() - this.blockedByPlayerInfo.startTime
-
-            if (elapsedTime < 5000) {
-              if (!this.sentMoveMessage) {
-                // Send message to the blocking player
-                const replyMessage = {
-                  from: this.playerData.id,
-                  to: blockingPlayerId,
-                  message: "Please move, you're blocking my path.",
-                  date: new Date().toISOString(),
-                } as ChatMessage
-                this.npc.aiBrain.memory.conversations.addChatMessage(blockingPlayerId, replyMessage)
-                this.npc.aiBrain.memory.conversations.addAIMessage(blockingPlayerId, {
-                  role: "assistant",
-                  content: "Please move, you're blocking my path.",
-                })
-                this.socket.emit("sendMessage", replyMessage)
-                this.sentMoveMessage = true
-              }
-
-              // Wait and keep trying to find a path
-              // Update animation to idle and send update to server
-              this.playerData.animation = `${this.playerData.spriteType}-idle`
-
-              const updateData: UpdatePlayerData = {
-                x: this.playerData.x,
-                y: this.playerData.y,
-                animation: this.playerData.animation,
-                flipX: this.playerData.flipX,
-              }
-
-              this.socket.emit("updatePlayerData", updateData)
-
-              // Try to recalculate the path again in the next move cycle
-              return
-            } else {
-              // 5 seconds have passed, NPC gives up on reaching the target
-              this.blockedByPlayerInfo = null
-              this.sentMoveMessage = false
-
-              // Clear the path to stop movement
-              this.path = []
-              this.pathIndex = 0
-
-              // Update NPC's state to idle
-              this.playerData.animation = `${this.playerData.spriteType}-idle`
-
-              const updateData: UpdatePlayerData = {
-                x: this.playerData.x,
-                y: this.playerData.y,
-                animation: this.playerData.animation,
-                flipX: this.playerData.flipX,
-              }
-
-              this.socket.emit("updatePlayerData", updateData)
-
-              console.log("Blocked for 5 seconds, giving up on reaching the target.")
-            }
-          } else {
-            // Path is blocked by an obstacle
-            console.log("Path blocked by obstacle, recalculating path.")
-            // Try to recalculate the path considering players
-            this.npc.calculatePath(true, (newPath) => {
-              if (newPath && newPath.length > 0) {
-                this.setPath(newPath)
-              } else {
-                // No path found, wait or handle accordingly
-                console.log("No path found after considering players.")
-              }
-            })
-          }
-        }
-      })
-      return
-    }
-
-    // Proceed with movement as normal
-    const dx = worldPos.x - this.playerData.x
-    const dy = worldPos.y - this.playerData.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-
-    const moveDistance = (this.speed * deltaTime) / 1000
-
-    if (distance < moveDistance) {
-      this.playerData.x = worldPos.x
-      this.playerData.y = worldPos.y
-      this.pathIndex++
-    } else {
-      const moveX = (dx / distance) * moveDistance
-      const moveY = (dy / distance) * moveDistance
-
-      this.playerData.x += moveX
-      this.playerData.y += moveY
-    }
-
-    // Animation update with movement threshold
-    const epsilon = 0.1 // Threshold for minimal movement
-    const isMoving = Math.abs(dx) > epsilon || Math.abs(dy) > epsilon
-
-    this.playerData.flipX = dx < 0
-    this.playerData.animation = isMoving ? `${this.playerData.spriteType}-walk` : `${this.playerData.spriteType}-idle`
-
-    const updateData: UpdatePlayerData = {
-      x: this.playerData.x,
-      y: this.playerData.y,
-      animation: this.playerData.animation,
-      flipX: this.playerData.flipX,
-    }
-
-    this.socket.emit("updatePlayerData", updateData)
   }
 }
 

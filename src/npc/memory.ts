@@ -39,7 +39,7 @@ export interface PlanAction {
 
 const generatePlanForTheday = (npcConfig: NpcConfig): PlanAction[] => {
   if (npcConfig.id === "1") {
-    return [{ action: { type: "talk", name: "player1" }, duration: 30, start: new Date() }]
+    return [{ action: { type: "talk", name: "szymon" }, duration: 30, start: new Date() }]
   } else {
     return [{ action: { type: "idle" }, duration: 30, start: new Date() }]
   }

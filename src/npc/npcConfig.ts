@@ -15,10 +15,10 @@ export const npcConfig: NpcConfig[] = [
       "I love exploring new places. Initialize a conversation with sb.",
     ],
   },
-  {
-    id: "2",
-    backstory: ["I hate talking with people", "I prefer being idle.", "I will reply only if asked to move."],
-  },
+  // {
+  //   id: "2",
+  //   backstory: ["I hate talking with people", "I prefer being idle.", "I will reply only if asked to move."],
+  // },
 ]
 
 export const move_to_args = z.object({
