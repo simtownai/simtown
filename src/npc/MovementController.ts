@@ -1,3 +1,4 @@
+import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
 import { NPC } from "./client"
 import { Socket } from "socket.io-client"
@@ -55,9 +56,9 @@ export class MovementController {
   resume() {
     this.isPaused = false
   }
+
   move(deltaTime: number) {
     if (this.isPaused || this.isRecalculatingPath || this.pathIndex >= this.path.length) {
-      // Set deltas to zero when paused or path is completed
       this.updateAnimationAndEmit(0, 0)
       return
     }
@@ -68,18 +69,16 @@ export class MovementController {
     if (this.npc.isCellBlocked(nextTile.x, nextTile.y)) {
       console.log("We are blocked")
       this.handleBlockedPath(nextTile)
-      // Set deltas to zero when blocked
       this.updateAnimationAndEmit(0, 0)
       return
     }
 
-    // Reset blocked state if we're no longer blocked
     this.blockedByPlayerInfo = null
     this.sentMoveMessage = false
 
-    // Proceed with movement
+    const verticalOffset = (CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT) / 2
     const dx = worldPos.x - this.playerData.x
-    const dy = worldPos.y - this.playerData.y
+    const dy = worldPos.y + verticalOffset - (this.playerData.y + verticalOffset)
 
     const distance = Math.sqrt(dx * dx + dy * dy)
 
@@ -89,9 +88,8 @@ export class MovementController {
     let moveY = 0
 
     if (distance <= moveDistance) {
-      // Snap to the exact position of the next tile
-      moveX = worldPos.x - this.playerData.x
-      moveY = worldPos.y - this.playerData.y
+      moveX = dx
+      moveY = dy
       this.playerData.x = worldPos.x
       this.playerData.y = worldPos.y
       this.pathIndex++
@@ -102,11 +100,7 @@ export class MovementController {
       this.playerData.y += moveY
     }
 
-    // Calculate movement delta
-    const deltaX = moveX
-    const deltaY = moveY
-
-    this.updateAnimationAndEmit(deltaX, deltaY)
+    this.updateAnimationAndEmit(moveX, moveY)
 
     if (this.pathIndex >= this.path.length && this.isAtPosition(this.targetPosition)) {
       this.handleMovementCompleted()
@@ -234,7 +228,7 @@ export class MovementController {
   private recalculatePath() {
     if (!this.isRecalculatingPath) {
       this.isRecalculatingPath = true
-      this.updateIdleState() // Ensure we're in idle state while recalculating
+      this.updateIdleState()
       this.npc
         .calculatePath(this.targetPosition, false)
         .then(this.handleRecalculatedPath.bind(this))
@@ -275,8 +269,9 @@ export class MovementController {
   }
 
   isAtPosition(targetPosition: { x: number; y: number }): boolean {
+    const verticalOffset = (CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT) / 2
     const dx = this.playerData.x - targetPosition.x
-    const dy = this.playerData.y - targetPosition.y
+    const dy = this.playerData.y + verticalOffset - (targetPosition.y + verticalOffset)
     const distance = Math.sqrt(dx * dx + dy * dy)
     console.log("distance", distance)
     return distance < 10

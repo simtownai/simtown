@@ -33,7 +33,7 @@ const io = new Server(server, {
 const players: Map<string, PlayerData> = new Map()
 
 function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
-  const characterWidth = CONFIG.SPRITE_CHARACTER_WIDTH
+  const characterWidth = CONFIG.SPRITE_COLLISION_BOX_HEIGHT
   return (
     player1.x < player2.x + characterWidth &&
     player1.x + characterWidth > player2.x &&

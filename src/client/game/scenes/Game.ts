@@ -344,7 +344,7 @@ export class Game extends Phaser.Scene {
         otherPlayerData.sprite.body!.reset(player.x, player.y)
         otherPlayerData.sprite.anims.play(player.animation, true)
 
-        otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_CHARACTER_WIDTH + 5))
+        otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5))
       }
     })
 
@@ -470,7 +470,7 @@ export class Game extends Phaser.Scene {
 
       otherPlayerSpeechBubble.setPosition(
         otherPlayerSprite.x,
-        otherPlayerSprite.y - (CONFIG.SPRITE_CHARACTER_WIDTH + 5),
+        otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
       )
 
       const distance = Phaser.Math.Distance.Between(

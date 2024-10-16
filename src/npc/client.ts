@@ -1,4 +1,5 @@
 import mapData from "../../public/assets/maps/simple-map.json"
+import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData } from "../shared/types"
 import { AiBrain, FunctionSchema } from "./AiBrain"
 import { MovementController } from "./MovementController"
@@ -232,16 +233,18 @@ export class NPC {
   }
 
   worldToGrid(x: number, y: number) {
+    const verticalOffset = CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT
     return {
       x: Math.floor(x / this.tileSize),
-      y: Math.floor(y / this.tileSize),
+      y: Math.floor((y + verticalOffset / 2) / this.tileSize),
     }
   }
 
   gridToWorld(x: number, y: number) {
+    const verticalOffset = CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT
     return {
       x: x * this.tileSize + this.tileSize / 2,
-      y: y * this.tileSize + this.tileSize / 2,
+      y: y * this.tileSize + this.tileSize / 2 - verticalOffset / 2,
     }
   }
 

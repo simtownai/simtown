@@ -82,11 +82,11 @@ export class SpriteHandler {
                 componentFrame.source.image as CanvasImageSource,
                 componentFrame.cutX,
                 componentFrame.cutY,
-                CONFIG.SPRITE_CHARACTER_WIDTH, // Width of the character within the frame
+                CONFIG.SPRITE_COLLISION_BOX_HEIGHT, // Width of the character within the frame
                 componentFrame.cutHeight,
                 0,
                 0,
-                CONFIG.SPRITE_CHARACTER_WIDTH,
+                CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
                 componentFrame.cutHeight,
               )
             }
@@ -122,8 +122,8 @@ export class SpriteHandler {
 
   public setupPlayer(player: Phaser.Physics.Arcade.Sprite, playerKey: string) {
     player.setScale(1)
-    player.body!.setSize(CONFIG.SPRITE_CHARACTER_WIDTH, CONFIG.SPRITE_CHARACTER_WIDTH)
-    player.body!.setOffset(0, CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_CHARACTER_WIDTH)
+    player.body!.setSize(CONFIG.SPRITE_COLLISION_BOX_HEIGHT, CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
+    player.body!.setOffset(0, CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
     player.anims.play(`${playerKey}-idle-down`)
   }
 }
