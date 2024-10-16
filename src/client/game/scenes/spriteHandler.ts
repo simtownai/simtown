@@ -1,68 +1,36 @@
 import { CONFIG } from "../../../shared/config"
-import { SpriteType } from "../../../shared/types"
-
-const animationsConfig: { [key in SpriteType]?: string[] } = {
-  Archer: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
-  "Armored Axeman": ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
-  "Armored Orc": ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk"],
-  "Armored Skeleton": ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
-  "Elite Orc": ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
-  Knight: ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk"],
-  "Knight Templar": ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk01", "Walk02"],
-  Lancer: ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk01", "Walk02"],
-  Orc: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
-  "Orc rider": ["Attack01", "Attack02", "Attack03", "Block", "Death", "Hurt", "Idle", "Walk"],
-  Priest: ["Attack", "Death", "Heal", "Hurt", "Idle", "Walk"],
-  Skeleton: ["Attack01", "Attack02", "Block", "Death", "Hurt", "Idle", "Walk"],
-  "Skeleton Archer": ["Attack", "Death", "Hurt", "Idle", "Walk"],
-  Slime: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
-  Soldier: ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
-  Swordsman: ["Attack01", "Attack02", "Attack3", "Death", "Hurt", "Idle", "Walk"],
-  Werebear: ["Attack01", "Attack02", "Attack03", "Death", "Hurt", "Idle", "Walk"],
-  Werewolf: ["Attack01", "Attack02", "Death", "Hurt", "Idle", "Walk"],
-  Wizard: ["Attack01", "Attack02", "DEATH", "Hurt", "Idle", "Walk"],
-}
+import { PlayerSpriteDefinition } from "../../../shared/types"
 
 export class SpriteHandler {
   private scene: Phaser.Scene
-  private spriteInfo: { [key in SpriteType]?: Set<string> } = {}
+  private nSpritesPerRow: number = 56
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
   }
 
   preloadSprites() {
-    Object.entries(animationsConfig).forEach(([spriteType, availableAnimations]) => {
-      const basePath = `assets/sprites/Tiny RPG Character Asset Pack v1.03 -Full 20 Characters/Characters(100x100)/${spriteType}/${spriteType}/${spriteType}`
+    this.scene.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
+      frameWidth: 11,
+      frameHeight: 11,
+    })
 
-      availableAnimations.forEach((animation) => {
-        const animationName = `${spriteType}-${animation.toLowerCase()}`
-        const path = `${basePath}-${animation}.png`
+    const manifest = this.scene.cache.json.get("componentManifest")
 
-        this.scene.load.spritesheet(animationName, path, {
+    Object.keys(manifest).forEach((component: string) => {
+      const filenames = manifest[component]
+
+      filenames.forEach((filename: string) => {
+        const path = `assets/sprites/Character_Generator/${component}/16x16/${filename}.png`
+        this.scene.load.spritesheet(filename, path, {
           frameWidth: CONFIG.SPRITE_WIDTH,
-          frameHeight: CONFIG.SPRITE_WIDTH,
+          frameHeight: CONFIG.SPRITE_HEIGHT,
         })
-
-        this.scene.load.on(`filecomplete-spritesheet-${animationName}`, () => {
-          if (!this.spriteInfo[spriteType]) {
-            this.spriteInfo[spriteType] = new Set<string>()
-          }
-          this.spriteInfo[spriteType]!.add(animation.toLowerCase())
-        })
-      })
-      this.scene.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
-        frameWidth: 11,
-        frameHeight: 11,
       })
     })
   }
 
-  createAnimations() {
-    Object.entries(this.spriteInfo).forEach(([spriteType, animations]) => {
-      this.createAnimationForCharacter(spriteType as SpriteType, animations!)
-    })
-
+  public createAnimations() {
     this.scene.anims.create({
       key: "speech-bubble-animation",
       frames: this.scene.anims.generateFrameNumbers("speech-bubble", { start: 0, end: 7 }),
@@ -78,50 +46,67 @@ export class SpriteHandler {
     })
   }
 
-  private createAnimationForCharacter(spriteType: SpriteType, animations: Set<string>) {
-    animations.forEach((animation) => {
-      let animationFinal = animation
+  public createPlayerAnimations(username: string, spriteDefinition: PlayerSpriteDefinition) {
+    const directions = ["right", "up", "left", "down"]
 
-      if (animation === "walk02") {
-        return
+    const animations = [
+      { keySuffix: "idle", row: 1, frameCount: 6, frameRate: 10, repeat: -1 },
+      { keySuffix: "walk", row: 2, frameCount: 6, frameRate: 10, repeat: -1 },
+      { keySuffix: "attack", row: 13, frameCount: 6, frameRate: 10, repeat: 0 },
+    ]
+
+    for (const anim of animations) {
+      const { keySuffix, row, frameCount, frameRate, repeat } = anim
+
+      for (const [directionIndex, direction] of directions.entries()) {
+        const frames = []
+        for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
+          const frameNumber = row * this.nSpritesPerRow + directionIndex * frameCount + frameIndex
+          const textureKey = `${username}-${keySuffix}-${direction}-frame${frameIndex}`
+
+          // Create a canvas texture for the composite frame
+          const canvasTexture = this.scene.textures.createCanvas(textureKey, CONFIG.SPRITE_WIDTH, CONFIG.SPRITE_HEIGHT)!
+          const canvas = canvasTexture.getSourceImage() as HTMLCanvasElement
+          const ctx = canvas.getContext("2d")!
+
+          // Draw each component's frame onto the canvas
+          for (const componentKey in spriteDefinition) {
+            const componentFilename = spriteDefinition[componentKey as keyof PlayerSpriteDefinition]
+            if (!componentFilename) continue
+
+            const componentFrame = this.scene.textures.getFrame(componentFilename, frameNumber)
+
+            if (componentFrame && componentFrame.source.image) {
+              // Adjust the drawImage parameters to draw only the character portion
+              ctx.drawImage(
+                componentFrame.source.image as CanvasImageSource,
+                componentFrame.cutX,
+                componentFrame.cutY,
+                CONFIG.SPRITE_CHARACTER_WIDTH, // Width of the character within the frame
+                componentFrame.cutHeight,
+                0,
+                0,
+                CONFIG.SPRITE_CHARACTER_WIDTH,
+                componentFrame.cutHeight,
+              )
+            }
+          }
+
+          // Refresh the canvas texture to update the composite image
+          canvasTexture.refresh()
+
+          // Add the composite frame to the animation frames
+          frames.push({ key: textureKey })
+        }
+
+        // Create the animation using the composite frames
+        this.scene.anims.create({
+          key: `${username}-${keySuffix}-${direction}`,
+          frames: frames,
+          frameRate: frameRate,
+          repeat: repeat,
+        })
       }
-      if (animation === "walk01") {
-        animationFinal = "walk"
-      } else if (animation === "attack" || animation === "attack01") {
-        animationFinal = "attack1"
-      } else if (animation === "attack02") {
-        animationFinal = "attack2"
-      } else if (animation === "attack03" || animation === "attack3") {
-        animationFinal = "attack3"
-      }
-
-      this.createAnimation(
-        spriteType,
-        animationFinal,
-        `${spriteType}-${animation}`,
-        animation.toLowerCase().startsWith("walk") ? 20 : 10,
-        animation.toLowerCase().startsWith("idle") || animation.toLowerCase().startsWith("walk") ? -1 : 0,
-      )
-    })
-  }
-
-  private createAnimation(
-    spriteType: SpriteType,
-    animation: string,
-    spritesheet: string,
-    frameRate: number,
-    repeat: number,
-  ) {
-    const texture = this.scene.textures.get(spritesheet)
-    if (texture) {
-      const frameCount = texture.frameTotal - 1
-
-      this.scene.anims.create({
-        key: `${spriteType}-${animation}`,
-        frames: this.scene.anims.generateFrameNumbers(spritesheet, { start: 0, end: frameCount - 1 }),
-        frameRate,
-        repeat,
-      })
     }
   }
 
@@ -135,13 +120,10 @@ export class SpriteHandler {
     return speechBubble
   }
 
-  public setupPlayer(player: Phaser.Physics.Arcade.Sprite, spriteType: SpriteType) {
+  public setupPlayer(player: Phaser.Physics.Arcade.Sprite, playerKey: string) {
     player.setScale(1)
     player.body!.setSize(CONFIG.SPRITE_CHARACTER_WIDTH, CONFIG.SPRITE_CHARACTER_WIDTH)
-    player.body!.setOffset(
-      CONFIG.SPRITE_WIDTH / 2 - CONFIG.SPRITE_CHARACTER_WIDTH / 2,
-      CONFIG.SPRITE_WIDTH / 2 - CONFIG.SPRITE_CHARACTER_WIDTH / 2,
-    )
-    player.anims.play(`${spriteType}-idle`)
+    player.body!.setOffset(0, CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_CHARACTER_WIDTH)
+    player.anims.play(`${playerKey}-idle-down`)
   }
 }

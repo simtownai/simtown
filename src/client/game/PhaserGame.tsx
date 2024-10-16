@@ -1,3 +1,4 @@
+import { PlayerSpriteDefinition } from "../../shared/types"
 import { EventBus } from "./EventBus"
 import StartGame from "./main"
 import { forwardRef, useEffect, useLayoutEffect, useRef } from "react"
@@ -10,6 +11,8 @@ export interface IRefPhaserGame {
 
 interface IProps {
   socket: Socket
+  username: string
+  spriteDefinition: PlayerSpriteDefinition
   currentActiveScene?: (scene_instance: Phaser.Scene) => void
   isChatContainerCollapsed: boolean
   setIsChatContainerCollapsed: (value: boolean) => void
@@ -20,6 +23,8 @@ interface IProps {
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
   {
     socket,
+    username,
+    spriteDefinition,
     currentActiveScene,
     isChatContainerCollapsed,
     setIsChatContainerCollapsed,
@@ -32,7 +37,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
   useLayoutEffect(() => {
     if (game.current === null) {
-      game.current = StartGame("game-container", socket)
+      game.current = StartGame("game-container", socket, username, spriteDefinition)
 
       if (typeof ref === "function") {
         ref({ game: game.current, scene: null })

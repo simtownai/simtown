@@ -1,5 +1,6 @@
 import { CONFIG } from "../shared/config"
-import { ChatMessage } from "../shared/types"
+import { createRandomSpriteDefinition } from "../shared/functions"
+import { ChatMessage, PlayerSpriteDefinition } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import Overlay from "./ui/Overlay"
@@ -10,6 +11,8 @@ const mobileWindowWidthThreshold = 450
 
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null)
+  const [username, setUsername] = useState<string>("Player" + Math.floor(Math.random() * 1000) + 1)
+  const [spriteDefinition, setSpriteDefinition] = useState<PlayerSpriteDefinition>(createRandomSpriteDefinition())
   const [chatmate, setChatmate] = useState<string | null>(null)
   const [isChatsContainerCollapsed, setIsChatsContainerCollapsed] = useState(true)
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
@@ -88,6 +91,8 @@ function App() {
       {socket && (
         <PhaserGame
           ref={phaserRef}
+          username={username}
+          spriteDefinition={spriteDefinition}
           socket={socket}
           currentActiveScene={currentScene}
           isChatContainerCollapsed={isChatsContainerCollapsed}
