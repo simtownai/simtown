@@ -41,8 +41,6 @@ export class Game extends Phaser.Scene {
   private uiCamera!: Phaser.Cameras.Scene2D.Camera
   private gameContainer!: Phaser.GameObjects.Container
   private uiContainer!: Phaser.GameObjects.Container
-  private playerContainer!: Phaser.GameObjects.Container
-  private otherPlayersContainer!: Phaser.GameObjects.Container
 
   private touchStartX: number = 0
   private touchStartY: number = 0
@@ -95,8 +93,6 @@ export class Game extends Phaser.Scene {
   private setupMap() {
     this.gameContainer = this.add.container(0, 0)
     this.uiContainer = this.add.container(0, 0)
-    this.playerContainer = this.add.container(0, 0)
-    this.otherPlayersContainer = this.add.container(0, 0)
 
     this.map = this.make.tilemap({ key: "map" })
     const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
@@ -111,7 +107,6 @@ export class Game extends Phaser.Scene {
     this.otherPlayersGroup = this.physics.add.group()
 
     this.gameContainer.add([grassLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
-    this.gameContainer.add([this.otherPlayersContainer, this.playerContainer])
   }
 
   private setupCameras() {
@@ -253,7 +248,9 @@ export class Game extends Phaser.Scene {
       },
     )
 
-    this.playerContainer.add(this.playerSprite)
+    this.add.existing(this.playerSprite)
+    this.uiCamera.ignore(this.playerSprite)
+    this.updateSpriteDepth(this.playerSprite)
   }
 
   private addOtherPlayer(playerInfo: PlayerData) {
@@ -277,12 +274,21 @@ export class Game extends Phaser.Scene {
       EventBus.emit("set-chatmate", playerInfo.username)
     })
 
-    this.otherPlayersContainer.add([otherPlayerSprite, speechBubble])
+    // Add the sprites directly to the scene
+    this.add.existing(otherPlayerSprite)
+    this.add.existing(speechBubble)
     this.otherPlayers.set(playerInfo.id, {
       sprite: otherPlayerSprite,
       speechBubble,
       playerData: playerInfo,
     })
+
+    this.uiCamera.ignore([otherPlayerSprite, speechBubble])
+    this.updateSpriteDepth(otherPlayerSprite)
+  }
+
+  private updateSpriteDepth(sprite: Phaser.Physics.Arcade.Sprite) {
+    sprite.setDepth(sprite.y + 64)
   }
 
   private getClosestPlayer(): PlayerData | null {
@@ -447,6 +453,8 @@ export class Game extends Phaser.Scene {
       this.input.keyboard!.resetKeys()
     }
 
+    this.updateSpriteDepth(this.playerSprite)
+
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
       username: this.username,
@@ -470,10 +478,13 @@ export class Game extends Phaser.Scene {
       const otherPlayerSprite = otherPlayerData.sprite
       const otherPlayerSpeechBubble = otherPlayerData.speechBubble
 
+      this.updateSpriteDepth(otherPlayerSprite)
+
       otherPlayerSpeechBubble.setPosition(
         otherPlayerSprite.x,
         otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
       )
+      otherPlayerSpeechBubble.setDepth(otherPlayerSprite.depth + 1)
 
       const distance = Phaser.Math.Distance.Between(
         this.playerSprite.x,
