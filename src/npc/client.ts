@@ -16,7 +16,6 @@ export class NPC {
   private collisionLayer: any
   private collisionGrid: number[][]
   socket: Socket
-  private playerId: string
   playerData: PlayerData
   public otherPlayers: Map<string, PlayerData>
   private tileSize: number
@@ -86,10 +85,10 @@ export class NPC {
 
   private setupSocketEvents() {
     this.socket.on("connect", () => {
-      this.playerId = this.socket.id!
+      const playerId = this.socket.id!
       this.socket.on("existingPlayers", (players: PlayerData[]) => {
         players.forEach((player) => {
-          if (player.id === this.playerId) {
+          if (player.id === playerId) {
             this.playerData = player
             this.movementController = new MovementController(this.playerData, this.socket, this)
             this.aiBrain = new AiBrain({
@@ -97,20 +96,20 @@ export class NPC {
               socket: this.socket,
             })
           } else {
-            this.otherPlayers.set(player.id, player)
+            this.otherPlayers.set(player.username, player)
           }
         })
       })
 
       this.socket.on("playerJoined", (player: PlayerData) => {
-        if (player.id !== this.playerId) {
-          this.otherPlayers.set(player.id, player)
+        if (player.id !== this.playerData.id) {
+          this.otherPlayers.set(player.username, player)
         }
       })
 
       this.socket.on("playerDataChanged", (player: PlayerData) => {
-        if (player.id !== this.playerId) {
-          this.otherPlayers.set(player.id, player)
+        if (player.id !== this.playerData.id) {
+          this.otherPlayers.set(player.username, player)
         }
       })
 
