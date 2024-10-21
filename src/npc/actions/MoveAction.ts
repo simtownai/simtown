@@ -12,8 +12,9 @@ export class MoveAction extends Action {
   }
 
   async start() {
-    this.isStarted = true
     console.log("MoveAction start", this.targetPosition)
+
+    this.isStarted = true
     this.npc.movementController.setMovementFailedCallback(() => {
       console.log("Movement failed callback received in MoveAction")
       this.isFailed = true
@@ -23,7 +24,6 @@ export class MoveAction extends Action {
       this.isCompletedFlag = true
     })
 
-    console.log("MoveAction start", this.targetPosition)
     this.npc.move_to(this.targetPosition)
     this.npc.movementController.resume()
   }
