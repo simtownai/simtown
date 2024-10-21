@@ -16,6 +16,7 @@ import { Socket, io } from "socket.io-client"
 export class NPC {
   private collisionLayer: (typeof mapData.layers)[0]
   private objectLayer: (typeof mapData.layers)[0]["objects"]
+  private roadLayer: (typeof mapData.layers)[0] | undefined
   private collisionGrid: number[][]
   socket: Socket
   playerData: PlayerData
@@ -34,7 +35,8 @@ export class NPC {
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
     this.planForTheDay = []
-    this.collisionLayer = mapData.layers.find((layer: any) => layer.name === "Collisions")!
+    this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
+    this.roadLayer = mapData.layers.find((layer) => layer.name === "Roads")
     this.objectLayer = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
@@ -81,8 +83,16 @@ export class NPC {
       const row: number[] = []
       for (let x = 0; x < this.collisionLayer.width!; x++) {
         const tileIndex = y * this.collisionLayer.width! + x
-        const tileId = this.collisionLayer.data![tileIndex]
-        row.push(tileId === 0 ? 0 : 1)
+        const collisionTileId = this.collisionLayer.data![tileIndex]
+        const roadTileId = this.roadLayer ? this.roadLayer.data![tileIndex] : null
+
+        if (collisionTileId !== 0) {
+          row.push(0)
+        } else if (roadTileId !== null && roadTileId !== 0) {
+          row.push(1)
+        } else {
+          row.push(10)
+        }
       }
       this.collisionGrid.push(row)
     }
@@ -274,7 +284,7 @@ export class NPC {
       return true
     }
     const tileValue = this.collisionGrid[y][x]
-    return tileValue !== 0
+    return tileValue === 0
   }
 
   getBlockingPlayer(x: number, y: number): PlayerData | null {
@@ -287,7 +297,6 @@ export class NPC {
     return null
   }
 
-  // Refactored to return a Promise instead of using a callback
   async calculatePath(
     targetPosition: { x: number; y: number },
     considerPlayers: boolean,
@@ -296,16 +305,19 @@ export class NPC {
     const end = this.worldToGrid(targetPosition.x, targetPosition.y)
 
     const easystar = new EasyStar.js()
-    easystar.setAcceptableTiles([0])
+
+    easystar.setAcceptableTiles([1, 10])
+
+    easystar.setTileCost(1, 1)
+    easystar.setTileCost(10, 10)
+
     // easystar.enableDiagonals()
     easystar.disableCornerCutting()
 
     let grid: number[][]
     if (considerPlayers) {
-      // Update grid with players as obstacles
       grid = this.getGridWithPlayers()
     } else {
-      // Use collision grid without players
       grid = this.collisionGrid
     }
 
@@ -329,7 +341,7 @@ export class NPC {
         gridPos.y >= 0 &&
         gridPos.y < gridWithPlayers.length
       ) {
-        gridWithPlayers[gridPos.y][gridPos.x] = 1
+        gridWithPlayers[gridPos.y][gridPos.x] = 0
       }
     }
     return gridWithPlayers
