@@ -3,6 +3,7 @@ import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData } from "../shared/types"
 import { AiBrain, FunctionSchema } from "./AiBrain"
 import { MovementController } from "./MovementController"
+import { ActionPlan, generatePlanForTheday } from "./Plan"
 import { Action } from "./actions/Action"
 import { IdleAction } from "./actions/IdleAction"
 import { MoveAction } from "./actions/MoveAction"
@@ -27,9 +28,11 @@ export class NPC {
   private actionStack: Action[] = []
   private talkActionSchema: FunctionSchema[]
   private talkActionFunctionMap: { [functionName: string]: Function }
+  private planForTheDay: ActionPlan
 
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
+    this.planForTheDay = []
     this.collisionLayer = mapData.layers.find((layer: any) => layer.name === "Collisions")!
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
@@ -42,7 +45,11 @@ export class NPC {
     this.socket.connect()
     this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
     this.talkActionSchema = [
-      functionToSchema(this.pushMoveToAction, move_to_args, "Move the NPC to the specified coordinates."),
+      functionToSchema(
+        this.pushMoveToAction,
+        move_to_args,
+        "Move the NPC to the specified coordinates. If no coordinates, move to 50,50",
+      ),
     ]
     this.talkActionFunctionMap = {
       pushMoveToAction: this.pushMoveToAction.bind(this),
@@ -87,7 +94,7 @@ export class NPC {
     this.socket.on("connect", () => {
       const playerId = this.socket.id!
       this.socket.on("existingPlayers", (players: PlayerData[]) => {
-        players.forEach((player) => {
+        players.forEach(async (player) => {
           if (player.id === playerId) {
             this.playerData = player
             this.movementController = new MovementController(this.playerData, this.socket, this)
@@ -95,6 +102,14 @@ export class NPC {
               npcConfig: this.npcConfig,
               socket: this.socket,
             })
+            setTimeout(async () => {
+              try {
+                this.planForTheDay = await generatePlanForTheday(this.npcConfig, Array.from(this.otherPlayers.keys()))
+                console.log("Plan for the day is", this.planForTheDay)
+              } catch (error) {
+                console.error("Error generating plan for the day:", error)
+              }
+            }, 5000)
           } else {
             this.otherPlayers.set(player.username, player)
           }
@@ -102,7 +117,7 @@ export class NPC {
       })
 
       this.socket.on("playerJoined", (player: PlayerData) => {
-        if (player.id !== this.playerData.id) {
+        if (!this.playerData || player.id !== this.playerData.id) {
           this.otherPlayers.set(player.username, player)
         }
       })
@@ -190,7 +205,7 @@ export class NPC {
   }
 
   private async startNextAction() {
-    const nextActionData = this.aiBrain.memory.planForTheDay.shift()
+    const nextActionData = this.planForTheDay.shift()
     if (!nextActionData) {
       console.log("No action to perform")
       return
@@ -200,20 +215,19 @@ export class NPC {
 
     let targetPlayerId: string | null = null
 
-    switch (nextActionData.action.type) {
+    switch (nextActionData.type) {
       case "idle":
-        action = new IdleAction(this, 600000) // idle for 10 minutes
+        action = new IdleAction(this) // idle for 10 minutes
         break
       case "move":
-        console.log("Moving to player")
-        targetPlayerId = nextActionData.action.target
+        targetPlayerId = nextActionData.target
         const playerPosition = this.getPlayerPosition(targetPlayerId)
         if (playerPosition) {
           action = new MoveAction(this, playerPosition)
         }
         break
       case "talk":
-        targetPlayerId = nextActionData.action.name
+        targetPlayerId = nextActionData.name
         action = new TalkAction(this, targetPlayerId, this.talkActionSchema, this.talkActionFunctionMap, {
           type: "new",
         })

@@ -37,9 +37,8 @@ export class TalkAction extends Action {
       ...functionMap,
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
     }
-    const tempPlayer = this.npc.otherPlayers.keys().next().value
-
-    this.targetPlayerUsername = tempPlayer
+    console.log("WE ARE IN CONSTRUCTOR,target username is ", targetPlayerUsername)
+    this.targetPlayerUsername = targetPlayerUsername
     this.conversationType = conversationType
     this.state = this.conversationType.type === "new" ? "moving" : "talking"
   }
@@ -198,8 +197,6 @@ export class TalkAction extends Action {
       const playerPosition = this.npc.getPlayerPosition(this.targetPlayerUsername)
 
       if (playerPosition) {
-        console.log("Initiating movement towards the player at position:", playerPosition)
-
         this.targetPosition = {
           x: playerPosition.x,
           y: playerPosition.y,
@@ -227,6 +224,7 @@ export class TalkAction extends Action {
 
           // Check if the movement is completed
           if (this.moveAction.isCompleted()) {
+            console.log("target username is ", this.targetPlayerUsername)
             this.startConversation(this.targetPlayerUsername)
             this.state = "talking"
           }

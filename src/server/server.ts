@@ -124,13 +124,16 @@ io.on("connection", (socket) => {
 
   socket.on("endConversation", (message: ChatMessage) => {
     logger.info(`endConversation receied from ${message.from}: ${message.message}`)
-    const recipientSocket = io.sockets.sockets.get(message.to)
-    if (recipientSocket) {
-      recipientSocket.emit("endConversation", message)
-      // socket.emit("newMessage", message)
-    } else {
-      socket.emit("messageError", { error: "Recipient not found" })
-    }
+    players.forEach((player) => {
+      if (player.username === message.to) {
+        const recipientSocket = io.sockets.sockets.get(player.id)
+        if (recipientSocket) {
+          recipientSocket.emit("endConversation", message)
+        } else {
+          socket.emit("messageError", { error: "Recipient not found" })
+        }
+      }
+    })
   })
 
   socket.on("sendMessage", (message: ChatMessage) => {

@@ -67,7 +67,6 @@ export class MovementController {
     const worldPos = this.npc.gridToWorld(nextTile.x, nextTile.y)
 
     if (this.npc.isCellBlocked(nextTile.x, nextTile.y)) {
-      console.log("We are blocked")
       this.handleBlockedPath(nextTile)
       this.updateAnimationAndEmit(0, 0)
       return
