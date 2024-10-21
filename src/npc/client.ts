@@ -13,7 +13,7 @@ import EasyStar from "easystarjs"
 import { Socket, io } from "socket.io-client"
 
 export class NPC {
-  private collisionLayer: any
+  private collisionLayer: (typeof mapData.layers)[0]
   private collisionGrid: number[][]
   socket: Socket
   playerData: PlayerData
@@ -30,7 +30,7 @@ export class NPC {
 
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
-    this.collisionLayer = mapData.layers.find((layer: any) => layer.name === "Collisions")!
+    this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.otherPlayers = new Map()
@@ -72,11 +72,11 @@ export class NPC {
   }
 
   private initializeCollisionGrid() {
-    for (let y = 0; y < this.collisionLayer.height; y++) {
+    for (let y = 0; y < this.collisionLayer.height!; y++) {
       const row: number[] = []
-      for (let x = 0; x < this.collisionLayer.width; x++) {
-        const tileIndex = y * this.collisionLayer.width + x
-        const tileId = this.collisionLayer.data[tileIndex]
+      for (let x = 0; x < this.collisionLayer.width!; x++) {
+        const tileIndex = y * this.collisionLayer.width! + x
+        const tileId = this.collisionLayer.data![tileIndex]
         row.push(tileId === 0 ? 0 : 1)
       }
       this.collisionGrid.push(row)
