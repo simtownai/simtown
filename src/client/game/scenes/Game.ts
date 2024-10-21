@@ -97,7 +97,8 @@ export class Game extends Phaser.Scene {
     this.map = this.make.tilemap({ key: "map" })
     const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
     const grassLayer = this.map.createLayer("Grass", tileset)!
-    const roadLayer = this.map.createLayer("Road and water", tileset)!
+    const waterLayer = this.map.createLayer("Water", tileset)!
+    const roadLayer = this.map.createLayer("Roads", tileset)!
     const objects1Layer = this.map.createLayer("Objects1", tileset)!
     const objects2Layer = this.map.createLayer("Objects2", tileset)!
     this.collisionLayer = this.map.createLayer("Collisions", tileset)!
@@ -106,7 +107,7 @@ export class Game extends Phaser.Scene {
 
     this.otherPlayersGroup = this.physics.add.group()
 
-    this.gameContainer.add([grassLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
+    this.gameContainer.add([grassLayer, waterLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
   }
 
   private setupCameras() {
