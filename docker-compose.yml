@@ -1,5 +1,6 @@
 services:
   simtown-server:
+    container_name: simtown-server
     image: ${IMAGE_NAME:-simtown}
     build:
       context: .
@@ -10,13 +11,12 @@ services:
     command: ["bun", "src/server/server.ts"]
 
   simtown-npc:
+    container_name: simtown-npc
     image: ${IMAGE_NAME:-simtown}
     build:
       context: .
     env_file:
       - .env
-    environment:
-      - OPENAI_API_KEY
     network_mode: "host"
     restart: always
     tty: true

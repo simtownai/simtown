@@ -1,3 +1,4 @@
+import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import cors from "cors"
@@ -32,6 +33,15 @@ const io = new Server(server, {
 
 const players: Map<string, PlayerData> = new Map()
 
+const spawnArea = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.find((obj) => obj.name === "spawn")!
+
+function getRandomPositionInSpawnArea(): { x: number; y: number } {
+  return {
+    x: spawnArea.x + Math.random() * spawnArea.width,
+    y: spawnArea.y + Math.random() * spawnArea.height,
+  }
+}
+
 function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
   const characterWidth = CONFIG.SPRITE_COLLISION_BOX_HEIGHT
   return (
@@ -60,9 +70,10 @@ function findValidPosition(newPlayer: PlayerData): PlayerData {
       return newPlayer
     }
 
-    // If collision found, try a new random position
-    newPlayer.x = 300 + Math.random() * 100
-    newPlayer.y = 250 + Math.random() * 50
+    // If collision found, try a new random position within the spawn area
+    const newPosition = getRandomPositionInSpawnArea()
+    newPlayer.x = newPosition.x
+    newPlayer.y = newPosition.y
     attempts++
   }
 
@@ -73,15 +84,15 @@ function findValidPosition(newPlayer: PlayerData): PlayerData {
 io.on("connection", (socket) => {
   const playerId = socket.id
   socket.on("joinGame", (username: string, spriteDefinition: PlayerSpriteDefinition) => {
+    const spawnPosition = getRandomPositionInSpawnArea()
     let playerData: PlayerData = {
       id: playerId,
       username: username,
       spriteDefinition: spriteDefinition,
-      x: 300 + Math.random() * 100,
-      y: 250 + Math.random() * 50,
+      x: spawnPosition.x,
+      y: spawnPosition.y,
       animation: `${username}-idle-down`,
     }
-
     // Find a valid initial position without collisions
     playerData = findValidPosition(playerData)
 
