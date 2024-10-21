@@ -1,4 +1,3 @@
-// import { FunctionSchema } from './AiBrain';
 import { z } from "zod"
 
 export interface FunctionSchema {
@@ -31,16 +30,15 @@ export function functionToSchema(
   description: string = "",
 ): FunctionSchema {
   const parameters: Record<string, any> = {}
-  const required: string[] = []
+  const required = new Set<string>() // Use a Set to ensure uniqueness
 
   const shape = paramSchema.shape || {}
 
   Object.entries(shape).forEach(([paramName, zodType]) => {
-    // @ts-ignore
     parameters[paramName] = getJsonSchemaForZodType(zodType)
 
     if (!(zodType instanceof z.ZodOptional)) {
-      required.push(paramName)
+      required.add(paramName) // Add to Set
     }
   })
 
@@ -52,7 +50,7 @@ export function functionToSchema(
       parameters: {
         type: "object",
         properties: parameters,
-        required: required,
+        required: Array.from(required), // Convert Set to Array
       },
     },
   }
@@ -63,6 +61,44 @@ function getJsonSchemaForZodType(zodType: z.ZodTypeAny): any {
   if (zodType instanceof z.ZodOptional) {
     return getJsonSchemaForZodType(zodType.unwrap())
   }
+
+  // Handle Discriminated Unions
+  if (zodType instanceof z.ZodDiscriminatedUnion) {
+    const discriminator = zodType.discriminator
+    const variants = zodType.options
+
+    const oneOf = variants.map((variant) => {
+      const variantSchema = getJsonSchemaForZodType(variant)
+      // Ensure the discriminator is a constant in each variant
+      if (variant instanceof z.ZodObject) {
+        // Use a Set to manage required fields within each variant
+        const variantRequired = new Set<string>(variantSchema.required || [])
+
+        return {
+          ...variantSchema,
+          properties: {
+            ...variantSchema.properties,
+            [discriminator]: {
+              const: variant.shape[discriminator]._def.value,
+              type: "string",
+            },
+          },
+          required: Array.from(variantRequired).includes(discriminator)
+            ? Array.from(variantRequired)
+            : [...Array.from(variantRequired), discriminator],
+        }
+      }
+      return variantSchema
+    })
+
+    return {
+      oneOf,
+      discriminator: {
+        propertyName: discriminator,
+      },
+    }
+  }
+
   const typeKind = zodType._def.typeName as z.ZodFirstPartyTypeKind
   const baseSchema = { type: zodTypeToJsonSchema[typeKind as keyof typeof zodTypeToJsonSchema] || "string" }
 
@@ -75,19 +111,19 @@ function getJsonSchemaForZodType(zodType: z.ZodTypeAny): any {
 
   if (zodType instanceof z.ZodObject) {
     const properties: Record<string, any> = {}
-    const required: string[] = []
+    const required = new Set<string>() // Use a Set to ensure uniqueness
 
     Object.entries(zodType.shape).forEach(([key, value]) => {
       properties[key] = getJsonSchemaForZodType(value as z.ZodTypeAny)
       if (!(value instanceof z.ZodOptional)) {
-        required.push(key)
+        required.add(key) // Add to Set
       }
     })
 
     return {
       ...baseSchema,
       properties,
-      required: required.length > 0 ? required : undefined,
+      required: required.size > 0 ? Array.from(required) : undefined, // Convert Set to Array
     }
   }
 

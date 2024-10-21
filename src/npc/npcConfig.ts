@@ -1,6 +1,5 @@
 import { createRandomSpriteDefinition } from "../shared/functions"
 import { PlayerSpriteDefinition } from "../shared/types"
-import { z } from "zod"
 
 export const ConversationTimeoutThreshold = 50000
 
@@ -29,8 +28,3 @@ export const npcConfig: NpcConfig[] = [
     ],
   },
 ]
-
-export const move_to_args = z.object({
-  x: z.number(),
-  y: z.number(),
-})

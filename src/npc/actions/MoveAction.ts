@@ -1,18 +1,19 @@
+import { MoveTarget } from "../Plan"
 import { NPC } from "../client"
 import { Action } from "./Action"
 
 export class MoveAction extends Action {
-  private targetPosition: { x: number; y: number }
+  private moveTarget: MoveTarget
   isStarted: boolean = false
   isFailed: boolean = false // New flag for movement failure
 
-  constructor(npc: NPC, targetPosition: { x: number; y: number }) {
+  constructor(npc: NPC, moveTarget: MoveTarget) {
     super(npc)
-    this.targetPosition = targetPosition
+    this.moveTarget = moveTarget
   }
 
   async start() {
-    console.log("MoveAction start", this.targetPosition)
+    console.log("MoveAction start", this.moveTarget)
 
     this.isStarted = true
     this.npc.movementController.setMovementFailedCallback(() => {
@@ -24,7 +25,7 @@ export class MoveAction extends Action {
       this.isCompletedFlag = true
     })
 
-    this.npc.move_to(this.targetPosition)
+    this.npc.move_to(this.moveTarget)
     this.npc.movementController.resume()
   }
 
@@ -47,6 +48,7 @@ export class MoveAction extends Action {
 
   resume(): void {
     super.resume()
+    this.npc.move_to(this.moveTarget)
     this.npc.movementController.resume()
   }
 }

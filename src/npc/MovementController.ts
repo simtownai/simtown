@@ -101,7 +101,7 @@ export class MovementController {
 
     this.updateAnimationAndEmit(moveX, moveY)
 
-    if (this.pathIndex >= this.path.length && this.isAtPosition(this.targetPosition)) {
+    if (this.pathIndex >= this.path.length) {
       this.handleMovementCompleted()
     }
   }
@@ -265,14 +265,5 @@ export class MovementController {
     }
 
     this.socket.emit("updatePlayerData", updateData)
-  }
-
-  isAtPosition(targetPosition: { x: number; y: number }): boolean {
-    const verticalOffset = (CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT) / 2
-    const dx = this.playerData.x - targetPosition.x
-    const dy = this.playerData.y + verticalOffset - (targetPosition.y + verticalOffset)
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    console.log("distance", distance)
-    return distance < 10
   }
 }

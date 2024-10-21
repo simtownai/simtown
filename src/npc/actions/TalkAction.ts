@@ -1,4 +1,5 @@
 import { ChatMessage } from "../../shared/types"
+import { MoveTarget } from "../Plan"
 import { FunctionSchema, functionToSchema } from "../aihelper"
 import { NPC } from "../client"
 import { ConversationTimeoutThreshold } from "../npcConfig"
@@ -17,27 +18,19 @@ export type ConversationType = ExistingConversationType | NewConversationType
 export class TalkAction extends Action {
   private targetPlayerUsername: string
   private state: TalkActionState
-  private targetPosition: { x: number; y: number } | null = null
   private moveAction: MoveAction | null = null
   private conversationTimeout: NodeJS.Timeout | null = null
   tools: FunctionSchema[]
   functionMap: { [functionName: string]: Function }
   conversationType: ConversationType
 
-  constructor(
-    npc: NPC,
-    targetPlayerUsername: string,
-    tools: FunctionSchema[],
-    functionMap: { [functionName: string]: Function },
-    conversationType: ConversationType,
-  ) {
+  constructor(npc: NPC, targetPlayerUsername: string, conversationType: ConversationType) {
     super(npc)
-    this.tools = [this.endConversationTool, ...tools]
+    this.tools = [this.endConversationTool]
     this.functionMap = {
-      ...functionMap,
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
     }
-    console.log("WE ARE IN CONSTRUCTOR,target username is ", targetPlayerUsername)
+    console.log("WE ARE IN CONSTRUCTOR, target username is ", targetPlayerUsername)
     this.targetPlayerUsername = targetPlayerUsername
     this.conversationType = conversationType
     this.state = this.conversationType.type === "new" ? "moving" : "talking"
@@ -194,20 +187,11 @@ export class TalkAction extends Action {
 
     if (this.conversationType.type === "new") {
       // Proceed with moving and starting a new conversation
-      const playerPosition = this.npc.getPlayerPosition(this.targetPlayerUsername)
-
-      if (playerPosition) {
-        this.targetPosition = {
-          x: playerPosition.x,
-          y: playerPosition.y,
-        }
-
-        this.moveAction = new MoveAction(this.npc, this.targetPosition)
-        await this.moveAction.start()
-      } else {
-        console.warn(`Player with ID ${this.targetPlayerUsername} not found.`)
-        this.isCompletedFlag = true // Can't find player, mark action as completed
-      }
+      this.moveAction = new MoveAction(this.npc, {
+        targetType: "person",
+        name: this.targetPlayerUsername,
+      } as MoveTarget)
+      await this.moveAction.start()
     } else {
       // Handle the message immediately
       await this.handleMessage(this.conversationType.message)

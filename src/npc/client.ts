@@ -1,15 +1,14 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData } from "../shared/types"
-import { AiBrain, FunctionSchema } from "./AiBrain"
+import { AiBrain } from "./AiBrain"
 import { MovementController } from "./MovementController"
-import { ActionPlan, generatePlanForTheday } from "./Plan"
+import { ActionPlan, MoveTarget, generatePlanForTheday } from "./Plan"
 import { Action } from "./actions/Action"
 import { IdleAction } from "./actions/IdleAction"
 import { MoveAction } from "./actions/MoveAction"
 import { TalkAction } from "./actions/TalkAction"
-import { functionToSchema } from "./aihelper"
-import { NpcConfig, move_to_args, npcConfig } from "./npcConfig"
+import { NpcConfig, npcConfig } from "./npcConfig"
 import EasyStar from "easystarjs"
 import { Socket, io } from "socket.io-client"
 
@@ -28,8 +27,6 @@ export class NPC {
   private npcConfig: NpcConfig
   private currentAction: Action | null = null
   private actionStack: Action[] = []
-  private talkActionSchema: FunctionSchema[]
-  private talkActionFunctionMap: { [functionName: string]: Function }
   private planForTheDay: ActionPlan
 
   constructor(npcConfig: NpcConfig) {
@@ -48,20 +45,11 @@ export class NPC {
     this.startUpdateLoop()
     this.socket.connect()
     this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
-    this.talkActionSchema = [
-      functionToSchema(
-        this.pushMoveToAction,
-        move_to_args,
-        "Move the NPC to the specified coordinates. If no coordinates, move to 50,50",
-      ),
-    ]
-    this.talkActionFunctionMap = {
-      pushMoveToAction: this.pushMoveToAction.bind(this),
-    }
   }
 
-  pushMoveToAction(args: { x: number; y: number }) {
-    const action = new MoveAction(this, args)
+  pushMoveToAction(moveTarget: MoveTarget) {
+    console.log("Pushing move action to stack", moveTarget)
+    const action = new MoveAction(this, moveTarget)
     return this.pushNewAction(action)
   }
   pushNewAction(action: Action) {
@@ -112,7 +100,11 @@ export class NPC {
             })
             setTimeout(async () => {
               try {
-                this.planForTheDay = await generatePlanForTheday(this.npcConfig, Array.from(this.otherPlayers.keys()))
+                this.planForTheDay = await generatePlanForTheday(
+                  this.npcConfig,
+                  Array.from(this.otherPlayers.keys()),
+                  this.objectLayer!.map((obj) => obj.name),
+                )
                 console.log("Plan for the day is", this.planForTheDay)
               } catch (error) {
                 console.error("Error generating plan for the day:", error)
@@ -155,7 +147,7 @@ export class NPC {
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.npcConfig.username) {
           // Create a new action to handle the message
-          const action = new TalkAction(this, message.from, this.talkActionSchema, this.talkActionFunctionMap, {
+          const action = new TalkAction(this, message.from, {
             type: "existing",
             message: message,
           })
@@ -177,7 +169,7 @@ export class NPC {
         this.currentAction.update(deltaTime)
         if (this.currentAction.isCompleted()) {
           this.currentAction = this.actionStack.pop() || null
-          if (this.currentAction) {
+          if (this.currentAction && !this.currentAction.isCompleted) {
             this.currentAction.resume()
           } else {
             this.startNextAction()
@@ -189,9 +181,33 @@ export class NPC {
     }, 1000 / 30)
   }
 
-  async move_to(args: { x: number; y: number }) {
-    const { x, y } = args
-    console.log(`Received command to move to position: (${x}, ${y})`)
+  async move_to(moveTarget: MoveTarget) {
+    let [x, y] = [0, 0]
+
+    if (moveTarget.targetType === "coordinates") {
+      x = moveTarget.x
+      y = moveTarget.y
+    } else if (moveTarget.targetType === "person") {
+      const player = this.otherPlayers.get(moveTarget.name)
+      if (!player) {
+        return "Couldn't find that player"
+      }
+      x = player.x - 32
+      y = player.y
+    } else if (moveTarget.targetType === "place") {
+      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      if (!place) {
+        return "Couldn't find that place"
+      }
+
+      const randomX = place.x + Math.random() * place.width
+      const randomY = place.y + Math.random() * place.height
+
+      x = randomX
+      y = randomY
+    }
+
+    console.log(`Received command to move to position: (${x}, ${y})`, moveTarget)
 
     try {
       const foundPath = await this.calculatePath({ x, y }, false)
@@ -229,15 +245,11 @@ export class NPC {
         action = new IdleAction(this) // idle for 10 minutes
         break
       case "move":
-        targetPlayerId = nextActionData.target
-        const playerPosition = this.getPlayerPosition(targetPlayerId)
-        if (playerPosition) {
-          action = new MoveAction(this, playerPosition)
-        }
+        action = new MoveAction(this, nextActionData.target)
         break
       case "talk":
         targetPlayerId = nextActionData.name
-        action = new TalkAction(this, targetPlayerId, this.talkActionSchema, this.talkActionFunctionMap, {
+        action = new TalkAction(this, targetPlayerId, {
           type: "new",
         })
         break
