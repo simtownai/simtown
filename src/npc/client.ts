@@ -14,6 +14,7 @@ import { Socket, io } from "socket.io-client"
 
 export class NPC {
   private collisionLayer: (typeof mapData.layers)[0]
+  private objectLayer: (typeof mapData.layers)[0]["objects"]
   private collisionGrid: number[][]
   socket: Socket
   playerData: PlayerData
@@ -31,6 +32,7 @@ export class NPC {
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
     this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
+    this.objectLayer = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
     this.collisionGrid = []
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.otherPlayers = new Map()
