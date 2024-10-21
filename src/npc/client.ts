@@ -54,10 +54,6 @@ export class NPC {
     this.talkActionFunctionMap = {
       pushMoveToAction: this.pushMoveToAction.bind(this),
     }
-
-    setTimeout(() => {
-      this.startNextAction()
-    }, 7000)
   }
 
   pushMoveToAction(args: { x: number; y: number }) {
@@ -167,7 +163,6 @@ export class NPC {
 
       if (this.currentAction) {
         this.currentAction.update(deltaTime)
-
         if (this.currentAction.isCompleted()) {
           this.currentAction = this.actionStack.pop() || null
           if (this.currentAction) {
@@ -176,6 +171,8 @@ export class NPC {
             this.startNextAction()
           }
         }
+      } else if (this.planForTheDay.length > 0) {
+        this.startNextAction()
       }
     }, 1000 / 30)
   }
