@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { Action, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
@@ -10,6 +10,7 @@ interface OtherPlayerData {
   sprite: Phaser.Physics.Arcade.Sprite
   speechBubble: Phaser.GameObjects.Sprite
   playerData: PlayerData
+  actionEmoji: Phaser.GameObjects.Text
 }
 
 export class Game extends Phaser.Scene {
@@ -275,16 +276,27 @@ export class Game extends Phaser.Scene {
       EventBus.emit("set-chatmate", playerInfo.username)
     })
 
-    // Add the sprites directly to the scene
+    const actionEmoji = this.add
+      .text(0, 0, this.getTextFromAction(playerInfo.action), {
+        fontSize: "8px",
+        fontFamily: "Roboto",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5)
+      .setVisible(playerInfo.action !== undefined)
+
     this.add.existing(otherPlayerSprite)
     this.add.existing(speechBubble)
+    this.add.existing(actionEmoji)
+
     this.otherPlayers.set(playerInfo.id, {
       sprite: otherPlayerSprite,
       speechBubble,
       playerData: playerInfo,
+      actionEmoji,
     })
 
-    this.uiCamera.ignore([otherPlayerSprite, speechBubble])
+    this.uiCamera.ignore([otherPlayerSprite, speechBubble, actionEmoji])
     this.updateSpriteDepth(otherPlayerSprite)
   }
 
@@ -326,12 +338,34 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  private getTextFromAction(action: Action | undefined): string {
+    if (!action) return ""
+    switch (action.type) {
+      case "move":
+        let emoji = "🚶"
+        if (action.target.targetType === "coordinates") {
+          return emoji + ` 📍${action.target.x},${action.target.y}`
+        } else if (action.target.targetType === "person") {
+          return emoji + ` 👤${action.target.name}`
+        } else if (action.target.targetType === "place") {
+          return emoji + ` 🏠${action.target.name}`
+        } else {
+          return emoji
+        }
+      case "talk":
+        return `💬 ${action.name}`
+      case "idle":
+        return `😴`
+      default:
+        return ""
+    }
+  }
+
   private setupSocketListeners() {
     this.socket.on("existingPlayers", (players: PlayerData[]) => {
       console.log("Received existing players:", players)
       players.forEach((player) => {
         console.log("Player:", player)
-        console.log("Player:", this.socket.id)
         if (player.id === this.socket.id) {
           this.setupPlayer(player)
         } else {
@@ -353,6 +387,17 @@ export class Game extends Phaser.Scene {
         otherPlayerData.sprite.body!.reset(player.x, player.y)
         otherPlayerData.sprite.anims.play(player.animation, true)
         otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5))
+        if (player.action && JSON.stringify(player.action) !== JSON.stringify(otherPlayerData.playerData.action)) {
+          const emoji = this.getTextFromAction(player.action)
+          if (emoji) {
+            otherPlayerData.actionEmoji!.setText(emoji)
+            otherPlayerData.actionEmoji!.setVisible(true)
+          } else {
+            otherPlayerData.actionEmoji!.setVisible(false)
+          }
+        } else if (!player.action) {
+          otherPlayerData.actionEmoji!.setVisible(false)
+        }
         otherPlayerData.playerData = player
       }
     })
@@ -367,6 +412,7 @@ export class Game extends Phaser.Scene {
         this.otherPlayersGroup.remove(otherPlayer.sprite, true, true)
         otherPlayer.sprite.destroy()
         otherPlayer.speechBubble.destroy()
+        otherPlayer.actionEmoji.destroy()
         this.otherPlayers.delete(playerId)
       }
     })
@@ -478,6 +524,7 @@ export class Game extends Phaser.Scene {
     this.otherPlayers.forEach((otherPlayerData, _playerId) => {
       const otherPlayerSprite = otherPlayerData.sprite
       const otherPlayerSpeechBubble = otherPlayerData.speechBubble
+      const actionEmoji = otherPlayerData.actionEmoji
 
       this.updateSpriteDepth(otherPlayerSprite)
 
@@ -486,6 +533,12 @@ export class Game extends Phaser.Scene {
         otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
       )
       otherPlayerSpeechBubble.setDepth(otherPlayerSprite.depth + 1)
+
+      actionEmoji.setPosition(
+        otherPlayerSprite.x + CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+        otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
+      )
+      actionEmoji.setDepth(otherPlayerSprite.depth + 1)
 
       const distance = Phaser.Math.Distance.Between(
         this.playerSprite.x,
