@@ -5,6 +5,7 @@
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set
   - able to send msg to somebody only if within range (add new property to Chat, like isAllowedToSend)
+  - complex features: handle multiple newmessages from a single user when npc is busy
   - UI
     - buttons: send, resize, close, go to chats
     - messages themselves (add full date like in discord )

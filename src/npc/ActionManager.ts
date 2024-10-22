@@ -16,23 +16,25 @@ export class ActionManager {
 
   constructor(npc: NPC) {
     this.npc = npc
-    this.generatePlan()
+    this.generatePlanAndSetActions()
   }
 
   /**
    * Generates the initial plan for the day and seeds the action queue
    */
-  private async generatePlan() {
+  private async generatePlanAndSetActions(currentActionQueue: Action[] = [], reflections: string[] = []) {
     try {
       const initialPlanData = await generatePlanForTheday(
         this.npc.npcConfig,
         Array.from(this.npc.otherPlayers.keys()),
         this.npc.objectLayer!.map((obj) => obj.name),
+        currentActionQueue,
+        reflections,
       )
       this.actionQueue = this.createActionsFromPlanData(initialPlanData)
-      console.log("Generated initial plan for the day:", initialPlanData)
+      console.log("Generated new plan for the day:", initialPlanData)
     } catch (error) {
-      console.error("Error generating initial plan:", error)
+      console.error("Error generating new plan:", error)
     }
   }
 
@@ -132,13 +134,14 @@ export class ActionManager {
       // Process reflection
       console.log("Starting reflection for:", this.currentAction.constructor.name)
       const reflections = await reflect(this.currentAction)
-
       if (!reflections) {
         throw new Error(`Could not reflect for action: ${this.currentAction.constructor.name}`)
       }
 
       console.log("Processing reflections:", reflections)
-      this.npc.aiBrain.memory.reflections.push(...reflections)
+      this.npc.aiBrain.memory.reflections.push(reflections)
+
+      await this.generatePlanAndSetActions(this.actionQueue, this.npc.aiBrain.memory.reflections)
 
       // Clear the current action
       this.currentAction = null

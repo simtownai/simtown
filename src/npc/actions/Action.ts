@@ -6,9 +6,11 @@ export abstract class Action {
   isInterrupted: boolean = false
   protected isStarted: boolean = false
   protected isCompletedFlag: boolean = false
+  reason: string
 
-  constructor(npc: NPC) {
+  constructor(npc: NPC, reason: string = "") {
     this.npc = npc
+    this.reason = reason
   }
 
   abstract start(): void

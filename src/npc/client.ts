@@ -121,16 +121,35 @@ export class NPC {
         if (message.to === this.npcConfig.username) {
           // Check if we're already in a TalkAction with this person
           const currentAction = this.actionManager.getCurrentAction()
+          console.log("currentAction is talkaction", currentAction instanceof TalkAction)
           if (currentAction instanceof TalkAction && currentAction.targetPlayerUsername === message.from) {
             // Update the current TalkAction with the new message
             currentAction.handleMessage(message)
-          } else {
+          } else if (currentAction instanceof TalkAction) {
             // Create a new action to handle the message
+            const action = new TalkAction(
+              this,
+              message.from,
+              {
+                type: "existing",
+                message: message,
+              },
+              "We received a request to talk but were talking with sb else at the time",
+            )
+            const refusalMessage: ChatMessage = {
+              to: message.from,
+              from: this.npcConfig.username,
+              message: "I'm sorry, but I'm already talking with someone else right now.",
+              date: new Date().toISOString(),
+            }
+            this.socket.emit("sendMessage", refusalMessage)
+            this.pushNewAction(action)
+          } else {
             const action = new TalkAction(this, message.from, {
               type: "existing",
               message: message,
             })
-            this.pushNewAction(action)
+            this.interruptCurrentActionAndExecuteNew(action)
           }
         }
       })
@@ -290,8 +309,12 @@ export class NPC {
     }, 1000 / 30)
   }
 
-  pushNewAction(action: Action) {
+  interruptCurrentActionAndExecuteNew(action: Action) {
     return this.actionManager.interruptCurrentActionAndExecuteNew(action)
+  }
+
+  pushNewAction(action: Action) {
+    return this.actionManager.pushNewAction(action, 0)
   }
 }
 

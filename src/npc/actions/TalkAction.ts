@@ -24,8 +24,8 @@ export class TalkAction extends Action {
   functionMap: { [functionName: string]: Function }
   conversationType: ConversationType
 
-  constructor(npc: NPC, targetPlayerUsername: string, conversationType: ConversationType) {
-    super(npc)
+  constructor(npc: NPC, targetPlayerUsername: string, conversationType: ConversationType, reason: string = "") {
+    super(npc, reason)
     this.tools = [this.endConversationTool]
     this.functionMap = {
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
