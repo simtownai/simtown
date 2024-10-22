@@ -19,6 +19,11 @@ export class ConversationMemory {
     this.threads = new Map()
   }
 
+  getLatestThread(targetPlayerId: string): Thread {
+    const threads = this.threads.get(targetPlayerId)
+    return threads![threads!.length - 1]
+  }
+
   isLatestThreadActive(targetPlayerId: string): boolean {
     const threads = this.threads.get(targetPlayerId)
     if (!threads) {

@@ -16,7 +16,7 @@ type NewConversationType = { type: "new" }
 export type ConversationType = ExistingConversationType | NewConversationType
 
 export class TalkAction extends Action {
-  private targetPlayerUsername: string
+  targetPlayerUsername: string
   private state: TalkActionState
   private moveAction: MoveAction | null = null
   private conversationTimeout: NodeJS.Timeout | null = null
@@ -226,21 +226,27 @@ export class TalkAction extends Action {
 
   interrupt(): void {
     super.interrupt()
-    if (this.moveAction) this.moveAction.interrupt()
 
-    // Optionally, handle conversation interruption
-    if (this.state === "talking") {
-      console.log("Interruptiong talking action")
-      // to do: implement talking interruption
+    if (this.state === "moving") {
+      this.moveAction?.interrupt()
+    } else if (this.state === "talking") {
+      console.log("Interrupting talking action")
+
+      // Clear the conversation timeout
+      this.clearConversationTimeout()
     }
   }
 
   resume(): void {
     super.resume()
-    if (this.moveAction) this.moveAction.resume()
+    if (this.state === "moving") {
+      this.moveAction?.resume()
+    }
 
     // Optionally, handle conversation resumption
     if (this.state === "talking") {
+      this.setConversationTimeout(this.targetPlayerUsername)
+
       // Implement logic to resume conversation if needed
     }
   }

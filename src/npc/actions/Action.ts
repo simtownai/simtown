@@ -2,8 +2,8 @@ import { NPC } from "../client"
 
 // Action.ts
 export abstract class Action {
-  protected npc: NPC
-  protected isInterrupted: boolean = false
+  npc: NPC
+  isInterrupted: boolean = false
   protected isStarted: boolean = false
   protected isCompletedFlag: boolean = false
 

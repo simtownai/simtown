@@ -1,12 +1,11 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
 import { ChatMessage, PlayerData } from "../shared/types"
+import { ActionManager } from "./ActionManager"
 import { AiBrain } from "./AiBrain"
 import { MovementController } from "./MovementController"
-import { ActionPlan, MoveTarget, generatePlanForTheday } from "./Plan"
+import { MoveTarget } from "./Plan"
 import { Action } from "./actions/Action"
-import { IdleAction } from "./actions/IdleAction"
-import { MoveAction } from "./actions/MoveAction"
 import { TalkAction } from "./actions/TalkAction"
 import { NpcConfig, npcConfig } from "./npcConfig"
 import EasyStar from "easystarjs"
@@ -14,7 +13,7 @@ import { Socket, io } from "socket.io-client"
 
 export class NPC {
   private collisionLayer: (typeof mapData.layers)[0]
-  private objectLayer: (typeof mapData.layers)[0]["objects"]
+  objectLayer: (typeof mapData.layers)[0]["objects"]
   private roadLayer: (typeof mapData.layers)[0] | undefined
   private collisionGrid: number[][]
   socket: Socket
@@ -22,16 +21,14 @@ export class NPC {
   public otherPlayers: Map<string, PlayerData>
   private tileSize: number
   movementController: MovementController
-  private lastUpdateTime: number
   aiBrain: AiBrain
-  private npcConfig: NpcConfig
-  private currentAction: Action | null = null
-  private actionStack: Action[] = []
-  private planForTheDay: ActionPlan
+  npcConfig: NpcConfig
+  lastUpdateTime: number
+
+  private actionManager: ActionManager
 
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
-    this.planForTheDay = []
     this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
     this.roadLayer = mapData.layers.find((layer) => layer.name === "Roads")
     this.objectLayer = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
@@ -39,31 +36,11 @@ export class NPC {
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.otherPlayers = new Map()
     this.tileSize = 16
-    this.lastUpdateTime = Date.now()
     this.initializeCollisionGrid()
+    this.lastUpdateTime = Date.now()
     this.setupSocketEvents()
-    this.startUpdateLoop()
     this.socket.connect()
     this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
-  }
-
-  pushMoveToAction(moveTarget: MoveTarget) {
-    console.log("Pushing move action to stack", moveTarget)
-    const action = new MoveAction(this, moveTarget)
-    return this.pushNewAction(action)
-  }
-  pushNewAction(action: Action) {
-    if (this.currentAction) {
-      console.log("Interrupting action", this.currentAction.constructor.name)
-      this.currentAction.interrupt()
-      this.actionStack.push(this.currentAction)
-    }
-
-    // Always create a new MoveAction, regardless of whether there was a current action
-    this.currentAction = action
-    console.log("Starting new action", action.constructor.name)
-    action.start()
-    return "Pushed new action to stack"
   }
 
   private initializeCollisionGrid() {
@@ -100,12 +77,8 @@ export class NPC {
             })
             setTimeout(async () => {
               try {
-                this.planForTheDay = await generatePlanForTheday(
-                  this.npcConfig,
-                  Array.from(this.otherPlayers.keys()),
-                  this.objectLayer!.map((obj) => obj.name),
-                )
-                console.log("Plan for the day is", this.planForTheDay)
+                this.actionManager = new ActionManager(this)
+                this.startUpdateLoop()
               } catch (error) {
                 console.error("Error generating plan for the day:", error)
               }
@@ -146,39 +119,22 @@ export class NPC {
       // Listen for incoming messages
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.npcConfig.username) {
-          // Create a new action to handle the message
-          const action = new TalkAction(this, message.from, {
-            type: "existing",
-            message: message,
-          })
-          this.pushNewAction(action)
+          // Check if we're already in a TalkAction with this person
+          const currentAction = this.actionManager.getCurrentAction()
+          if (currentAction instanceof TalkAction && currentAction.targetPlayerUsername === message.from) {
+            // Update the current TalkAction with the new message
+            currentAction.handleMessage(message)
+          } else {
+            // Create a new action to handle the message
+            const action = new TalkAction(this, message.from, {
+              type: "existing",
+              message: message,
+            })
+            this.pushNewAction(action)
+          }
         }
       })
     })
-  }
-
-  private startUpdateLoop() {
-    setInterval(() => {
-      if (!this.playerData) return
-
-      const now = Date.now()
-      const deltaTime = now - this.lastUpdateTime
-      this.lastUpdateTime = now
-
-      if (this.currentAction) {
-        this.currentAction.update(deltaTime)
-        if (this.currentAction.isCompleted()) {
-          this.currentAction = this.actionStack.pop() || null
-          if (this.currentAction && !this.currentAction.isCompleted) {
-            this.currentAction.resume()
-          } else {
-            this.startNextAction()
-          }
-        }
-      } else if (this.planForTheDay.length > 0) {
-        this.startNextAction()
-      }
-    }, 1000 / 30)
   }
 
   async move_to(moveTarget: MoveTarget) {
@@ -227,43 +183,6 @@ export class NPC {
     const temp_player = this.otherPlayers.keys().next().value
     const player = this.otherPlayers.get(temp_player)
     return player ? { x: player.x, y: player.y } : null
-  }
-
-  private async startNextAction() {
-    const nextActionData = this.planForTheDay.shift()
-    if (!nextActionData) {
-      console.log("No action to perform")
-      return
-    }
-
-    let action: Action | null = null
-
-    let targetPlayerId: string | null = null
-
-    switch (nextActionData.type) {
-      case "idle":
-        action = new IdleAction(this) // idle for 10 minutes
-        break
-      case "move":
-        action = new MoveAction(this, nextActionData.target)
-        break
-      case "talk":
-        targetPlayerId = nextActionData.name
-        action = new TalkAction(this, targetPlayerId, {
-          type: "new",
-        })
-        break
-    }
-
-    if (action) {
-      if (this.currentAction) {
-        this.currentAction.interrupt()
-        this.actionStack.push(this.currentAction)
-      }
-      this.currentAction = action
-      console.log("Starting action: " + action.constructor.name)
-      action.start()
-    }
   }
 
   worldToGrid(x: number, y: number) {
@@ -357,6 +276,22 @@ export class NPC {
       }
     }
     return gridWithPlayers
+  }
+
+  private startUpdateLoop() {
+    setInterval(async () => {
+      if (!this.playerData) return
+
+      const now = Date.now()
+      const deltaTime = now - this.lastUpdateTime
+      this.lastUpdateTime = now
+
+      await this.actionManager.update(deltaTime)
+    }, 1000 / 30)
+  }
+
+  pushNewAction(action: Action) {
+    return this.actionManager.interruptCurrentActionAndExecuteNew(action)
   }
 }
 

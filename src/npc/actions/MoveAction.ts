@@ -3,7 +3,7 @@ import { NPC } from "../client"
 import { Action } from "./Action"
 
 export class MoveAction extends Action {
-  private moveTarget: MoveTarget
+  moveTarget: MoveTarget
   isStarted: boolean = false
   isFailed: boolean = false // New flag for movement failure
 

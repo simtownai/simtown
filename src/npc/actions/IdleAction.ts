@@ -1,9 +1,9 @@
 // IdleAction.ts
 import { NPC } from "../client"
+import { IdleActionDuration } from "../npcConfig"
 import { Action } from "./Action"
 
 export class IdleAction extends Action {
-  private idleTime: number = 10000 // 10 seconds in milliseconds
   private elapsedTime: number = 0
 
   constructor(npc: NPC) {
@@ -19,9 +19,9 @@ export class IdleAction extends Action {
     if (this.isInterrupted || !this.isStarted) return
 
     this.elapsedTime += deltaTime
-    if (this.elapsedTime >= this.idleTime) {
+    if (this.elapsedTime >= IdleActionDuration) {
       this.isCompletedFlag = true
-      console.log("Idle action completed after 10 seconds")
+      console.log("Idle action completed")
     }
   }
 }

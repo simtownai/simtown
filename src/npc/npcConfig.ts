@@ -2,6 +2,7 @@ import { createRandomSpriteDefinition } from "../shared/functions"
 import { PlayerSpriteDefinition } from "../shared/types"
 
 export const ConversationTimeoutThreshold = 50000
+export const IdleActionDuration = 10000
 
 export type NpcConfig = {
   id: string
@@ -17,14 +18,14 @@ export const npcConfig: NpcConfig[] = [
     id: "1",
     backstory: ["I used to live in a small village.", "I love talking with people."],
   },
-  {
-    username: "Mark",
-    spriteDefinition: createRandomSpriteDefinition(),
-    id: "2",
-    backstory: [
-      "I used to live in a small village.",
-      "I  hate talking with people",
-      "I will reply only if asked to move.",
-    ],
-  },
+  // {
+  //   username: "Mark",
+  //   spriteDefinition: createRandomSpriteDefinition(),
+  //   id: "2",
+  //   backstory: [
+  //     "I used to live in a small village.",
+  //     "I  hate talking with people",
+  //     "I will reply only if asked to move.",
+  //   ],
+  // },
 ]
