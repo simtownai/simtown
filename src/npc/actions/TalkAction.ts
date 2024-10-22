@@ -1,5 +1,4 @@
-import { ChatMessage } from "../../shared/types"
-import { MoveTarget } from "../Plan"
+import { ChatMessage, MoveTarget } from "../../shared/types"
 import { FunctionSchema, functionToSchema } from "../aihelper"
 import { NPC } from "../client"
 import { ConversationTimeoutThreshold } from "../npcConfig"

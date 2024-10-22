@@ -1,4 +1,4 @@
-import { MoveTarget } from "../Plan"
+import { MoveTarget } from "../../shared/types"
 import { NPC } from "../client"
 import { Action } from "./Action"
 

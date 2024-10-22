@@ -1,3 +1,4 @@
+import { ActionPlan, ActionPlanSchema } from "../shared/types"
 import { Action } from "./actions/Action"
 import { NpcConfig } from "./npcConfig"
 import client from "./openai"
@@ -5,61 +6,9 @@ import { createPlanDataFromActions } from "./planningHelpers"
 import { zodResponseFormat } from "openai/helpers/zod.mjs"
 import { z } from "zod"
 
-const CoordinatesTargetSchema = z.object({
-  targetType: z.literal("coordinates"),
-  x: z.number(),
-  y: z.number(),
-})
-
-const PersonTargetSchema = z.object({
-  targetType: z.literal("person"),
-  name: z.string(),
-})
-
-const PlaceTargetSchema = z.object({
-  targetType: z.literal("place"),
-  name: z.string(),
-})
-
-const TargetSchema = z.discriminatedUnion("targetType", [
-  CoordinatesTargetSchema,
-  PersonTargetSchema,
-  PlaceTargetSchema,
-])
-
-export const MoveSchema = z.object({
-  type: z.literal("move"),
-  target: TargetSchema,
-  reasonWhy: z.string().optional(),
-})
-
-const TalkSchema = z.object({
-  type: z.literal("talk"),
-  name: z.string(),
-  reasonWhy: z.string().optional(),
-})
-
-const IdleSchema = z.object({
-  type: z.literal("idle"),
-  reasonWhy: z.string().optional(),
-})
-
-const ActionSchema = z.discriminatedUnion("type", [MoveSchema, TalkSchema, IdleSchema])
-
-const ActionPlanSchema = z.array(ActionSchema)
-
 const ResponseSchema = z.object({
   plan: ActionPlanSchema,
 })
-
-type CoordinatesTarget = z.infer<typeof CoordinatesTargetSchema>
-type PersonTarget = z.infer<typeof PersonTargetSchema>
-type PlaceTarget = z.infer<typeof PlaceTargetSchema>
-
-export type MoveTarget = CoordinatesTarget | PersonTarget | PlaceTarget
-
-export type ActionPlan = z.infer<typeof ActionPlanSchema>
-// Adjust the import path accordingly
 
 export const generatePlanForTheday = async (
   npcConfig: NpcConfig,

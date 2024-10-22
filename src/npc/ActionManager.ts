@@ -1,9 +1,11 @@
-import { ActionPlan, generatePlanForTheday } from "./Plan"
+import { ActionPlan, Action as ActionType, UpdatePlayerData } from "../shared/types"
+import { generatePlanForTheday } from "./Plan"
 import { Action } from "./actions/Action"
 import { IdleAction } from "./actions/IdleAction"
 import { MoveAction } from "./actions/MoveAction"
 import { TalkAction } from "./actions/TalkAction"
 import { NPC } from "./client"
+import { transformActionToActionPlan } from "./planningHelpers"
 import { reflect } from "./reflect"
 
 // Assuming you have a plan function that generates plans based on reflections
@@ -42,7 +44,7 @@ export class ActionManager {
    * Converts plan data into Action instances
    */
   private createActionsFromPlanData(planData: ActionPlan): Action[] {
-    return planData.map((actionData) => {
+    return planData.map((actionData: ActionType) => {
       switch (actionData.type) {
         case "idle":
           return new IdleAction(this.npc)
@@ -110,6 +112,7 @@ export class ActionManager {
     }
 
     const nextAction = this.actionQueue.shift()
+
     if (!nextAction) {
       console.log("No more actions planned")
       return
@@ -117,6 +120,10 @@ export class ActionManager {
 
     this.currentAction = nextAction
     console.log("Starting next action:", nextAction.constructor.name)
+
+    this.npc.socket.emit("updatePlayerData", {
+      action: transformActionToActionPlan(this.currentAction),
+    } as UpdatePlayerData)
 
     if (this.currentAction.isInterrupted) {
       this.currentAction.resume()
@@ -139,9 +146,13 @@ export class ActionManager {
       }
 
       console.log("Processing reflections:", reflections)
+      console.log(
+        "Processing reflections======================================================================",
+        reflections,
+      )
       this.npc.aiBrain.memory.reflections.push(reflections)
 
-      await this.generatePlanAndSetActions(this.actionQueue, this.npc.aiBrain.memory.reflections)
+      // await this.generatePlanAndSetActions(this.actionQueue, this.npc.aiBrain.memory.reflections)
 
       // Clear the current action
       this.currentAction = null
