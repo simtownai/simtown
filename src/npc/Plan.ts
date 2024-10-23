@@ -21,8 +21,11 @@ export const generatePlanForTheday = async (
   const npcName = npcConfig.username
   const reflectionsSummary = reflections.join("\n")
 
+  console.log("reflections are", reflectionsSummary)
+
   // Serialize the current action queue
-  const existingPlanData = createPlanDataFromActions(currentActionQueue).toString()
+  const existingPlanData = JSON.stringify(createPlanDataFromActions(currentActionQueue))
+  console.log("existing plandata is", existingPlanData)
 
   // Build the prompt with clear instructions and context
   const prompt = `
@@ -38,7 +41,7 @@ You are an AI that generates action plans for NPCs in a simulation game.
 ${reflectionsSummary}
 
 **Current planned actions**:
-${existingPlanData}
+${JSON.stringify(existingPlanData)}
 
 The NPC can perform the following actions:
 - **Move**: Move to a target (coordinates, person by name, or place by name).
@@ -55,8 +58,6 @@ The NPC can perform the following actions:
 - If you add or modify existing actions, briefly explain why in comments.
 `
 
-  console.log("We are replanning with", prompt)
-
   // Make the AI request
   const completion = await client.beta.chat.completions.parse({
     model: "gpt-4o-mini",
@@ -68,6 +69,6 @@ The NPC can perform the following actions:
   if (!parsed) {
     throw new Error("Couldn't create a plan")
   }
-
+  console.log("Generated plan for the day:", parsed.plan)
   return parsed.plan
 }

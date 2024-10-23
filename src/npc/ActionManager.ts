@@ -25,6 +25,10 @@ export class ActionManager {
    * Generates the initial plan for the day and seeds the action queue
    */
   private async generatePlanAndSetActions(currentActionQueue: Action[] = [], reflections: string[] = []) {
+    console.log("================================")
+    console.log("Generating new plan for the day")
+    console.log("================================")
+
     try {
       const initialPlanData = await generatePlanForTheday(
         this.npc.npcConfig,
@@ -34,7 +38,7 @@ export class ActionManager {
         reflections,
       )
       this.actionQueue = this.createActionsFromPlanData(initialPlanData)
-      console.log("Generated new plan for the day:", initialPlanData)
+      // console.log("Generated new plan for the day:", initialPlanData)
     } catch (error) {
       console.error("Error generating new plan:", error)
     }
@@ -119,7 +123,7 @@ export class ActionManager {
     }
 
     this.currentAction = nextAction
-    console.log("Starting next action:", nextAction.constructor.name)
+    // console.log("Starting next action:", nextAction.constructor.name)
 
     this.npc.socket.emit("updatePlayerData", {
       action: transformActionToActionPlan(this.currentAction),
@@ -145,14 +149,11 @@ export class ActionManager {
         throw new Error(`Could not reflect for action: ${this.currentAction.constructor.name}`)
       }
 
-      console.log("Processing reflections:", reflections)
-      console.log(
-        "Processing reflections======================================================================",
-        reflections,
-      )
+      // console.log("Processing reflections:", reflections)
+
       this.npc.aiBrain.memory.reflections.push(reflections)
 
-      // await this.generatePlanAndSetActions(this.actionQueue, this.npc.aiBrain.memory.reflections)
+      await this.generatePlanAndSetActions(this.actionQueue, this.npc.aiBrain.memory.reflections)
 
       // Clear the current action
       this.currentAction = null
