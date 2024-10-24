@@ -213,8 +213,8 @@ export class NPC {
       const randomX = place.x + Math.random() * place.width
       const randomY = place.y + Math.random() * place.height
 
-      x = randomX
-      y = randomY
+      x = Math.round(randomX)
+      y = Math.round(randomY)
     }
 
     console.log(`Received command to move to position: (${x}, ${y})`, moveTarget)
