@@ -19,7 +19,7 @@ export class NPC {
   socket: Socket
   playerData: PlayerData
   public otherPlayers: Map<string, PlayerData>
-  private tileSize: number
+  tileSize: number
   movementController: MovementController
   aiBrain: AiBrain
   npcConfig: NpcConfig
@@ -38,9 +38,11 @@ export class NPC {
     this.tileSize = 16
     this.initializeCollisionGrid()
     this.lastUpdateTime = Date.now()
-    this.setupSocketEvents()
-    this.socket.connect()
-    this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
+    setTimeout(() => {
+      this.setupSocketEvents()
+      this.socket.connect()
+      this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
+    }, 7000)
   }
 
   private initializeCollisionGrid() {
@@ -167,8 +169,41 @@ export class NPC {
       if (!player) {
         return "Couldn't find that player"
       }
-      x = player.x - 32
-      y = player.y
+
+      const playerGridPos = this.worldToGrid(player.x, player.y)
+
+      const adjacentOffsets = [
+        { x: 0, y: -1 }, // North
+        { x: 1, y: 0 }, // East
+        { x: 0, y: 1 }, // South
+        { x: -1, y: 0 }, // West
+      ]
+
+      let possibleTargets: { x: number; y: number }[] = []
+
+      for (const offset of adjacentOffsets) {
+        const adjX = playerGridPos.x + offset.x
+        const adjY = playerGridPos.y + offset.y
+
+        if (!this.isCellBlocked(adjX, adjY)) {
+          const worldPos = this.gridToWorld(adjX, adjY)
+          possibleTargets.push({ x: worldPos.x, y: worldPos.y })
+        }
+      }
+
+      if (possibleTargets.length === 0) {
+        return "No adjacent position available to move to"
+      }
+
+      // Choose the closest target
+      possibleTargets.sort((a, b) => {
+        const distA = Math.hypot(a.x - this.playerData.x, a.y - this.playerData.y)
+        const distB = Math.hypot(b.x - this.playerData.x, b.y - this.playerData.y)
+        return distA - distB
+      })
+
+      x = possibleTargets[0].x
+      y = possibleTargets[0].y
     } else if (moveTarget.targetType === "place") {
       const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
       if (!place) {

@@ -16,7 +16,8 @@ export const npcConfig: NpcConfig[] = [
     username: "John",
     spriteDefinition: createRandomSpriteDefinition(),
     id: "1",
-    backstory: ["I used to live in a small village.", "I love talking with people."],
+    // backstory: ["I used to live in a small village.", "I love talking with people."],
+    backstory: ["I only want to talk to other players"],
   },
   // {
   //   username: "Mark",

@@ -17,6 +17,8 @@ export class MovementController {
   private onMovementCompleted: (() => void) | null = null
   private lastDirection: "left" | "right" | "up" | "down" = "down"
 
+  public movementCompleted: boolean = false
+
   constructor(
     private playerData: PlayerData,
     private socket: Socket,
@@ -32,20 +34,38 @@ export class MovementController {
   }
 
   private handleMovementCompleted() {
+    this.movementCompleted = true // Set flag when movement is completed
     if (this.onMovementCompleted) {
       this.onMovementCompleted()
       this.updateAnimationAndEmit(0, 0)
-
-      this.onMovementCompleted = null // Reset the callback after calling it
+      this.onMovementCompleted = null
     }
   }
 
-  setPath(newPath: { x: number; y: number }[], targetPosition: { x: number; y: number }) {
-    this.path = newPath
-    this.pathIndex = 0
-    this.blockedByPlayerInfo = null
-    this.sentMoveMessage = false
-    this.targetPosition = targetPosition
+  public setPath(newPath: { x: number; y: number }[], targetPosition: { x: number; y: number }) {
+    this.movementCompleted = false // Reset flag when a new path is set
+    if (newPath && newPath.length > 0) {
+      // Find the closest point on the new path to the NPC's current position
+      let closestIndex = 0
+      let minDistance = Infinity
+      for (let i = 0; i < newPath.length; i++) {
+        const pathPointWorld = this.npc.gridToWorld(newPath[i].x, newPath[i].y)
+        const dx = pathPointWorld.x - this.playerData.x
+        const dy = pathPointWorld.y - this.playerData.y
+        const distance = Math.hypot(dx, dy)
+
+        if (distance < minDistance) {
+          minDistance = distance
+          closestIndex = i
+        }
+      }
+
+      this.path = newPath
+      this.pathIndex = closestIndex + 1 // Smoothing the direction after recalculation
+      this.targetPosition = targetPosition
+      this.blockedByPlayerInfo = null
+      this.sentMoveMessage = false
+    }
   }
 
   pause() {
@@ -61,6 +81,11 @@ export class MovementController {
     if (this.isPaused || this.isRecalculatingPath || this.pathIndex >= this.path.length) {
       this.updateAnimationAndEmit(0, 0)
       return
+    }
+
+    // Ensure pathIndex is within bounds
+    if (this.pathIndex < 0) {
+      this.pathIndex = 0
     }
 
     const nextTile = this.path[this.pathIndex]
@@ -257,7 +282,7 @@ export class MovementController {
     }
   }
 
-  private emitUpdatePlayerData() {
+  emitUpdatePlayerData() {
     const updateData: UpdatePlayerData = {
       x: this.playerData.x,
       y: this.playerData.y,
