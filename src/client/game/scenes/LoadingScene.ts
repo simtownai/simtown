@@ -16,12 +16,10 @@ export class LoadingScene extends Scene {
     this.cameras.main.setBackgroundColor("#6c4a2b")
     this.createLoadingUI()
 
-    // Register loading event handlers
     this.load.on("progress", this.updateProgress, this)
     this.load.on("fileprogress", this.updateFileProgress, this)
     this.load.on("complete", this.loadComplete, this)
 
-    // Load all game assets here
     this.loadGameAssets()
   }
 
@@ -37,61 +35,55 @@ export class LoadingScene extends Scene {
     // Progress bar
     this.progressBar = this.add.graphics()
 
-    // Loading text
-    this.loadingText = this.add.text(width / 2, height / 2 - 70, "Loading...", {
+    const textConfig = {
       fontFamily: "Monogram Extended",
       fontSize: "32px",
       color: "#ffffff",
-    })
-    this.loadingText.setOrigin(0.5, 0.5)
+      resolution: 1,
+    }
+
+    // Loading text
+    this.loadingText = this.add.text(width / 2, height / 2 - 70, "Loading...", textConfig)
+    this.loadingText.setOrigin(0.5)
 
     // Percentage text
-    this.percentText = this.add.text(width / 2, height / 2 - 5, "0%", {
-      fontFamily: "Monogram Extended",
-      fontSize: "26px",
-      color: "#ffffff",
-    })
-    this.percentText.setOrigin(0.5, 0.5)
+    this.percentText = this.add.text(width / 2, height / 2 - 5, "0%", textConfig)
+    this.percentText.setOrigin(0.5)
 
     // Asset text
-    this.assetText = this.add.text(width / 2, height / 2 + 50, "", {
-      fontFamily: "Monogram Extended",
-      fontSize: "24px",
-      color: "#ffffff",
-    })
-    this.assetText.setOrigin(0.5, 0.5)
+    this.assetText = this.add.text(width / 2, height / 2 + 50, "", textConfig)
+    this.assetText.setOrigin(0.5)
   }
 
   private updateProgress(value: number) {
     const width = this.cameras.main.width
     const height = this.cameras.main.height
 
-    // Update progress bar
     this.progressBar.clear()
     this.progressBar.fillStyle(0xe1af74, 1)
     this.progressBar.fillRect(width / 4 + 10, height / 2 - 20, (width / 2 - 20) * value, 30)
 
-    // Update percentage text
-    this.percentText.setText(`${Math.floor(value * 100)}%`)
+    const percent = Math.floor(value * 100)
+    this.percentText.setText(`${percent}%`)
   }
 
   private updateFileProgress(file: { key: string }) {
-    this.assetText.setText(`Loading asset: ${file.key}`)
+    let assetName = file.key
+    // Clean up asset name for display
+    assetName = assetName.replace(/^assets\//, "")
+    assetName = assetName.split("/").pop() || assetName
+    this.assetText.setText(assetName)
   }
 
   private loadComplete() {
-    // Fade out loading UI
     this.tweens.add({
       targets: [this.progressBar, this.progressBox, this.loadingText, this.percentText, this.assetText],
       alpha: 0,
       duration: 500,
       onComplete: () => {
-        // Clean up loading event listeners
         this.load.off("progress", this.updateProgress)
         this.load.off("fileprogress", this.updateFileProgress)
         this.load.off("complete", this.loadComplete)
-
-        // Start the game scene
         this.scene.start("Game")
       },
     })
