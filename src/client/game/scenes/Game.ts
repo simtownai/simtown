@@ -96,8 +96,9 @@ export class Game extends Phaser.Scene {
   private setupCameras() {
     this.cameras.main.setZoom(3)
     this.cameras.main.roundPixels = true
-
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+    this.cameras.main.visible = false
+
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
 
     this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height)
@@ -220,6 +221,7 @@ export class Game extends Phaser.Scene {
     this.physics.add.collider(this.playerSprite, this.collisionLayer)
     this.physics.add.collider(this.playerSprite, this.otherPlayersGroup)
     this.cameras.main.startFollow(this.playerSprite, true, 0.09, 0.09)
+    this.cameras.main.visible = true
     this.spriteHandler.setupPlayer(this.playerSprite, this.username)
     this.resize(this.scale.gameSize)
 
