@@ -30,6 +30,7 @@ export interface ChatMessage {
   to: string
   message: string
   date: string
+  isRead?: boolean
 }
 
 const MoveToCoordinatesTargetSchema = z.object({

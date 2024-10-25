@@ -9,13 +9,17 @@ interface OverlayProps {
   isMobile: boolean
   isChatsContainerCollapsed: boolean
   setIsChatsContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+  totalUnreadCount: number
 }
 
-export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChatsContainerCollapsed }: OverlayProps) {
+export default function Overlay({
+  isMobile,
+  isChatsContainerCollapsed,
+  setIsChatsContainerCollapsed,
+  totalUnreadCount,
+}: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
   const [currentTime, setCurrentTime] = useState(getTime())
-
-  // ... existing handleClick function ...
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -34,21 +38,6 @@ export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChat
       button.classList.remove(styles.clicked)
     }, 100)
   }
-
-  // Disable when chat opened
-  // useEffect(() => {
-  //   const handleKeyDown = (event: KeyboardEvent) => {
-  //     if (event.key === "?") {
-  //       setIsHelpContainerCollapsed((prev) => !prev)
-  //     }
-  //   }
-
-  //   window.addEventListener("keydown", handleKeyDown)
-
-  //   return () => {
-  //     window.removeEventListener("keydown", handleKeyDown)
-  //   }
-  // }, [setIsHelpContainerCollapsed])
 
   return (
     <>
@@ -76,6 +65,9 @@ export default function Overlay({ isMobile, isChatsContainerCollapsed, setIsChat
             }}
           >
             <img src={chatsIcon} className={styles.buttonImage} />
+            {totalUnreadCount > 0 && (
+              <div className={styles.unreadBadge}>{totalUnreadCount > 99 ? "99+" : totalUnreadCount}</div>
+            )}
           </button>
         )}
       </div>

@@ -4,7 +4,7 @@ import { ChatMessage, PlayerSpriteDefinition } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import Overlay from "./ui/Overlay"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
 
 const mobileWindowWidthThreshold = 450
@@ -23,6 +23,20 @@ function App() {
   const [isMessageLoading, setIsMessageLoading] = useState(false)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
+
+  const chatmateRef = useRef(chatmate)
+  const isChatsContainerCollapsedRef = useRef(isChatsContainerCollapsed)
+  const isChatCollapsedRef = useRef(isChatCollapsed)
+  useEffect(() => {
+    chatmateRef.current = chatmate
+  }, [chatmate])
+  useEffect(() => {
+    isChatsContainerCollapsedRef.current = isChatsContainerCollapsed
+  }, [isChatsContainerCollapsed])
+  useEffect(() => {
+    isChatCollapsedRef.current = isChatCollapsed
+  }, [isChatCollapsed])
+
   const currentScene = (scene: Phaser.Scene) => {
     console.log(scene)
   }
@@ -40,7 +54,14 @@ function App() {
     newSocket.on("newMessage", (message: ChatMessage) => {
       setMessages((prevMessages) => {
         const oldMessages = prevMessages.get(message.from) || []
-        const newMessages = [...oldMessages, message]
+        const newMessage = {
+          ...message,
+          isRead:
+            !isChatsContainerCollapsedRef.current &&
+            !isChatCollapsedRef.current &&
+            chatmateRef.current === message.from,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
         return new Map(prevMessages).set(message.from, newMessages)
       })
     })
@@ -48,7 +69,14 @@ function App() {
     newSocket.on("endConversation", (message: ChatMessage) => {
       setMessages((prevMessages) => {
         const oldMessages = prevMessages.get(message.from) || []
-        const newMessages = [...oldMessages, message]
+        const newMessage = {
+          ...message,
+          isRead:
+            !isChatsContainerCollapsedRef.current &&
+            !isChatCollapsedRef.current &&
+            chatmateRef.current === message.from,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
         return new Map(prevMessages).set(message.from, newMessages)
       })
     })
@@ -62,6 +90,21 @@ function App() {
   function handleResize() {
     setIsMobile(window.innerWidth < mobileWindowWidthThreshold)
   }
+
+  useEffect(() => {
+    if (chatmate) {
+      setMessages((prevMessages) => {
+        const userMessages = prevMessages.get(chatmate)
+        if (!userMessages) return prevMessages
+
+        const updatedMessages = userMessages.map((msg) => ({
+          ...msg,
+          isRead: true,
+        }))
+        return new Map(prevMessages).set(chatmate, updatedMessages)
+      })
+    }
+  }, [isChatsContainerCollapsed, isChatCollapsed, chatmate])
 
   useEffect(() => {
     if (username) {
@@ -87,6 +130,14 @@ function App() {
     }
   }, [])
 
+  const totalUnreadCount = useMemo(() => {
+    let count = 0
+    messages.forEach((chatMessages) => {
+      count += chatMessages.filter((msg) => msg.from !== username && !msg.isRead).length
+    })
+    return count
+  }, [messages])
+
   return (
     <>
       {socket && (
@@ -107,6 +158,7 @@ function App() {
           isMobile={isMobile}
           isChatsContainerCollapsed={isChatsContainerCollapsed}
           setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}
+          totalUnreadCount={totalUnreadCount}
         />
       )}
       {socket && !isChatsContainerCollapsed && (

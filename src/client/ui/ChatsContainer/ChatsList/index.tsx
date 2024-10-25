@@ -7,6 +7,7 @@ import React, { useEffect, useMemo } from "react"
 interface ChatsListProps {
   isMobile: boolean
   messages: Map<string, ChatMessage[]>
+  username: string
   chatmate: string | null
   setChatmate: (value: string) => void
   setIsChatCollapsed: (value: boolean) => void
@@ -16,19 +17,23 @@ interface ChatsListProps {
 const ChatsList: React.FC<ChatsListProps> = ({
   isMobile,
   messages,
+  username,
   chatmate,
   setChatmate,
   setIsChatCollapsed,
   setIsChatsContainerCollapsed,
 }) => {
   const chatmatesWithLastMessage = useMemo(() => {
+    console.log(messages)
     return Array.from(messages.entries())
       .map(([name, msgs]) => {
+        const lastChatmateMessage = [...msgs].reverse().find((msg) => msg.from !== username)
         const lastMessage = msgs[msgs.length - 1]
         return {
           name,
           lastMessage: lastMessage ? lastMessage.message : "No messages yet",
           date: lastMessage ? lastMessage.date : new Date().toISOString(),
+          isRead: lastChatmateMessage ? lastChatmateMessage.isRead! : true, // TODO: handle undefined
         }
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -64,13 +69,14 @@ const ChatsList: React.FC<ChatsListProps> = ({
       />
       {chatmatesWithLastMessage.length !== 0 ? (
         <ul className={styles.list}>
-          {chatmatesWithLastMessage.map(({ name, lastMessage, date }, index) => (
+          {chatmatesWithLastMessage.map(({ name, lastMessage, date, isRead }, index) => (
             <ChatListItem
               key={name}
               name={name}
               lastMessage={lastMessage}
               date={date}
               isActive={chatmate === name}
+              isRead={isRead}
               onClick={() => {
                 setChatmate(name)
                 setIsChatCollapsed(false)

@@ -93,6 +93,7 @@ const ChatsContainer: React.FC<ChatsContainerProps> = ({
             <ChatsList
               isMobile={isMobile}
               messages={messages}
+              username={username}
               chatmate={chatmate}
               setChatmate={setChatmate}
               setIsChatCollapsed={setIsChatCollapsed}
