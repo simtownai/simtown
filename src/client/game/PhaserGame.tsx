@@ -18,6 +18,7 @@ interface IProps {
   setIsChatContainerCollapsed: (value: boolean) => void
   setIsChatCollapsed: (value: boolean) => void
   setChatmate: (value: string) => void
+  onGameLoaded: () => void
 }
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
@@ -30,6 +31,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     setIsChatContainerCollapsed,
     setIsChatCollapsed,
     setChatmate,
+    onGameLoaded,
   },
   ref,
 ) {
@@ -67,11 +69,14 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
       } else if (ref) {
         ref.current = { game: game.current, scene: scene_instance }
       }
+
+      // Signal that the game is loaded and ready
+      onGameLoaded()
     })
     return () => {
       EventBus.removeListener("current-scene-ready")
     }
-  }, [currentActiveScene, ref])
+  }, [currentActiveScene, ref, onGameLoaded])
 
   useEffect(() => {
     EventBus.on("chats-container-collapse", (value: boolean) => {

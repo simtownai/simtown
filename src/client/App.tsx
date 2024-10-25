@@ -10,6 +10,7 @@ import io, { Socket } from "socket.io-client"
 const mobileWindowWidthThreshold = 450
 
 function App() {
+  const [isGameLoaded, setIsGameLoaded] = useState(false)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [username, setUsername] = useState<string>("Player" + Math.floor(Math.random() * 1000) + 1)
   const [spriteDefinition, setSpriteDefinition] = useState<PlayerSpriteDefinition>(createRandomSpriteDefinition())
@@ -92,6 +93,15 @@ function App() {
   }
 
   useEffect(() => {
+    handleResize()
+    const resizeListener = () => handleResize()
+    window.addEventListener("resize", resizeListener)
+    return () => {
+      window.removeEventListener("resize", resizeListener)
+    }
+  }, [])
+
+  useEffect(() => {
     if (chatmate) {
       setMessages((prevMessages) => {
         const userMessages = prevMessages.get(chatmate)
@@ -121,15 +131,6 @@ function App() {
     }
   }, [socket])
 
-  useEffect(() => {
-    handleResize()
-    const resizeListener = () => handleResize()
-    window.addEventListener("resize", resizeListener)
-    return () => {
-      window.removeEventListener("resize", resizeListener)
-    }
-  }, [])
-
   const totalUnreadCount = useMemo(() => {
     let count = 0
     messages.forEach((chatMessages) => {
@@ -137,6 +138,10 @@ function App() {
     })
     return count
   }, [messages])
+
+  const handleGameLoaded = () => {
+    setIsGameLoaded(true)
+  }
 
   return (
     <>
@@ -151,9 +156,10 @@ function App() {
           setIsChatContainerCollapsed={setIsChatsContainerCollapsed}
           setIsChatCollapsed={setIsChatCollapsed}
           setChatmate={setChatmate}
+          onGameLoaded={handleGameLoaded}
         />
       )}
-      {socket && (
+      {socket && isGameLoaded && (
         <Overlay
           isMobile={isMobile}
           isChatsContainerCollapsed={isChatsContainerCollapsed}
@@ -161,7 +167,7 @@ function App() {
           totalUnreadCount={totalUnreadCount}
         />
       )}
-      {socket && !isChatsContainerCollapsed && (
+      {socket && isGameLoaded && !isChatsContainerCollapsed && (
         <ChatsContainer
           socket={socket}
           username={username}
