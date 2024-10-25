@@ -25,7 +25,7 @@ export class NPC {
   npcConfig: NpcConfig
   lastUpdateTime: number
 
-  private actionManager: ActionManager
+  actionManager: ActionManager
 
   constructor(npcConfig: NpcConfig) {
     this.npcConfig = npcConfig
@@ -42,7 +42,7 @@ export class NPC {
       this.setupSocketEvents()
       this.socket.connect()
       this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
-    }, 7000)
+    }, 2000)
   }
 
   private initializeCollisionGrid() {
@@ -65,6 +65,11 @@ export class NPC {
     }
   }
 
+  private initializeActionManager() {
+    this.actionManager = new ActionManager()
+    this.actionManager.setNPC(this)
+  }
+
   private setupSocketEvents() {
     this.socket.on("connect", () => {
       const playerId = this.socket.id!
@@ -74,12 +79,12 @@ export class NPC {
             this.playerData = player
             this.movementController = new MovementController(this.playerData, this.socket, this)
             this.aiBrain = new AiBrain({
-              npcConfig: this.npcConfig,
-              socket: this.socket,
+              npc: this,
             })
+
             setTimeout(async () => {
               try {
-                this.actionManager = new ActionManager(this)
+                this.initializeActionManager()
                 this.startUpdateLoop()
               } catch (error) {
                 console.error("Error generating plan for the day:", error)

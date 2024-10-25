@@ -1,4 +1,5 @@
 // In MoveAction.ts
+import { CONFIG } from "../../shared/config"
 import { MoveTarget } from "../../shared/types"
 import { NPC } from "../client"
 import { Action } from "./Action"
@@ -27,7 +28,9 @@ export class MoveAction extends Action {
     })
     this.npc.movementController.setMovementCompletedCallback(() => {
       console.log("Movement completed callback received in MoveAction")
-      // We'll handle completion in the update method
+      if (CONFIG.RUN_AIS) {
+        this.isCompletedFlag = true
+      }
     })
 
     if (this.moveTarget.targetType === "person") {

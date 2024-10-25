@@ -2,10 +2,17 @@
 
 ## top priority
 
+- ai
+
+  - Make the aiBrain summary avaialble in talk action
+  - reflect after current action gets interrupted (currently we only reflect on completed actions)
+  - create broadcast and listen actions
+  - create kamala and trump chars
+  - handle multiple newmessages from a single user when npc is busy (currently we continue on adding to the quee of things to do)
+
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set
   - able to send msg to somebody only if within range (add new property to Chat, like isAllowedToSend)
-  - complex features: handle multiple newmessages from a single user when npc is busy
   - UI
     - buttons: send, resize, close, go to chats
     - messages themselves (add full date like in discord )

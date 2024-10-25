@@ -3,6 +3,7 @@ import { MoveAction } from "./actions/MoveAction"
 import { TalkAction } from "./actions/TalkAction"
 import { IdleActionDuration } from "./npcConfig"
 import client from "./openai"
+import { summarize_conversation as summarize_conversation_prompt } from "./prompts"
 
 export const reflect = async (action: Action) => {
   // for now we are only reflecting on completed actions
@@ -54,8 +55,7 @@ export const summarizeConversation = async (_startTime: string, _endTime: string
     messages: [
       {
         role: "system",
-        content:
-          "Summarize following conversation. Focus on extracting key information and event you might want to attend in the future.",
+        content: summarize_conversation_prompt,
       },
       { role: "user", content },
     ],

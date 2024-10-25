@@ -12,11 +12,11 @@ import { reflect } from "./reflect"
 
 export class ActionManager {
   private currentAction: Action | null = null
-  private actionQueue: Action[] = []
+  actionQueue: Action[] = []
   private npc: NPC
   private isProcessingAction: boolean = false
 
-  constructor(npc: NPC) {
+  setNPC(npc: NPC) {
     this.npc = npc
     this.generatePlanAndSetActions()
   }
@@ -24,19 +24,13 @@ export class ActionManager {
   /**
    * Generates the initial plan for the day and seeds the action queue
    */
-  private async generatePlanAndSetActions(currentActionQueue: Action[] = [], reflections: string[] = []) {
+  private async generatePlanAndSetActions() {
     console.log("================================")
     console.log("Generating new plan for the day")
     console.log("================================")
 
     try {
-      const initialPlanData = await generatePlanForTheday(
-        this.npc.npcConfig,
-        Array.from(this.npc.otherPlayers.keys()),
-        this.npc.objectLayer!.map((obj) => obj.name),
-        currentActionQueue,
-        reflections,
-      )
+      const initialPlanData = await generatePlanForTheday(this.npc)
       this.actionQueue = this.createActionsFromPlanData(initialPlanData)
       // console.log("Generated new plan for the day:", initialPlanData)
     } catch (error) {
@@ -80,6 +74,10 @@ export class ActionManager {
    * Updates the current action and manages action transitions
    */
   async update(deltaTime: number) {
+    if (!this.npc) {
+      console.warn("ActionManager: NPC not set")
+      return
+    }
     if (this.isProcessingAction) {
       return
     }
@@ -153,7 +151,7 @@ export class ActionManager {
 
       this.npc.aiBrain.memory.reflections.push(reflections)
 
-      await this.generatePlanAndSetActions(this.actionQueue, this.npc.aiBrain.memory.reflections)
+      await this.generatePlanAndSetActions()
 
       // Clear the current action
       this.currentAction = null
