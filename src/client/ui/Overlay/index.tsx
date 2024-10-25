@@ -1,3 +1,4 @@
+import { CONFIG } from "../../../shared/config"
 import { getTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
@@ -31,6 +32,24 @@ export default function Overlay({
     }
   }, [])
 
+  const formatTimeAMPM = (date: Date) => {
+    let hours = date.getHours()
+    const minutes = date.getMinutes()
+    const ampm = hours >= 12 ? "PM" : "AM"
+    hours = hours % 12
+    hours = hours ? hours : 12 // Convert 0 to 12
+    const minutesStr = minutes < 10 ? "0" + minutes : minutes
+    return `${hours}:${minutesStr} ${ampm}`
+  }
+
+  const getDaysRemaining = () => {
+    const now = currentTime
+    const targetDate = CONFIG.TARGET_DATE
+    const diffTime = targetDate.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const button = e.currentTarget
     button.classList.add(styles.clicked)
@@ -42,7 +61,10 @@ export default function Overlay({
   return (
     <>
       <div className={`${styles.overlay} ${styles.overlayTopRight}`}>
-        <div className={styles.timeDisplay}>{currentTime.toISOString()}</div>
+        <div className={styles.timeDisplay}>
+          <div>{formatTimeAMPM(currentTime)}</div>
+          <div>{getDaysRemaining()} days left</div>
+        </div>
       </div>
       <div className={`${styles.overlay} ${styles.overlayBottomLeft}`}>
         <button
