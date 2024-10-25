@@ -262,12 +262,16 @@ export class Game extends Phaser.Scene {
 
     const actionEmoji = this.add
       .text(0, 0, this.getTextFromAction(playerInfo.action), {
-        fontSize: "8px",
+        fontSize: "24px",
         fontFamily: "Roboto",
         color: "#ffffff",
       })
-      .setOrigin(0.5)
+      .setOrigin(0, 0.5) // Set origin to left-center instead of center
+      .setScale(0.33)
       .setVisible(playerInfo.action !== undefined)
+
+    actionEmoji.setScrollFactor(1)
+    actionEmoji.setPipeline("TextureTintPipeline")
 
     this.add.existing(otherPlayerSprite)
     this.add.existing(speechBubble)
@@ -328,16 +332,16 @@ export class Game extends Phaser.Scene {
       case "move":
         let emoji = "🚶"
         if (action.target.targetType === "coordinates") {
-          return emoji + ` 📍${action.target.x},${action.target.y}`
+          return emoji + `📍${action.target.x},${action.target.y}`
         } else if (action.target.targetType === "person") {
-          return emoji + ` 👤${action.target.name}`
+          return emoji + `👤${action.target.name}`
         } else if (action.target.targetType === "place") {
-          return emoji + ` 🏠${action.target.name}`
+          return emoji + `🏠${action.target.name}`
         } else {
           return emoji
         }
       case "talk":
-        return `💬 ${action.name}`
+        return `💬${action.name}`
       case "idle":
         return `😴`
       default:
@@ -519,7 +523,7 @@ export class Game extends Phaser.Scene {
       otherPlayerSpeechBubble.setDepth(otherPlayerSprite.depth + 1)
 
       actionEmoji.setPosition(
-        otherPlayerSprite.x + CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+        otherPlayerSprite.x + CONFIG.SPRITE_COLLISION_BOX_HEIGHT / 2,
         otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
       )
       actionEmoji.setDepth(otherPlayerSprite.depth + 1)
