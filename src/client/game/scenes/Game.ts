@@ -56,27 +56,9 @@ export class Game extends Phaser.Scene {
     this.spriteDefinition = spriteDefinition
   }
 
-  preload() {
-    this.load.json("componentManifest", "assets/sprites/Character_Generator/componentManifest.json")
-    this.load.tilemapTiledJSON("map", "assets/maps/simple-map.json")
-    this.load.image("tiles", "assets/tiles/cute-fantasy-rpg-free.png")
-
-    this.load.once("filecomplete-json-componentManifest", this.onManifestLoaded, this)
-  }
-
-  onManifestLoaded() {
+  create() {
     this.spriteHandler = new SpriteHandler(this)
 
-    this.spriteHandler.preloadSprites()
-
-    // Listen for when the new assets are loaded
-    // this.load.once("complete", this.onSpritesLoaded, this)
-
-    // Start the loader again
-    this.load.start()
-  }
-
-  create() {
     this.setupMap()
     this.spriteHandler.createAnimations()
     this.setupSocketListeners()
