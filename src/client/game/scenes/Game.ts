@@ -95,7 +95,7 @@ export class Game extends Phaser.Scene {
 
   private setupCameras() {
     this.cameras.main.setZoom(3)
-    this.cameras.main.roundPixels = true
+    this.cameras.main.setRoundPixels(true)
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
     this.cameras.main.visible = false
 
