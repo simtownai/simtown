@@ -3,13 +3,12 @@
 ## top priority
 
 - ai
-
   - Make the aiBrain summary avaialble in talk action
   - reflect after current action gets interrupted (currently we only reflect on completed actions)
   - create broadcast and listen actions
   - create kamala and trump chars
   - handle multiple newmessages from a single user when npc is busy (currently we continue on adding to the quee of things to do)
-
+- fix movements to place
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set
   - able to send msg to somebody only if within range (add new property to Chat, like isAllowedToSend)
@@ -17,7 +16,6 @@
     - buttons: send, resize, close, go to chats
     - messages themselves (add full date like in discord )
   - top right icon to open chat + key C open closest (if no closest then just Chats)
-  - when somebody chats you you get a notification icon (like I get in telegram)
   - check if loading chats from localstorage actually works
   - header is not attached to top of the screen when typing on iphone -> other user's messages are not visible
   - (?)when clicking outside of chat return control to the game
@@ -26,17 +24,14 @@
   - preload font
 - anonymous loggin with just name
 - nice map
-- NPCs
 
 ## nice to have
 
 - make movements of other players smoother even on high ping
 - render chatprompt bubble on top of everything
-- spawn point layer
 - login with google
 - loading screen
 - cache all sprites
-- add any button to connect to avoid health checks counted as players on prod (maybe will be solved with name on entry)
 - sounds (moving, dependent on terrain; actions, clicks, etc)
 - walk behind big tree bushes
 - zoom (questionable)

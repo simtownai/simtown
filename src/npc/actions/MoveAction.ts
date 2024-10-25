@@ -28,7 +28,7 @@ export class MoveAction extends Action {
     })
     this.npc.movementController.setMovementCompletedCallback(() => {
       console.log("Movement completed callback received in MoveAction")
-      if (CONFIG.RUN_AIS) {
+      if (CONFIG.ENABLE_NPC_AUTOMATION) {
         this.isCompletedFlag = true
       }
     })
