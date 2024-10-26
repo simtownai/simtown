@@ -27,6 +27,17 @@ export function isWithinListenThreshold(playerData: PlayerData, x: number, y: nu
   return distance <= CONFIG.LISTEN_THRESHOLD
 }
 
+export function isInZone(
+  playerX: number,
+  playerY: number,
+  zoneX: number,
+  zoneY: number,
+  zoneWidth: number,
+  zoneHeight: number,
+): boolean {
+  return playerX >= zoneX && playerX <= zoneX + zoneWidth && playerY >= zoneY && playerY <= zoneY + zoneHeight
+}
+
 export function createRandomSpriteDefinition(): PlayerSpriteDefinition {
   const randomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
 
