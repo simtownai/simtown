@@ -2,8 +2,21 @@
 
 ## top priority
 
+- to idling add subtype (just idling / reading / phone)
+
+- overhearing mechanic for real players
+
+- map
+
+  - 4 rally places
+  - voting palce
+  - park
+  - coffe shop
+  - playground
+
 - ai
 
+  - broadcast & listening & talking -> add check if we are in place (and also propagate the emoji updatePlayerData)
   - figure out timing of broadcasts and how to make npcs aware about this
   - figure out what happens when 2 npcs decide to talk with each other at the same time
   - create kamala and trump chars
