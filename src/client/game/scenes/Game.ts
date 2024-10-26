@@ -378,7 +378,15 @@ export class Game extends Phaser.Scene {
       if (otherPlayerData) {
         otherPlayerData.sprite.body!.reset(player.x, player.y)
         otherPlayerData.sprite.anims.play(player.animation, true)
-        otherPlayerData.speechBubble.setPosition(player.x, player.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5))
+        otherPlayerData.speechBubble.setPosition(
+          player.x,
+          player.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
+        )
+
+        otherPlayerData.actionEmoji.setPosition(
+          player.x + CONFIG.SPRITE_COLLISION_BOX_HEIGHT / 2,
+          player.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
+        )
         if (player.action && JSON.stringify(player.action) !== JSON.stringify(otherPlayerData.playerData.action)) {
           const emoji = this.getTextFromAction(player.action)
           if (emoji) {
@@ -522,13 +530,13 @@ export class Game extends Phaser.Scene {
 
       otherPlayerSpeechBubble.setPosition(
         otherPlayerSprite.x,
-        otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
+        otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
       )
       otherPlayerSpeechBubble.setDepth(otherPlayerSprite.depth + 1)
 
       actionEmoji.setPosition(
         otherPlayerSprite.x + CONFIG.SPRITE_COLLISION_BOX_HEIGHT / 2,
-        otherPlayerSprite.y - (CONFIG.SPRITE_COLLISION_BOX_HEIGHT + 5),
+        otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
       )
       actionEmoji.setDepth(otherPlayerSprite.depth + 1)
 

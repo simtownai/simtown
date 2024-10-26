@@ -125,5 +125,6 @@ export class SpriteHandler {
     player.body!.setSize(CONFIG.SPRITE_COLLISION_BOX_HEIGHT, CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
     player.body!.setOffset(0, CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
     player.anims.play(`${playerKey}-idle-down`)
+    player.setOrigin(0.5, 1)
   }
 }

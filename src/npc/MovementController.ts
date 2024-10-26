@@ -100,12 +100,10 @@ export class MovementController {
     this.blockedByPlayerInfo = null
     this.sentMoveMessage = false
 
-    const verticalOffset = (CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT) / 2
     const dx = worldPos.x - this.playerData.x
-    const dy = worldPos.y + verticalOffset - (this.playerData.y + verticalOffset)
+    const dy = worldPos.y - this.playerData.y
 
     const distance = Math.sqrt(dx * dx + dy * dy)
-
     const moveDistance = (this.speed * deltaTime) / 1000
 
     let moveX = 0

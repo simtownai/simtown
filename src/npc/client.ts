@@ -274,26 +274,24 @@ export class NPC {
   }
 
   worldToGrid(x: number, y: number) {
-    const verticalOffset = CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT
     return {
       x: Math.floor(x / this.tileSize),
-      y: Math.floor((y + verticalOffset / 2) / this.tileSize),
+      y: Math.floor(y / this.tileSize),
     }
   }
 
   gridToWorld(x: number, y: number) {
-    const verticalOffset = CONFIG.SPRITE_HEIGHT - CONFIG.SPRITE_COLLISION_BOX_HEIGHT
     return {
       x: x * this.tileSize + this.tileSize / 2,
-      y: y * this.tileSize + this.tileSize / 2 - verticalOffset / 2,
+      y: y * this.tileSize + this.tileSize,
     }
   }
 
   isCellBlocked(x: number, y: number): boolean {
     // Check for players at the given grid position
     for (const player of this.otherPlayers.values()) {
-      const gridPos = this.worldToGrid(player.x, player.y)
-      if (gridPos.x === x && gridPos.y === y) {
+      const playerGridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
+      if (playerGridPos.x === x && playerGridPos.y === y) {
         return true
       }
     }
@@ -308,8 +306,8 @@ export class NPC {
 
   getBlockingPlayer(x: number, y: number): PlayerData | null {
     for (const [_playerId, player] of this.otherPlayers.entries()) {
-      const gridPos = this.worldToGrid(player.x, player.y)
-      if (gridPos.x === x && gridPos.y === y) {
+      const playerGridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
+      if (playerGridPos.x === x && playerGridPos.y === y) {
         return player
       }
     }
@@ -319,18 +317,19 @@ export class NPC {
   async calculatePath(
     targetPosition: { x: number; y: number },
     considerPlayers: boolean,
+    startPosition?: { x: number; y: number },
   ): Promise<{ x: number; y: number }[] | null> {
-    const start = this.worldToGrid(this.playerData.x, this.playerData.y)
+    // Use provided start position or current position
+    const start = startPosition
+      ? { x: startPosition.x, y: startPosition.y }
+      : this.worldToGrid(this.playerData.x, this.playerData.y)
+
     const end = this.worldToGrid(targetPosition.x, targetPosition.y)
 
     const easystar = new EasyStar.js()
-
     easystar.setAcceptableTiles([1, 10])
-
     easystar.setTileCost(1, 1)
     easystar.setTileCost(10, 10)
-
-    // easystar.enableDiagonals()
     easystar.disableCornerCutting()
 
     let grid: number[][]

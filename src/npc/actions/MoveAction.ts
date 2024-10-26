@@ -72,8 +72,6 @@ export class MoveAction extends Action {
         (Math.abs(dx) <= 32 && Math.abs(dy) <= this.npc.tileSize / 2 && dx !== 0) ||
         (Math.abs(dy) <= 32 && Math.abs(dx) <= this.npc.tileSize / 2 && dy !== 0)
 
-      console.log("isAdjacent", isAdjacent)
-
       if (isAdjacent) {
         // Face the person
         const direction = this.getFacingDirection(dx, dy)
