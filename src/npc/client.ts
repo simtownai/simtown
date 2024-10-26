@@ -204,7 +204,7 @@ export class NPC {
         return "Couldn't find that player"
       }
 
-      const playerGridPos = this.worldToGrid(player.x, player.y)
+      const playerGridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
 
       const adjacentOffsets = [
         { x: 0, y: -1 }, // North
@@ -322,7 +322,7 @@ export class NPC {
     // Use provided start position or current position
     const start = startPosition
       ? { x: startPosition.x, y: startPosition.y }
-      : this.worldToGrid(this.playerData.x, this.playerData.y)
+      : this.worldToGrid(this.playerData.x, this.playerData.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
 
     const end = this.worldToGrid(targetPosition.x, targetPosition.y)
 
@@ -352,7 +352,7 @@ export class NPC {
   getGridWithPlayers(): number[][] {
     const gridWithPlayers = this.collisionGrid.map((row) => row.slice())
     for (const player of this.otherPlayers.values()) {
-      const gridPos = this.worldToGrid(player.x, player.y)
+      const gridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
       if (
         gridPos.x >= 0 &&
         gridPos.x < gridWithPlayers[0].length &&
