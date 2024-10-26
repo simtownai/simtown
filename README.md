@@ -5,8 +5,6 @@
 - ai
 
   - figure out timing of broadcasts and how to make npcs aware about this
-
-  - make broadcast not interruptable
   - figure out what happens when 2 npcs decide to talk with each other at the same time
   - create kamala and trump chars
   - handle multiple newmessages from a single user when npc is busy (currently we continue on adding to the quee of things to do)

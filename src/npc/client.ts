@@ -6,6 +6,7 @@ import { ActionManager } from "./ActionManager"
 import { AiBrain } from "./AiBrain"
 import { MovementController } from "./MovementController"
 import { Action } from "./actions/Action"
+import { BroadcastAction } from "./actions/BroadcastAction"
 import { TalkAction } from "./actions/TalkAction"
 import { NpcConfig, npcConfig } from "./npcConfig"
 import EasyStar from "easystarjs"
@@ -151,6 +152,15 @@ export class NPC {
           if (currentAction instanceof TalkAction && currentAction.targetPlayerUsername === message.from) {
             // Update the current TalkAction with the new message
             currentAction.handleMessage(message)
+          } else if (currentAction instanceof BroadcastAction) {
+            // TODO: figure out whether we want to save talk aproach in memory and come back to the person, I think no
+            const refusalMessage: ChatMessage = {
+              to: message.from,
+              from: this.npcConfig.username,
+              message: "I'm sorry, but I'm in the middle of broadcasting right now.",
+              date: new Date().toISOString(),
+            }
+            this.socket.emit("sendMessage", refusalMessage)
           } else if (currentAction instanceof TalkAction) {
             // Create a new action to handle the message
             const action = new TalkAction(
