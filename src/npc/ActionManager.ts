@@ -1,11 +1,8 @@
-import { ActionPlan, Action as ActionType, UpdatePlayerData } from "../shared/types"
+import { UpdatePlayerData } from "../shared/types"
 import { generatePlanForTheday } from "./Plan"
 import { Action } from "./actions/Action"
-import { IdleAction } from "./actions/IdleAction"
-import { MoveAction } from "./actions/MoveAction"
-import { TalkAction } from "./actions/TalkAction"
 import { NPC } from "./client"
-import { transformActionToActionPlan } from "./planningHelpers"
+import { createActionsFromPlanData, transformActionToActionPlan } from "./planningHelpers"
 import { reflect } from "./reflect"
 
 // Assuming you have a plan function that generates plans based on reflections
@@ -31,30 +28,11 @@ export class ActionManager {
 
     try {
       const initialPlanData = await generatePlanForTheday(this.npc)
-      this.actionQueue = this.createActionsFromPlanData(initialPlanData)
+      this.actionQueue = createActionsFromPlanData(initialPlanData, this.npc)
       // console.log("Generated new plan for the day:", initialPlanData)
     } catch (error) {
       console.error("Error generating new plan:", error)
     }
-  }
-
-  /**
-   * Converts plan data into Action instances
-   */
-  private createActionsFromPlanData(planData: ActionPlan): Action[] {
-    return planData.map((actionData: ActionType) => {
-      switch (actionData.type) {
-        case "idle":
-          return new IdleAction(this.npc)
-        case "move":
-          return new MoveAction(this.npc, actionData.target)
-        case "talk":
-          return new TalkAction(this.npc, actionData.name, { type: "new" })
-        default:
-          console.warn("Unknown action type:", actionData)
-          return new IdleAction(this.npc) // Fallback action
-      }
-    })
   }
 
   getCurrentAction(): Action | null {

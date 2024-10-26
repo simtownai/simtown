@@ -1,6 +1,6 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { ChatMessage, PlayerSpriteDefinition } from "../shared/types"
+import { BroadcastMessage, ChatMessage, PlayerSpriteDefinition } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import Overlay from "./ui/Overlay"
@@ -66,6 +66,24 @@ function App() {
         return new Map(prevMessages).set(message.from, newMessages)
       })
     })
+
+    newSocket.on("listenBroadcast", (message: BroadcastMessage) => {
+      setMessages((prevMessages) => {
+        const key = `broadcast-${message.from}`
+        const oldMessages = prevMessages.get(key) || []
+        const newMessage = {
+          to: username,
+          ...message,
+          isRead:
+            !isChatsContainerCollapsedRef.current &&
+            !isChatCollapsedRef.current &&
+            chatmateRef.current === message.from,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(key, newMessages)
+      })
+    })
+
 
     newSocket.on("endConversation", (message: ChatMessage) => {
       setMessages((prevMessages) => {

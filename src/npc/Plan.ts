@@ -78,6 +78,7 @@ export const generatePlanForTheday = async (npc: NPC): Promise<ActionPlan> => {
       console.error("Invalid plan, retrying...", errorMessage)
     }
     if (isValid) {
+      console.log("Plan created:", plan)
       return plan
     }
   }

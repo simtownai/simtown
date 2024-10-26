@@ -13,14 +13,22 @@ export type NpcConfig = {
 
 export const npcConfig: NpcConfig[] = [
   {
+    username: "Donald",
+    spriteDefinition: createRandomSpriteDefinition(),
+    id: "1",
+    // backstory: ["I used to live in a small village.", "I love talking with people."],
+    backstory: ["You are Donald Trump. You should broadcast your message to the world at Trump place."],
+  },
+  {
     username: "John",
     spriteDefinition: createRandomSpriteDefinition(),
     id: "1",
     // backstory: ["I used to live in a small village.", "I love talking with people."],
     backstory: [
-      "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You care only about restricting abortion and want to convince other people about your belief.",
+      "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will go to Trump place to listen to his broadcast.",
     ],
   },
+  // },
   // {
   //   username: "Maria",
   //   spriteDefinition: createRandomSpriteDefinition(),

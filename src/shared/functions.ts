@@ -1,6 +1,6 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { PlayerSpriteDefinition } from "./types"
+import { PlayerData, PlayerSpriteDefinition } from "./types"
 
 const currentDate = new Date()
 const realTimeDifferenceMs = CONFIG.TARGET_DATE.getTime() - currentDate.getTime()
@@ -18,6 +18,13 @@ export function getTime(): Date {
   // Calculate and return the in-game date
   const inGameDate = new Date(startDateMs + gameTimeDifferenceMs)
   return inGameDate
+}
+
+export function isWithinListenThreshold(playerData: PlayerData, x: number, y: number): boolean {
+  const dx = playerData.x - x
+  const dy = playerData.y - y
+  const distance = Math.sqrt(dx * dx + dy * dy)
+  return distance <= CONFIG.LISTEN_THRESHOLD
 }
 
 export function createRandomSpriteDefinition(): PlayerSpriteDefinition {

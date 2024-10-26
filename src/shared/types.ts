@@ -33,6 +33,13 @@ export interface ChatMessage {
   isRead?: boolean
 }
 
+export interface BroadcastMessage {
+  from: string
+  message: string
+  place: string
+  date: string
+}
+
 const MoveToCoordinatesTargetSchema = z.object({
   targetType: z.literal("coordinates"),
   x: z.number(),
@@ -46,6 +53,7 @@ const MoveToPlaceTargetSchema = z.object({
   targetType: z.literal("place"),
   name: z.string(),
 })
+export type MoveTargetPlace = z.infer<typeof MoveToPlaceTargetSchema>
 const MoveTargetSchema = z.discriminatedUnion("targetType", [
   MoveToCoordinatesTargetSchema,
   MoveToPersonTargetSchema,
@@ -65,8 +73,17 @@ const TalkSchema = z.object({
 const IdleSchema = z.object({
   type: z.literal("idle"),
 })
+const BroadcastSchema = z.object({
+  type: z.literal("broadcast"),
+  targetPlace: z.string(),
+})
 
-const ActionSchema = z.discriminatedUnion("type", [MoveSchema, TalkSchema, IdleSchema])
+const ListenSchema = z.object({
+  type: z.literal("listen"),
+  targetPlace: z.string(),
+})
+
+const ActionSchema = z.discriminatedUnion("type", [MoveSchema, TalkSchema, IdleSchema, BroadcastSchema, ListenSchema])
 export type Action = z.infer<typeof ActionSchema>
 
 export const ActionPlanSchema = z.array(ActionSchema)

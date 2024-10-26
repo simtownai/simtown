@@ -1,6 +1,7 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
+import { isWithinListenThreshold } from "../shared/functions"
+import { BroadcastMessage, ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -142,6 +143,27 @@ io.on("connection", (socket) => {
           recipientSocket.emit("endConversation", message)
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
+        }
+      }
+    })
+  })
+
+  socket.on("broadcast", (message: BroadcastMessage) => {
+    console.log("broadcast receieved", message)
+    const broadcastPlace = message.place
+    const { x, y } = mapData.layers
+      .find((layer) => layer.name === "Boxes")!
+      .objects!.find((obj) => obj.name === broadcastPlace)!
+
+    players.forEach((player) => {
+      const isInBroadcastRange = isWithinListenThreshold(player, x, y)
+
+      if (isInBroadcastRange) {
+        const recipientSocket = io.sockets.sockets.get(player.id)
+        if (recipientSocket) {
+          recipientSocket.emit("listenBroadcast", message)
+        } else {
+          socket.emit("broadcastError", { error: "Recipient not found" })
         }
       }
     })

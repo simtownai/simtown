@@ -45,6 +45,25 @@ export class NPC {
     }, 2000)
   }
 
+  findObject(object: MoveTarget) {
+    if (object.targetType === "place") {
+      const place = this.objectLayer!.find((obj) => obj.name === object.name)
+      if (!place) {
+        throw new Error(`Object ${object.name} not found`)
+      }
+      return { x: place.x, y: place.y }
+    }
+    if (object.targetType === "coordinates") {
+      return { x: object.x, y: object.y }
+    } else {
+      const player = this.otherPlayers.get(object.name)
+      if (!player) {
+        throw new Error(`Player ${object.name} not found`)
+      }
+      return { x: player.x, y: player.y }
+    }
+  }
+
   private initializeCollisionGrid() {
     for (let y = 0; y < this.collisionLayer.height!; y++) {
       const row: number[] = []

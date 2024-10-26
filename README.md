@@ -3,10 +3,13 @@
 ## top priority
 
 - ai
+
+  - reflect on broadcast and listen
+  - make broadcast not interruptable
   - figure out what happens when 2 npcs decide to talk with each other at the same time
-  - create broadcast and listen actions
   - create kamala and trump chars
   - handle multiple newmessages from a single user when npc is busy (currently we continue on adding to the quee of things to do)
+
 - fix movements to place
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set

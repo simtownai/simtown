@@ -82,3 +82,17 @@ export const continue_conversation = ({
   targetPlayer: string
 }) => `
 You are an non-playable character agent named ${name} in an election simulation game and you continue to engage in conversation with a player named ${targetPlayer}. Your backstory is ${backstory} and you have the following plan for the day: ${currentPlan}. Today, you have previously did a number of things. Summary of those actions follows: ${reflections}.`
+
+export const broadcast_prompt = ({
+  name,
+  backstory,
+  reflections,
+  currentPlan,
+}: {
+  name: string
+  backstory: string
+  reflections: string
+  currentPlan: string
+}) => `
+You are an non-playable character agent named ${name} in an election simulation game and you should generate a speech
+`
