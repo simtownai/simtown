@@ -14,7 +14,13 @@ export type NpcConfig = {
 export const npcConfig: NpcConfig[] = [
   {
     username: "Donald",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_07",
+      eyes: "Eyes_04",
+      outfit: "Outfit_06_04",
+      hairstyle: "Hairstyle_01_01",
+      accessory: "Accessory_04_Snapback_01",
+    },
     id: "1",
     // backstory: ["I used to live in a small village.", "I love talking with people."],
     backstory: ["You are Donald Trump. You should broadcast your message to the world at Trump place."],
