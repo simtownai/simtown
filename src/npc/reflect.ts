@@ -6,10 +6,14 @@ import client from "./openai"
 import { summarize_conversation as summarize_conversation_prompt } from "./prompts"
 
 export const reflect = async (action: Action) => {
+  const isInterrupted = action.isInterrupted
+  console.log("Is interrupted", isInterrupted)
   // for now we are only reflecting on completed actions
   const actionType = action.constructor.name
   if (actionType === "IdleAction") {
-    return `I did nothing for ${IdleActionDuration / 1000} seconds`
+    return isInterrupted
+      ? "I was idling, doing nothing but got interrupted."
+      : `I completed Idle Action, did nothing for ${IdleActionDuration / 1000} seconds`
   } else if (actionType === "MoveAction") {
     const moveAction = action as MoveAction
     //   as we are assuming this is completed, we know we succesfuly got to target
@@ -20,7 +24,9 @@ export const reflect = async (action: Action) => {
     } else if (target === "coordinates") {
       destination = `Coordinates ${moveAction.moveTarget.x}, ${moveAction.moveTarget.y}`
     }
-    return `I moved to ${destination}`
+    return isInterrupted
+      ? `I was moving to ${destination} but got interrupted.`
+      : `I completed Move Action, moved to ${destination}`
   } else if (actionType === "TalkAction") {
     const talkAction = action as TalkAction
     const lastTalkedPlayerName = talkAction.targetPlayerUsername
@@ -43,7 +49,6 @@ export const reflect = async (action: Action) => {
         return `${item.from} said: ${item.message}`
       }
     })
-    console.log("Content is", content)
     const result = await summarizeConversation(firstDate, lastDate, content.join("\n"))
     return result
   }

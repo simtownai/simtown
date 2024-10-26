@@ -61,7 +61,6 @@ export class AiBrain {
       currentPlan: currentActionQueueString,
       currentAction: currentActionString,
     }
-    console.log("NPC memories", result)
     return result
   }
 

@@ -3,8 +3,7 @@
 ## top priority
 
 - ai
-  - Validate output of planning
-  - reflect after current action gets interrupted (currently we only reflect on completed actions)
+  - figure out what happens when 2 npcs decide to talk with each other at the same time
   - create broadcast and listen actions
   - create kamala and trump chars
   - handle multiple newmessages from a single user when npc is busy (currently we continue on adding to the quee of things to do)

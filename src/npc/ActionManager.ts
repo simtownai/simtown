@@ -101,11 +101,6 @@ export class ActionManager {
   }
 
   /**
-   * Handles the completion of the current action, ensuring reflection is completed
-   * before moving to the next action
-   */
-
-  /**
    * Starts the next action from the action queue
    */
   private async startNextAction() {
@@ -121,7 +116,7 @@ export class ActionManager {
     }
 
     this.currentAction = nextAction
-    // console.log("Starting next action:", nextAction.constructor.name)
+    console.error("Starting next action:", nextAction.constructor.name)
 
     this.npc.socket.emit("updatePlayerData", {
       action: transformActionToActionPlan(this.currentAction),
@@ -164,22 +159,14 @@ export class ActionManager {
     }
   }
 
-  /**
-   * Clears all current and planned actions
-   */
-  clearActions() {
-    if (this.currentAction) {
-      this.currentAction.interrupt()
-    }
-    this.currentAction = null
-    this.actionQueue = []
-    this.isProcessingAction = false
-    console.log("All actions cleared")
-  }
-
   public async interruptCurrentActionAndExecuteNew(newAction: Action) {
     if (this.currentAction) {
       this.currentAction.interrupt()
+      const reflections = await reflect(this.currentAction)
+      if (!reflections) {
+        throw new Error(`Could not reflect for interrupted action: ${this.currentAction.constructor.name}`)
+      }
+      this.npc.aiBrain.memory.reflections.push(reflections)
       // Add the interrupted action back to the front of the queue
       this.actionQueue.unshift(this.currentAction)
       this.currentAction = null
@@ -187,7 +174,10 @@ export class ActionManager {
 
     // Start the new action immediately
     this.currentAction = newAction
-    console.log("Starting new action:", newAction.constructor.name)
+    this.npc.socket.emit("updatePlayerData", {
+      action: transformActionToActionPlan(this.currentAction),
+    } as UpdatePlayerData)
+
     this.currentAction.start()
   }
 }
