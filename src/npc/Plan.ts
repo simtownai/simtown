@@ -16,6 +16,19 @@ const validateActions = (
   playerNames: string[],
 ): { isValid: boolean; error?: string } => {
   for (const action of plan) {
+    if (action.type === "broadcast" && !places.includes(action.targetPlace)) {
+      return {
+        isValid: false,
+        error: `Invalid place: ${action.targetPlace} for the broadcast action. Only ${places.join(", ")} are available`,
+      }
+    }
+    if (action.type === "listen" && !places.includes(action.targetPlace)) {
+      return {
+        isValid: false,
+        error: `Invalid place: ${action.targetPlace} for the listen action. Only ${places.join(", ")} are available`,
+      }
+    }
+
     if (action.type === "move" && action.target.targetType !== "coordinates") {
       if (action.target.targetType === "place" && !places.includes(action.target.name)) {
         return {

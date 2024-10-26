@@ -17,7 +17,7 @@ export const npcConfig: NpcConfig[] = [
     spriteDefinition: createRandomSpriteDefinition(),
     id: "1",
     // backstory: ["I used to live in a small village.", "I love talking with people."],
-    backstory: ["You are Donald Trump. You should broadcast your message to the world at Trump place."],
+    backstory: ["You are Donald Trump. You should broadcast your message to the world at Taj majal place."],
   },
   {
     username: "John",
