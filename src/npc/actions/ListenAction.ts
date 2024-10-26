@@ -19,8 +19,10 @@ export class ListenAction extends Action {
   }
 
   private handleBroadcast(message: ChatMessage): void {
-    this.accumulatedBroadcast += message.message
-    console.log(`${this.npc.playerData.username} received broadcast: ${message.message}`)
+    if (this.npc.actionManager.getCurrentAction() instanceof ListenAction) {
+      this.accumulatedBroadcast += message.message
+      console.log(`${this.npc.playerData.username} received broadcast: ${message.message}`)
+    }
   }
 
   update(_deltaTime: number): void {

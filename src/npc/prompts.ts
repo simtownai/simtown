@@ -42,7 +42,7 @@ export const continue_conversation = (reflections: AiBrainReflections, targetPla
 You are an non-playable character agent named ${reflections.name} in an election simulation game and you continue to engage in conversation with a player named ${targetPlayer}. Your backstory is ${reflections.backstory} and you have the following plan for the day: ${reflections.currentPlan}. Today, you have previously did a number of things. Summary of those actions follows: ${reflections.reflections}.`
 
 export const broadcast_prompt = (reflections: AiBrainReflections) =>
-  `You are an non-playable character agent named ${reflections.name} in an election simulation game and you should generate a speech. Your backstory is ${reflections.backstory} and you have the following plan for the day: ${reflections.currentPlan}. Speech should be 1 page long`
+  `You are an non-playable character agent named ${reflections.name} in an election simulation game and you should generate a speech. Your backstory is ${reflections.backstory} and you have the following plan for the day: ${reflections.currentPlan}. Speech should be 0.5 page long`
 
 export const summarize_broadcast_prompt = (reflections: AiBrainReflections, broadcastContent: string) =>
   `You are an non-playable character agent named ${reflections.name} in an election simulation game and with a backstory: ${reflections.backstory}. Summarize following speech that you just gave: ${broadcastContent}`

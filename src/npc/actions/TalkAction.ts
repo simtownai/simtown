@@ -90,6 +90,8 @@ export class TalkAction extends Action {
         ...this.npc.aiBrain.memory.conversations.getNewestActiveThread(targetPlayerUsername).aiMessages,
       ]
 
+      console.log("toSubmit", toSubmit)
+
       try {
         const completion = await client.chat.completions.create({
           model: "gpt-4o-mini",
