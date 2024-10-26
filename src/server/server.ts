@@ -1,6 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { isWithinListenThreshold } from "../shared/functions"
+import { isInZone, isWithinListenThreshold } from "../shared/functions"
 import { BroadcastMessage, ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import cors from "cors"
 import express from "express"
@@ -149,16 +149,23 @@ io.on("connection", (socket) => {
   })
 
   socket.on("broadcast", (message: BroadcastMessage) => {
-    console.log("broadcast receieved", message)
+    console.log("broadcast received", message)
     const broadcastPlace = message.place
-    const { x, y } = mapData.layers
+    const zoneObject = mapData.layers
       .find((layer) => layer.name === "Boxes")!
       .objects!.find((obj) => obj.name === broadcastPlace)!
 
     players.forEach((player) => {
-      const isInBroadcastRange = isWithinListenThreshold(player, x, y)
+      const isInBroadcastZone = isInZone(
+        player.x,
+        player.y,
+        zoneObject.x,
+        zoneObject.y,
+        zoneObject.width,
+        zoneObject.height,
+      )
 
-      if (isInBroadcastRange) {
+      if (isInBroadcastZone) {
         const recipientSocket = io.sockets.sockets.get(player.id)
         if (recipientSocket) {
           recipientSocket.emit("listenBroadcast", message)
