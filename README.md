@@ -3,7 +3,7 @@
 ## top priority
 
 - ai
-  - Make the aiBrain summary avaialble in talk action
+  - Validate output of planning
   - reflect after current action gets interrupted (currently we only reflect on completed actions)
   - create broadcast and listen actions
   - create kamala and trump chars

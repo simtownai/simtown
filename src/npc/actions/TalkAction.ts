@@ -3,6 +3,7 @@ import { FunctionSchema, functionToSchema } from "../aihelper"
 import { NPC } from "../client"
 import { ConversationTimeoutThreshold } from "../npcConfig"
 import client from "../openai"
+import { continue_conversation, start_conversation } from "../prompts"
 import { Action } from "./Action"
 import { MoveAction } from "./MoveAction"
 import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/index.mjs"
@@ -44,7 +45,9 @@ export class TalkAction extends Action {
     this.npc.aiBrain.memory.conversations.getNewestActiveThread(targetPlayerUsername)
     this.clearConversationTimeout()
 
-    const system_message = `You are an NPC with a backstory of ${this.npc.aiBrain.memory.backstory}. Generate a conversation starter with another player.`
+    const aiBrainSummary = this.npc.aiBrain.getNPCMemories()
+
+    const system_message = start_conversation({ ...aiBrainSummary, targetPlayer: targetPlayerUsername })
 
     const responseContent = await this.generateAssistantResponse(system_message, targetPlayerUsername)
 
@@ -146,7 +149,8 @@ export class TalkAction extends Action {
     this.npc.aiBrain.memory.conversations.addChatMessage(chatMessage.from, chatMessage)
     this.npc.aiBrain.memory.conversations.addAIMessage(chatMessage.from, { role: "user", content: chatMessage.message })
 
-    const system_message = `You are an NPC with a backstory of ${this.npc.aiBrain.memory.backstory}.`
+    const aiBrainSummary = this.npc.aiBrain.getNPCMemories()
+    const system_message = continue_conversation({ ...aiBrainSummary, targetPlayer: chatMessage.from })
 
     const responseContent = await this.generateAssistantResponse(system_message, chatMessage.from)
 

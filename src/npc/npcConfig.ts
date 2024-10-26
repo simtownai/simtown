@@ -22,13 +22,12 @@ export const npcConfig: NpcConfig[] = [
     ],
   },
   // {
-  //   username: "Mark",
+  //   username: "Maria",
   //   spriteDefinition: createRandomSpriteDefinition(),
   //   id: "2",
   //   backstory: [
-  //     "I used to live in a small village.",
-  //     "I  hate talking with people",
-  //     "I will reply only if asked to move.",
+  //     "I am a woman who is deeply liberal and pro-choice. I want to make sure that everyone has access to safe and legal abortion services.",
+  //     "I like to talk with people and share my beliefs.",
   //   ],
   // },
 ]

@@ -47,21 +47,38 @@ Your character can perform following actions:
 export const summarize_conversation =
   "Summarize following conversation. Focus on extracting key information and event you might want to attend in the future."
 
-// export const start_conversation = ({
-//   name,
-//   backstory,
-//   playerNames,
-//   placesNames,
-//   reflections,
-//   currentPlan,
-//   currentAction,
-// }: {
-//   name: string
-//   backstory: string
-//   playerNames: string
-//   placesNames: string
-//   reflections: string
-//   currentPlan: string
-//   currentAction: string
-// }) => `
-// You are an non-playable character agent named ${name} in an election simulation game and you should generate a plan for your day that adheres to the following constraints:`
+export const start_conversation = ({
+  name,
+  backstory,
+  reflections,
+  currentPlan,
+  targetPlayer,
+}: {
+  name: string
+  backstory: string
+  playerNames: string
+  placesNames: string
+  reflections: string
+  currentPlan: string
+  currentAction: string
+  targetPlayer: string
+}) => `
+You are an non-playable character agent named ${name} in an election simulation game and you engage in conversation with a player named ${targetPlayer}. Your backstory is ${backstory} and you have the following plan for the day: ${currentPlan}. Today, you have previously did a number of things. Summary of those actions follows: ${reflections}.`
+
+export const continue_conversation = ({
+  name,
+  backstory,
+  reflections,
+  currentPlan,
+  targetPlayer,
+}: {
+  name: string
+  backstory: string
+  playerNames: string
+  placesNames: string
+  reflections: string
+  currentPlan: string
+  currentAction: string
+  targetPlayer: string
+}) => `
+You are an non-playable character agent named ${name} in an election simulation game and you continue to engage in conversation with a player named ${targetPlayer}. Your backstory is ${backstory} and you have the following plan for the day: ${currentPlan}. Today, you have previously did a number of things. Summary of those actions follows: ${reflections}.`
