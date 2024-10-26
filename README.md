@@ -4,7 +4,8 @@
 
 - ai
 
-  - reflect on broadcast and listen
+  - figure out timing of broadcasts and how to make npcs aware about this
+
   - make broadcast not interruptable
   - figure out what happens when 2 npcs decide to talk with each other at the same time
   - create kamala and trump chars
