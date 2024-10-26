@@ -69,15 +69,12 @@ function App() {
 
     newSocket.on("listenBroadcast", (message: BroadcastMessage) => {
       setMessages((prevMessages) => {
-        const key = `broadcast-${message.from}`
+        const key = `${message.from} (broadcast)`
         const oldMessages = prevMessages.get(key) || []
         const newMessage = {
           to: username,
           ...message,
-          isRead:
-            !isChatsContainerCollapsedRef.current &&
-            !isChatCollapsedRef.current &&
-            chatmateRef.current === message.from,
+          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
         } as ChatMessage
         const newMessages = [...oldMessages, newMessage]
         return new Map(prevMessages).set(key, newMessages)

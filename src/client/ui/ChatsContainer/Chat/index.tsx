@@ -123,7 +123,7 @@ export default function Chat({
           <div className={styles.placeholder}>Select a chat to start messaging</div>
         )}
       </div>
-      {chatmate && (
+      {chatmate && !chatmate.endsWith("(broadcast)") && (
         <>
           <Compose
             configuration={configuration}
