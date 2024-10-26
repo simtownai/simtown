@@ -114,10 +114,9 @@ export class ActionManager {
 
     try {
       // Process reflection
-      console.log("Starting reflection for:", this.currentAction.constructor.name)
       const reflections = await reflect(this.currentAction)
       if (!reflections) {
-        throw new Error(`Could not reflect for action: ${this.currentAction.constructor.name}`)
+        throw new Error(`Could not reflect for completed action: ${this.currentAction.constructor.name}`)
       }
 
       // console.log("Processing reflections:", reflections)

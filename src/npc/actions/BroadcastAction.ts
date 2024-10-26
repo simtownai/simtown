@@ -5,7 +5,7 @@ import { broadcast_prompt } from "../prompts"
 import { Action } from "./Action"
 
 export class BroadcastAction extends Action {
-  private broadcastContent: string = ""
+  broadcastContent: string = ""
   private broadcastInterval: NodeJS.Timeout | null = null
   private broadcastIndex: number = 0
   private chunkSize: number = 100 // Characters per chunk

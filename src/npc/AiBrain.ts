@@ -70,3 +70,12 @@ export class AiBrain {
     // Implementation for planning (if needed)
   }
 }
+export type AiBrainReflections = {
+  name: string
+  backstory: string
+  playerNames: string
+  placesNames: string
+  reflections: string
+  currentPlan: string
+  currentAction: string
+}

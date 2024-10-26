@@ -47,7 +47,7 @@ export class TalkAction extends Action {
 
     const aiBrainSummary = this.npc.aiBrain.getNPCMemories()
 
-    const system_message = start_conversation({ ...aiBrainSummary, targetPlayer: targetPlayerUsername })
+    const system_message = start_conversation(aiBrainSummary, this.targetPlayerUsername)
 
     const responseContent = await this.generateAssistantResponse(system_message, targetPlayerUsername)
 
@@ -150,7 +150,7 @@ export class TalkAction extends Action {
     this.npc.aiBrain.memory.conversations.addAIMessage(chatMessage.from, { role: "user", content: chatMessage.message })
 
     const aiBrainSummary = this.npc.aiBrain.getNPCMemories()
-    const system_message = continue_conversation({ ...aiBrainSummary, targetPlayer: chatMessage.from })
+    const system_message = continue_conversation(aiBrainSummary, chatMessage.from)
 
     const responseContent = await this.generateAssistantResponse(system_message, chatMessage.from)
 
