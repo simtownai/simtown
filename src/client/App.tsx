@@ -84,7 +84,6 @@ function App() {
       })
     })
 
-
     newSocket.on("endConversation", (message: ChatMessage) => {
       setMessages((prevMessages) => {
         const oldMessages = prevMessages.get(message.from) || []
