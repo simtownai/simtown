@@ -38,10 +38,10 @@ export class NPC {
           if (player.id === playerId) {
             this.playerData = player
             this.movementController = new MovementController(
-              this.playerData,
-              this.otherPlayers,
-              this.sendMoveMessage.bind(this),
-              this.emitUpdatePlayerData.bind(this),
+              () => this.playerData,
+              () => this.otherPlayers,
+              (blockingPlayer: PlayerData) => this.sendMoveMessage(blockingPlayer),
+              (updatePlayerData: UpdatePlayerData) => this.updateAndEmitPlayerData(updatePlayerData),
             )
 
             setTimeout(async () => {
@@ -53,7 +53,7 @@ export class NPC {
                   getMovementController: () => this.movementController,
                   places: this.placesNames,
                   socket: this.socket,
-                  setAndEmitPlayerData: (playerData: PlayerData) => this.emitUpdatePlayerData(playerData),
+                  setAndEmitPlayerData: (playerData: PlayerData) => this.updateAndEmitPlayerData(playerData),
                 })
                 this.aiBrain.generatePlanAndSetActions()
                 this.startUpdateLoop()
@@ -144,13 +144,9 @@ export class NPC {
     })
   }
 
-  setAndEmitPlayerData(playerData: PlayerData) {
-    this.playerData = playerData
-    this.emitUpdatePlayerData(playerData)
-  }
-
-  emitUpdatePlayerData(data: UpdatePlayerData) {
-    this.socket.emit("updatePlayerData", data)
+  updateAndEmitPlayerData(updatePlayerData: UpdatePlayerData) {
+    this.playerData = { ...this.playerData, ...updatePlayerData }
+    this.socket.emit("updatePlayerData", updatePlayerData)
   }
 
   sendMoveMessage(blockingPlayer: PlayerData) {
