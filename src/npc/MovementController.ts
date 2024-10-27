@@ -172,8 +172,12 @@ export class MovementController {
     const worldPos = this.gridToWorld(nextTile)
 
     if (this.isCellBlocked(nextTile)) {
-      this.handleBlockedPath(nextTile)
       this.setIdleAnimation()
+      if (this.pathIndex === this.path.length - 1) {
+        this.initiateMovement(this.currentMoveTarget!)
+      } else {
+        this.handleBlockedPath(nextTile)
+      }
       return
     }
 
