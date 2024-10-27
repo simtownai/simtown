@@ -1,93 +1,35 @@
 import mapData from "../../public/assets/maps/simple-map.json"
-import { CONFIG } from "../shared/config"
-import { ChatMessage, PlayerData } from "../shared/types"
-import { MoveTarget } from "../shared/types"
+import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
 import { ActionManager } from "./ActionManager"
 import { AiBrain } from "./AiBrain"
 import { MovementController } from "./MovementController"
-import { Action } from "./actions/Action"
 import { BroadcastAction } from "./actions/BroadcastAction"
 import { TalkAction } from "./actions/TalkAction"
-import { NpcConfig, npcConfig } from "./npcConfig"
-import EasyStar from "easystarjs"
+import { NPCConfig, npcConfig } from "./npcConfig"
 import { Socket, io } from "socket.io-client"
 
 export class NPC {
-  private collisionLayer: (typeof mapData.layers)[0]
-  objectLayer: (typeof mapData.layers)[0]["objects"]
-  private roadLayer: (typeof mapData.layers)[0] | undefined
-  private collisionGrid: number[][]
-  socket: Socket
-  playerData: PlayerData
-  public otherPlayers: Map<string, PlayerData>
-  tileSize: number
   movementController: MovementController
   aiBrain: AiBrain
-  npcConfig: NpcConfig
-  lastUpdateTime: number
+  private socket: Socket
+  private playerData: PlayerData
+  private otherPlayers: Map<string, PlayerData>
+  private lastUpdateTime: number
+  private actionManager: ActionManager
+  private placesNames: string[]
 
-  actionManager: ActionManager
-
-  constructor(npcConfig: NpcConfig) {
-    this.npcConfig = npcConfig
-    this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
-    this.roadLayer = mapData.layers.find((layer) => layer.name === "Roads")
-    this.objectLayer = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
-    this.collisionGrid = []
+  constructor(private npcConfig: NPCConfig) {
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.otherPlayers = new Map()
-    this.tileSize = 16
-    this.initializeCollisionGrid()
     this.lastUpdateTime = Date.now()
+    this.placesNames = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.map((obj) => obj.name)
+
+    // const placesNames = this.npc.objectLayer!
     setTimeout(() => {
       this.setupSocketEvents()
       this.socket.connect()
       this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
-    }, 2000)
-  }
-
-  findObject(object: MoveTarget) {
-    if (object.targetType === "place") {
-      const place = this.objectLayer!.find((obj) => obj.name === object.name)
-      if (!place) {
-        throw new Error(`Object ${object.name} not found`)
-      }
-      return { x: place.x, y: place.y }
-    }
-    if (object.targetType === "coordinates") {
-      return { x: object.x, y: object.y }
-    } else {
-      const player = this.otherPlayers.get(object.name)
-      if (!player) {
-        throw new Error(`Player ${object.name} not found`)
-      }
-      return { x: player.x, y: player.y }
-    }
-  }
-
-  private initializeCollisionGrid() {
-    for (let y = 0; y < this.collisionLayer.height!; y++) {
-      const row: number[] = []
-      for (let x = 0; x < this.collisionLayer.width!; x++) {
-        const tileIndex = y * this.collisionLayer.width! + x
-        const collisionTileId = this.collisionLayer.data![tileIndex]
-        const roadTileId = this.roadLayer ? this.roadLayer.data![tileIndex] : null
-
-        if (collisionTileId !== 0) {
-          row.push(0)
-        } else if (roadTileId !== null && roadTileId !== 0) {
-          row.push(1)
-        } else {
-          row.push(10)
-        }
-      }
-      this.collisionGrid.push(row)
-    }
-  }
-
-  private initializeActionManager() {
-    this.actionManager = new ActionManager()
-    this.actionManager.setNPC(this)
+    }, 7000)
   }
 
   private setupSocketEvents() {
@@ -97,14 +39,18 @@ export class NPC {
         players.forEach(async (player) => {
           if (player.id === playerId) {
             this.playerData = player
-            this.movementController = new MovementController(this.playerData, this.socket, this)
-            this.aiBrain = new AiBrain({
-              npc: this,
-            })
+            this.movementController = new MovementController(
+              this.playerData,
+              this.otherPlayers,
+              this.sendMoveMessage.bind(this),
+              this.emitUpdatePlayerData.bind(this),
+            )
 
             setTimeout(async () => {
               try {
-                this.initializeActionManager()
+                this.actionManager = new ActionManager(this)
+                this.aiBrain = new AiBrain(this.npcConfig, this.otherPlayers, this.placesNames, this.actionManager)
+                this.actionManager.generatePlanAndSetActions()
                 this.startUpdateLoop()
               } catch (error) {
                 console.error("Error generating plan for the day:", error)
@@ -139,8 +85,8 @@ export class NPC {
         }
       })
 
-      this.socket.on("playerLeft", (playerId: string) => {
-        this.otherPlayers.delete(playerId)
+      this.socket.on("playerLeft", (username: string) => {
+        this.otherPlayers.delete(username)
       })
 
       // Listen for incoming messages
@@ -179,190 +125,38 @@ export class NPC {
               date: new Date().toISOString(),
             }
             this.socket.emit("sendMessage", refusalMessage)
-            this.pushNewAction(action)
+            return this.actionManager.pushNewAction(action, 0)
           } else {
             const action = new TalkAction(this, message.from, {
               type: "existing",
               message: message,
             })
-            this.interruptCurrentActionAndExecuteNew(action)
+            this.actionManager.interruptCurrentActionAndExecuteNew(action)
           }
         }
       })
     })
   }
 
-  async move_to(moveTarget: MoveTarget) {
-    let [x, y] = [0, 0]
-
-    if (moveTarget.targetType === "coordinates") {
-      x = moveTarget.x
-      y = moveTarget.y
-    } else if (moveTarget.targetType === "person") {
-      const player = this.otherPlayers.get(moveTarget.name)
-      if (!player) {
-        return "Couldn't find that player"
-      }
-
-      const playerGridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
-
-      const adjacentOffsets = [
-        { x: 0, y: -1 }, // North
-        { x: 1, y: 0 }, // East
-        { x: 0, y: 1 }, // South
-        { x: -1, y: 0 }, // West
-      ]
-
-      let possibleTargets: { x: number; y: number }[] = []
-
-      for (const offset of adjacentOffsets) {
-        const adjX = playerGridPos.x + offset.x
-        const adjY = playerGridPos.y + offset.y
-
-        if (!this.isCellBlocked(adjX, adjY)) {
-          const worldPos = this.gridToWorld(adjX, adjY)
-          possibleTargets.push({ x: worldPos.x, y: worldPos.y })
-        }
-      }
-
-      if (possibleTargets.length === 0) {
-        return "No adjacent position available to move to"
-      }
-
-      // Choose the closest target
-      possibleTargets.sort((a, b) => {
-        const distA = Math.hypot(a.x - this.playerData.x, a.y - this.playerData.y)
-        const distB = Math.hypot(b.x - this.playerData.x, b.y - this.playerData.y)
-        return distA - distB
-      })
-
-      x = possibleTargets[0].x
-      y = possibleTargets[0].y
-    } else if (moveTarget.targetType === "place") {
-      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
-      if (!place) {
-        return "Couldn't find that place"
-      }
-
-      const randomX = place.x + Math.random() * place.width
-      const randomY = place.y + Math.random() * place.height
-
-      x = Math.round(randomX)
-      y = Math.round(randomY)
-    }
-
-    console.log(`Received command to move to position: (${x}, ${y})`, moveTarget)
-
-    try {
-      const foundPath = await this.calculatePath({ x, y }, false)
-      if (!foundPath || foundPath.length === 0) {
-        throw new Error("Couldn't find path")
-      }
-
-      this.movementController.setPath(foundPath, { x, y }) // Pass targetPosition
-      return "Moving to target position"
-    } catch (error) {
-      console.error("Error in move_to:", error)
-      return "Couldn't move there, those numbers are not valid coordinates"
-    }
+  emitUpdatePlayerData(data: UpdatePlayerData) {
+    this.socket.emit("updatePlayerData", data)
   }
 
-  getPlayerPosition(_playerId: string): { x: number; y: number } | null {
-    const temp_player = this.otherPlayers.keys().next().value
-    const player = this.otherPlayers.get(temp_player)
-    return player ? { x: player.x, y: player.y } : null
-  }
-
-  worldToGrid(x: number, y: number) {
-    return {
-      x: Math.floor(x / this.tileSize),
-      y: Math.floor(y / this.tileSize),
-    }
-  }
-
-  gridToWorld(x: number, y: number) {
-    return {
-      x: x * this.tileSize + this.tileSize / 2,
-      y: y * this.tileSize + this.tileSize,
-    }
-  }
-
-  isCellBlocked(x: number, y: number): boolean {
-    // Check for players at the given grid position
-    for (const player of this.otherPlayers.values()) {
-      const playerGridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
-      if (playerGridPos.x === x && playerGridPos.y === y) {
-        return true
-      }
+  sendMoveMessage(blockingPlayer: PlayerData) {
+    const replyMessage: ChatMessage = {
+      from: this.playerData.username,
+      to: blockingPlayer.username,
+      message: "Please move, you're blocking my path.",
+      date: new Date().toISOString(),
     }
 
-    // Check for static collisions
-    if (x < 0 || y < 0 || y >= this.collisionGrid.length || x >= this.collisionGrid[0].length) {
-      return true
-    }
-    const tileValue = this.collisionGrid[y][x]
-    return tileValue === 0
-  }
-
-  getBlockingPlayer(x: number, y: number): PlayerData | null {
-    for (const [_playerId, player] of this.otherPlayers.entries()) {
-      const playerGridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
-      if (playerGridPos.x === x && playerGridPos.y === y) {
-        return player
-      }
-    }
-    return null
-  }
-
-  async calculatePath(
-    targetPosition: { x: number; y: number },
-    considerPlayers: boolean,
-    startPosition?: { x: number; y: number },
-  ): Promise<{ x: number; y: number }[] | null> {
-    // Use provided start position or current position
-    const start = startPosition
-      ? { x: startPosition.x, y: startPosition.y }
-      : this.worldToGrid(this.playerData.x, this.playerData.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
-
-    const end = this.worldToGrid(targetPosition.x, targetPosition.y)
-
-    const easystar = new EasyStar.js()
-    easystar.setAcceptableTiles([1, 10])
-    easystar.setTileCost(1, 1)
-    easystar.setTileCost(10, 10)
-    easystar.disableCornerCutting()
-
-    let grid: number[][]
-    if (considerPlayers) {
-      grid = this.getGridWithPlayers()
-    } else {
-      grid = this.collisionGrid
-    }
-
-    easystar.setGrid(grid)
-
-    return new Promise((resolve) => {
-      easystar.findPath(start.x, start.y, end.x, end.y, (foundPath) => {
-        resolve(foundPath)
-      })
-      easystar.calculate()
+    this.aiBrain.memory.conversations.addChatMessage(blockingPlayer.username, replyMessage)
+    this.aiBrain.memory.conversations.addAIMessage(blockingPlayer.username, {
+      role: "assistant",
+      content: "Please move, you're blocking my path.",
     })
-  }
 
-  getGridWithPlayers(): number[][] {
-    const gridWithPlayers = this.collisionGrid.map((row) => row.slice())
-    for (const player of this.otherPlayers.values()) {
-      const gridPos = this.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
-      if (
-        gridPos.x >= 0 &&
-        gridPos.x < gridWithPlayers[0].length &&
-        gridPos.y >= 0 &&
-        gridPos.y < gridWithPlayers.length
-      ) {
-        gridWithPlayers[gridPos.y][gridPos.x] = 0
-      }
-    }
-    return gridWithPlayers
+    this.socket.emit("sendMessage", replyMessage)
   }
 
   private startUpdateLoop() {
@@ -375,14 +169,6 @@ export class NPC {
 
       await this.actionManager.update(deltaTime)
     }, 1000 / 30)
-  }
-
-  interruptCurrentActionAndExecuteNew(action: Action) {
-    return this.actionManager.interruptCurrentActionAndExecuteNew(action)
-  }
-
-  pushNewAction(action: Action) {
-    return this.actionManager.pushNewAction(action, 0)
   }
 }
 

@@ -40,6 +40,8 @@ export interface BroadcastMessage {
   date: string
 }
 
+export type GridPosition = { gridX: number; gridY: number }
+
 const MoveToCoordinatesTargetSchema = z.object({
   targetType: z.literal("coordinates"),
   x: z.number(),

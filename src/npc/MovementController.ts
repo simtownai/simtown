@@ -1,29 +1,61 @@
+import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
-import { NPC } from "./client"
-import { Socket } from "socket.io-client"
+import { GridPosition, MoveTarget, PlayerData, UpdatePlayerData } from "../shared/types"
+import EasyStar from "easystarjs"
 
-const threshold = 0.01
+const tinyMovementThreshold = 0.01
+
 export class MovementController {
-  private path: { x: number; y: number }[] = []
+  private objectLayer: (typeof mapData.layers)[0]["objects"]
+  private collisionLayer: (typeof mapData.layers)[0]
+  private roadLayer: (typeof mapData.layers)[0] | undefined
+  private collisionGrid: number[][]
+  private path: GridPosition[] = []
   private pathIndex = 0
   private speed = 50 // pixels per second
   private blockedByPlayerInfo: { username: string; startTime: number } | null = null
-  private sentMoveMessage: boolean = false
+  private moveMessageSent: boolean = false
   private isRecalculatingPath: boolean = false
   private isPaused: boolean = false
-  private targetPosition: { x: number; y: number }
+  private targetPosition: GridPosition
   private onMovementFailed: (() => void) | null = null
   private onMovementCompleted: (() => void) | null = null
   private lastDirection: "left" | "right" | "up" | "down" = "down"
 
-  public movementCompleted: boolean = false
+  movementCompleted: boolean = false
 
   constructor(
     private playerData: PlayerData,
-    private socket: Socket,
-    private npc: NPC,
-  ) {}
+    private otherPlayers: Map<string, PlayerData>,
+    private sendMoveMessage: (blockingPlayer: PlayerData) => void,
+    private emitUpdatePlayerData: (data: UpdatePlayerData) => void,
+  ) {
+    this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
+    this.roadLayer = mapData.layers.find((layer) => layer.name === "Roads")
+    this.objectLayer = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
+    this.initializeCollisionGrid()
+  }
+
+  private initializeCollisionGrid() {
+    this.collisionGrid = []
+    for (let y = 0; y < this.collisionLayer.height!; y++) {
+      const row: number[] = []
+      for (let x = 0; x < this.collisionLayer.width!; x++) {
+        const tileIndex = y * this.collisionLayer.width! + x
+        const collisionTileId = this.collisionLayer.data![tileIndex]
+        const roadTileId = this.roadLayer ? this.roadLayer.data![tileIndex] : null
+
+        if (collisionTileId !== 0) {
+          row.push(0)
+        } else if (roadTileId !== null && roadTileId !== 0) {
+          row.push(1)
+        } else {
+          row.push(10)
+        }
+      }
+      this.collisionGrid.push(row)
+    }
+  }
 
   setMovementFailedCallback(callback: () => void) {
     this.onMovementFailed = callback
@@ -42,14 +74,14 @@ export class MovementController {
     }
   }
 
-  public setPath(newPath: { x: number; y: number }[], targetPosition: { x: number; y: number }) {
+  public setPath(path: GridPosition[], targetPosition: GridPosition) {
     this.movementCompleted = false // Reset flag when a new path is set
-    if (newPath && newPath.length > 0) {
+    if (path && path.length > 0) {
       // Find the closest point on the new path to the NPC's current position
       let closestIndex = 0
       let minDistance = Infinity
-      for (let i = 0; i < newPath.length; i++) {
-        const pathPointWorld = this.npc.gridToWorld(newPath[i].x, newPath[i].y)
+      for (let i = 0; i < path.length; i++) {
+        const pathPointWorld = this.gridToWorld(path[i])
         const dx = pathPointWorld.x - this.playerData.x
         const dy = pathPointWorld.y - this.playerData.y
         const distance = Math.hypot(dx, dy)
@@ -60,11 +92,11 @@ export class MovementController {
         }
       }
 
-      this.path = newPath
+      this.path = path
       this.pathIndex = closestIndex + 1 // Smoothing the direction after recalculation
       this.targetPosition = targetPosition
       this.blockedByPlayerInfo = null
-      this.sentMoveMessage = false
+      this.moveMessageSent = false
     }
   }
 
@@ -89,16 +121,16 @@ export class MovementController {
     }
 
     const nextTile = this.path[this.pathIndex]
-    const worldPos = this.npc.gridToWorld(nextTile.x, nextTile.y)
+    const worldPos = this.gridToWorld(nextTile)
 
-    if (this.npc.isCellBlocked(nextTile.x, nextTile.y)) {
+    if (this.isCellBlocked(nextTile)) {
       this.handleBlockedPath(nextTile)
       this.updateAnimationAndEmit(0, 0)
       return
     }
 
     this.blockedByPlayerInfo = null
-    this.sentMoveMessage = false
+    this.moveMessageSent = false
 
     const dx = worldPos.x - this.playerData.x
     const dy = worldPos.y - this.playerData.y
@@ -131,7 +163,7 @@ export class MovementController {
 
   private updateAnimationAndEmit(deltaX: number, deltaY: number) {
     // Increased threshold to account for tiny movements
-    const isMoving = Math.abs(deltaX) > threshold || Math.abs(deltaY) > threshold
+    const isMoving = Math.abs(deltaX) > tinyMovementThreshold || Math.abs(deltaY) > tinyMovementThreshold
 
     if (isMoving) {
       const direction = this.getDirection(deltaX, deltaY)
@@ -142,7 +174,7 @@ export class MovementController {
       this.playerData.animation = `${this.playerData.username}-idle-${this.lastDirection}`
     }
 
-    this.emitUpdatePlayerData()
+    this.emitUpdatePlayerData(this.playerData)
   }
 
   private getDirection(deltaX: number, deltaY: number): "left" | "right" | "up" | "down" {
@@ -158,11 +190,11 @@ export class MovementController {
   private updateIdleState() {
     // Use the lastDirection for idle animation
     this.playerData.animation = `${this.playerData.username}-idle-${this.lastDirection}`
-    this.emitUpdatePlayerData()
+    this.emitUpdatePlayerData(this.playerData)
   }
 
-  private handleBlockedPath(nextTile: { x: number; y: number }) {
-    const blockingPlayer = this.npc.getBlockingPlayer(nextTile.x, nextTile.y)
+  private handleBlockedPath(nextTile: GridPosition) {
+    const blockingPlayer = this.getBlockingPlayer(nextTile)
 
     if (blockingPlayer) {
       this.handleBlockedByPlayer(blockingPlayer)
@@ -176,10 +208,10 @@ export class MovementController {
   private async handleBlockedByPlayer(blockingPlayer: PlayerData) {
     if (!this.blockedByPlayerInfo || this.blockedByPlayerInfo.username !== blockingPlayer.username) {
       this.blockedByPlayerInfo = { username: blockingPlayer.username, startTime: Date.now() }
-      this.sentMoveMessage = false
+      this.moveMessageSent = false
 
       // Attempt to recalculate path when first blocked
-      const newPath = await this.attemptPathRecalculation()
+      const newPath = await this.attemptPathRecalculation(true)
       if (newPath) {
         // If a new path is found, update the path and return
         this.setPath(newPath, this.targetPosition)
@@ -190,16 +222,20 @@ export class MovementController {
     const elapsedTime = Date.now() - this.blockedByPlayerInfo.startTime
 
     if (elapsedTime < 5000) {
-      this.sendMoveMessageIfNeeded(blockingPlayer)
+      if (!this.moveMessageSent) {
+        this.sendMoveMessage(blockingPlayer)
+        this.moveMessageSent = true
+      }
     } else {
       this.giveUpOnTarget()
     }
   }
 
-  private async attemptPathRecalculation(): Promise<{ x: number; y: number }[] | null> {
+  private async attemptPathRecalculation(considerPlayers: boolean): Promise<GridPosition[] | null> {
     console.log("Attempting to recalculate path due to player blockage")
     try {
-      const newPath = await this.npc.calculatePath(this.targetPosition, true)
+      const currentPos: GridPosition = this.worldToGrid(this.playerData.x, this.playerData.y)
+      const newPath = await this.calculatePath(currentPos, this.targetPosition, considerPlayers)
       if (newPath && newPath.length > 0) {
         console.log("New path found after recalculation")
         return newPath
@@ -213,29 +249,9 @@ export class MovementController {
     }
   }
 
-  private sendMoveMessageIfNeeded(blockingPlayer: PlayerData) {
-    if (!this.sentMoveMessage) {
-      const replyMessage: ChatMessage = {
-        from: this.playerData.username,
-        to: blockingPlayer.username,
-        message: "Please move, you're blocking my path.",
-        date: new Date().toISOString(),
-      }
-
-      this.npc.aiBrain.memory.conversations.addChatMessage(blockingPlayer.username, replyMessage)
-      this.npc.aiBrain.memory.conversations.addAIMessage(blockingPlayer.username, {
-        role: "assistant",
-        content: "Please move, you're blocking my path.",
-      })
-
-      this.socket.emit("sendMessage", replyMessage)
-      this.sentMoveMessage = true
-    }
-  }
-
   private giveUpOnTarget() {
     this.blockedByPlayerInfo = null
-    this.sentMoveMessage = false
+    this.moveMessageSent = false
     this.path = []
     this.pathIndex = 0
 
@@ -251,14 +267,13 @@ export class MovementController {
     if (!this.isRecalculatingPath) {
       this.isRecalculatingPath = true
       this.updateIdleState()
-      this.npc
-        .calculatePath(this.targetPosition, false)
+      this.calculatePath(this.worldToGrid(this.playerData.x, this.playerData.y), this.targetPosition, false)
         .then(this.handleRecalculatedPath.bind(this))
         .catch(this.handleRecalculationError.bind(this))
     }
   }
 
-  private handleRecalculatedPath(newPath: { x: number; y: number }[] | null) {
+  private handleRecalculatedPath(newPath: GridPosition[] | null) {
     this.isRecalculatingPath = false
     if (newPath && newPath.length > 0) {
       this.setPath(newPath, this.targetPosition)
@@ -280,13 +295,185 @@ export class MovementController {
     }
   }
 
-  emitUpdatePlayerData() {
-    const updateData: UpdatePlayerData = {
-      x: this.playerData.x,
-      y: this.playerData.y,
-      animation: this.playerData.animation,
+  async initiateMovement(moveTarget: MoveTarget) {
+    let targetPosition: GridPosition = { gridX: 0, gridY: 0 }
+    console.log("top level move to")
+
+    if (moveTarget.targetType === "coordinates") {
+      targetPosition = this.worldToGrid(moveTarget.x, moveTarget.y)
+    } else if (moveTarget.targetType === "person") {
+      const player = this.otherPlayers.get(moveTarget.name)
+      if (!player) {
+        return "Couldn't find that player"
+      }
+
+      const playerGridPos = this.worldToGrid(player.x, player.y)
+
+      const adjacentOffsets: GridPosition[] = [
+        { gridX: 0, gridY: -1 }, // North
+        { gridX: 1, gridY: 0 }, // East
+        { gridX: 0, gridY: 1 }, // South
+        { gridX: -1, gridY: 0 }, // West
+      ]
+
+      let possibleTargets: GridPosition[] = []
+
+      for (const offset of adjacentOffsets) {
+        const adjPos: GridPosition = {
+          gridX: playerGridPos.gridX + offset.gridX,
+          gridY: playerGridPos.gridY + offset.gridY,
+        }
+
+        if (!this.isCellBlocked(adjPos)) {
+          possibleTargets.push(adjPos)
+        }
+      }
+
+      if (possibleTargets.length === 0) {
+        return "No adjacent position available to move to"
+      }
+
+      // Choose the closest target
+      possibleTargets.sort((a, b) => {
+        const worldPositionA = this.gridToWorld(a)
+        const worldPositionB = this.gridToWorld(b)
+        const distA = Math.hypot(worldPositionA.x - this.playerData.x, worldPositionA.y - this.playerData.y)
+        const distB = Math.hypot(worldPositionB.x - this.playerData.x, worldPositionB.y - this.playerData.y)
+        return distA - distB
+      })
+      targetPosition = possibleTargets[0]
+    } else if (moveTarget.targetType === "place") {
+      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      if (!place) {
+        return "Couldn't find that place"
+      }
+
+      const randomX = Math.round(place.x + 2 + Math.random() * (place.width - 2))
+      const randomY = Math.round(place.y + 2 + Math.random() * (place.height - 2))
+
+      targetPosition = this.worldToGrid(randomX, randomY)
     }
 
-    this.socket.emit("updatePlayerData", updateData)
+    console.log(`Received command to move to position: (${targetPosition})`, moveTarget)
+
+    try {
+      const foundPath = await this.calculatePath(
+        this.worldToGrid(this.playerData.x, this.playerData.y),
+        targetPosition,
+        false,
+      )
+      if (!foundPath || foundPath.length === 0) {
+        throw new Error("Couldn't find path")
+      }
+
+      this.setPath(foundPath, targetPosition)
+      return "Moving to target position"
+    } catch (error) {
+      console.error("Error in move_to:", error)
+      return "Couldn't move there, those numbers are not valid coordinates"
+    }
+  }
+
+  getPlayerPosition(_playerId: string): { x: number; y: number } | null {
+    const temp_player = this.otherPlayers.keys().next().value
+    const player = this.otherPlayers.get(temp_player)
+    return player ? { x: player.x, y: player.y } : null
+  }
+
+  worldToGrid(x: number, y: number): GridPosition {
+    return {
+      gridX: Math.floor((x - 1) / CONFIG.TILE_SIZE),
+      gridY: Math.floor((y - 1) / CONFIG.TILE_SIZE),
+    }
+  }
+
+  gridToWorld(cell: GridPosition): { x: number; y: number } {
+    return {
+      x: cell.gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+      y: cell.gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE,
+    }
+  }
+
+  isCellBlocked(cell: GridPosition): boolean {
+    // Check for players at the given grid position
+    for (const player of this.otherPlayers.values()) {
+      const playerGridPos = this.worldToGrid(player.x, player.y)
+      if (playerGridPos.gridX === cell.gridX && playerGridPos.gridY === cell.gridY) {
+        return true
+      }
+    }
+
+    // Check for static collisions
+    if (
+      cell.gridX < 0 ||
+      cell.gridY < 0 ||
+      cell.gridY >= this.collisionGrid.length ||
+      cell.gridX >= this.collisionGrid[0].length
+    ) {
+      return true
+    }
+    const tileValue = this.collisionGrid[cell.gridY][cell.gridX]
+    return tileValue === 0
+  }
+
+  getBlockingPlayer(cell: GridPosition): PlayerData | null {
+    for (const player of this.otherPlayers.values()) {
+      const playerGridPos = this.worldToGrid(player.x, player.y)
+      if (playerGridPos.gridX === cell.gridX && playerGridPos.gridY === cell.gridY) {
+        return player
+      }
+    }
+    return null
+  }
+
+  async calculatePath(
+    startPosition: GridPosition,
+    targetPosition: GridPosition,
+    considerPlayers: boolean,
+  ): Promise<GridPosition[] | null> {
+    const easystar = new EasyStar.js()
+    easystar.setAcceptableTiles([1, 10])
+    easystar.setTileCost(1, 1)
+    easystar.setTileCost(10, 10)
+    easystar.disableCornerCutting()
+
+    let grid: number[][]
+    if (considerPlayers) {
+      grid = this.getGridWithPlayers()
+    } else {
+      grid = this.collisionGrid
+    }
+
+    easystar.setGrid(grid)
+
+    return new Promise((resolve) => {
+      easystar.findPath(
+        startPosition.gridX,
+        startPosition.gridY,
+        targetPosition.gridX,
+        targetPosition.gridY,
+        (foundPath) => {
+          resolve(foundPath ? foundPath.map((cell) => ({ gridX: cell.x, gridY: cell.y })) : null)
+        },
+      )
+      easystar.calculate()
+    })
+  }
+
+  getGridWithPlayers(): number[][] {
+    const gridWithPlayers = this.collisionGrid.map((row) => row.slice())
+    for (const player of this.otherPlayers.values()) {
+      const gridPos = this.worldToGrid(player.x, player.y)
+      if (
+        gridPos.gridX >= 0 &&
+        gridPos.gridX < gridWithPlayers[0].length &&
+        gridPos.gridY >= 0 &&
+        gridPos.gridY < gridWithPlayers.length
+      ) {
+        console.log(gridWithPlayers.length, gridWithPlayers[0].length)
+        gridWithPlayers[gridPos.gridY][gridPos.gridX] = 0
+      }
+    }
+    return gridWithPlayers
   }
 }

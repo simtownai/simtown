@@ -9,7 +9,7 @@ export class MoveAction extends Action {
   isStarted: boolean = false
   isFailed: boolean = false
   lastKnownPlayerPosition: { x: number; y: number } | null = null
-  pathRecalculationThreshold: number = 32 // Distance threshold for path recalculation
+  pathRecalculationThreshold: number = 2
   pathRecalculationInterval: number = 500 // Minimum time between path recalculations in ms
   lastPathRecalculationTime: number = 0
 
@@ -28,7 +28,7 @@ export class MoveAction extends Action {
     })
     this.npc.movementController.setMovementCompletedCallback(() => {
       console.log("Movement completed callback received in MoveAction")
-      if (CONFIG.ENABLE_NPC_AUTOMATION) {
+      if (CONFIG.ENABLE_NPC_AUTOMATION && this.moveTarget.targetType !== "person") {
         this.isCompletedFlag = true
       }
     })
@@ -44,7 +44,7 @@ export class MoveAction extends Action {
       }
     }
 
-    await this.npc.move_to(this.moveTarget)
+    await this.npc.movementController.initiateMovement(this.moveTarget)
     this.npc.movementController.resume()
   }
 
@@ -65,43 +65,55 @@ export class MoveAction extends Action {
         return
       }
 
-      const dx = player.x - this.npc.playerData.x
-      const dy = player.y - this.npc.playerData.y
+      const currentTime = Date.now()
 
-      const isAdjacent =
-        (Math.abs(dx) <= 32 && Math.abs(dy) <= this.npc.tileSize / 2 && dx !== 0) ||
-        (Math.abs(dy) <= 32 && Math.abs(dx) <= this.npc.tileSize / 2 && dy !== 0)
+      // Check if movement is completed
+      console.log(
+        this.npc.movementController.movementCompleted,
+        currentTime - this.lastPathRecalculationTime,
+        this.pathRecalculationInterval,
+      )
+      if (
+        this.npc.movementController.movementCompleted &&
+        currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval
+      ) {
+        // const npcGridPos = this.npc.worldToGrid(
+        //   this.npc.playerData.x,
+        //   this.npc.playerData.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+        // )
+        // const targetGridPos = this.npc.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
 
-      if (isAdjacent) {
+        // const isAdjacent =
+        //   (Math.abs(npcGridPos.x - targetGridPos.x) === 1 && npcGridPos.y === targetGridPos.y) || // Adjacent horizontally
+        //   (Math.abs(npcGridPos.y - targetGridPos.y) === 1 && npcGridPos.x === targetGridPos.x) // Adjacent vertically
+
+        // console.log("Movement completed, checking adjacency...", isAdjacent)
+
+        // if (isAdjacent) {
         // Face the person
+        const dx = player.x - this.npc.playerData.x
+        const dy = player.y - this.npc.playerData.y
         const direction = this.getFacingDirection(dx, dy)
         this.npc.playerData.animation = `${this.npc.playerData.username}-idle-${direction}`
-        this.npc.movementController.emitUpdatePlayerData()
+        this.npc.movementController.emitUpdatePlayerData(this.npc.playerData)
 
         this.isCompletedFlag = true
-        return
-      } else {
-        const currentTime = Date.now()
+        // return
+        // }
+        // console.log("Movement completed but not adjacent. Recalculating path...")
+        // this.lastKnownPlayerPosition = { x: player.x, y: player.y }
+        // this.lastPathRecalculationTime = currentTime
+        // await this.npc.initiateMovement(this.moveTarget)
+        // this.npc.movementController.movementCompleted = false // Reset the flag
+      } else if (currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval) {
+        const lastPos = this.lastKnownPlayerPosition!
+        const distanceMoved = Math.hypot(player.x - lastPos.x, player.y - lastPos.y)
 
-        // Check if movement is completed
-        if (
-          this.npc.movementController.movementCompleted &&
-          currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval
-        ) {
-          console.log("Movement completed but not adjacent. Recalculating path...")
+        if (distanceMoved > this.pathRecalculationThreshold) {
+          console.log("Player moved significantly, recalculating path.")
           this.lastKnownPlayerPosition = { x: player.x, y: player.y }
           this.lastPathRecalculationTime = currentTime
-          await this.npc.move_to(this.moveTarget)
-          this.npc.movementController.movementCompleted = false // Reset the flag
-        } else if (currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval) {
-          const lastPos = this.lastKnownPlayerPosition!
-          const distanceMoved = Math.hypot(player.x - lastPos.x, player.y - lastPos.y)
-
-          if (distanceMoved > this.pathRecalculationThreshold) {
-            this.lastKnownPlayerPosition = { x: player.x, y: player.y }
-            this.lastPathRecalculationTime = currentTime
-            await this.npc.move_to(this.moveTarget)
-          }
+          await this.npc.movementController.initiateMovement(this.moveTarget)
         }
       }
     }
@@ -124,7 +136,7 @@ export class MoveAction extends Action {
 
   resume(): void {
     super.resume()
-    this.npc.move_to(this.moveTarget)
+    this.npc.movementController.initiateMovement(this.moveTarget)
     this.npc.movementController.resume()
   }
 }

@@ -16,7 +16,7 @@
 
 - movement
 
-  - move move action logic to movement controller
+  - move move action logic to movement controller (finish move action refactor)
 
   - when was walking to empty place near a person but it became occupied, you should initiate whole movement from scratch instead of recalculatin path
 
