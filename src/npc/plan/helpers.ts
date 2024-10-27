@@ -1,6 +1,6 @@
 // Assuming you have access to the Action classes and their properties
 import { isWithinTalkDistanceThreshold } from "../../shared/functions"
-import { GeneratedAction, GeneratedActionPlan, PlayerData } from "../../shared/types"
+import { GeneratedAction, GeneratedActionPlan, MoveTarget, PlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { Action } from "../actions/Action"
 import { BroadcastAction } from "../actions/BroadcastAction"
@@ -78,30 +78,30 @@ export const convertGeneratedPlanToActions = (
   setAndEmitPlayerData: (playerData: PlayerData) => void,
 ): Action[] => {
   return planData.flatMap((actionData: GeneratedAction) => {
+    let supportingMoveTarget: MoveTarget
     switch (actionData.type) {
       case "idle":
         return new IdleAction(getBrainDump, socket, actionData.activityType)
       case "move":
         return new MoveAction(getBrainDump, socket, movementController, setAndEmitPlayerData, actionData.target)
       case "talk":
-        const playerData = getBrainDump().playerData
-        const targetPosition = movementController.getPlayerPosition(actionData.name)
-        if (!targetPosition) {
-          throw new Error("Target position not found")
-        }
         const talkAction = new TalkAction(getBrainDump, socket, actionData.name, { type: "new" })
 
-        if (!isWithinTalkDistanceThreshold(playerData, targetPosition.x, targetPosition.y)) {
+        supportingMoveTarget = {
+          targetType: "person",
+          name: actionData.name,
+        }
+        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
+          console.log(
+            "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
+          )
           return [
             new MoveAction(
               getBrainDump,
               socket,
               movementController,
               setAndEmitPlayerData,
-              {
-                targetType: "person",
-                name: actionData.name,
-              },
+              supportingMoveTarget,
               "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
             ),
             talkAction,
@@ -109,9 +109,52 @@ export const convertGeneratedPlanToActions = (
         }
         return talkAction
       case "broadcast":
-        return new BroadcastAction(getBrainDump, socket, actionData.targetPlace)
+        const broadcastAction = new BroadcastAction(getBrainDump, socket, actionData.targetPlace)
+        supportingMoveTarget = {
+          targetType: "place",
+          name: actionData.targetPlace,
+        }
+        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
+          console.log(
+            "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
+          )
+          return [
+            new MoveAction(
+              getBrainDump,
+              socket,
+              movementController,
+              setAndEmitPlayerData,
+              supportingMoveTarget,
+              "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
+            ),
+            broadcastAction,
+          ]
+        }
+
+        return broadcastAction
       case "listen":
-        return new ListenAction(getBrainDump, actionData.targetPlace, socket)
+        const listenAction = new ListenAction(getBrainDump, actionData.targetPlace, socket)
+        supportingMoveTarget = {
+          targetType: "place",
+          name: actionData.targetPlace,
+        }
+        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
+          console.log(
+            "We are not close to the target place, so before we initialize the listen action, we need to move towards it.",
+          )
+          return [
+            new MoveAction(
+              getBrainDump,
+              socket,
+              movementController,
+              setAndEmitPlayerData,
+              supportingMoveTarget,
+              "We are not close to the target place, so before we initialize the listen action, we need to move towards it.",
+            ),
+            listenAction,
+          ]
+        }
+        return listenAction
       default:
         throw new Error("Unknown action type:")
     }
