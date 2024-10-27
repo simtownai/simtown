@@ -2,6 +2,8 @@
 
 ## top priority
 
+- NPCs are approaching other's to talk but not talking
+
 - Optimize prompts
 
 - overhearing mechanic for real players
@@ -18,20 +20,10 @@
 
 - movement
 
-  - move move action logic to movement controller (finish move action refactor)
-
-  - when was walking to empty place near a person but it became occupied, you should initiate whole movement from scratch instead of recalculatin path
-
-  - rotate to somebody when talking to them
-
+  - rotate to somebody when talking to them (embed in broadcast & listen as well)
   - writes without finishing movement
-
   - smooth path recalculation when approaching smbd
-
     - rm this.pathIndex = closestIndex + 1 // Smoothing the direction after recalculation
-
-  - not coming close enough
-
   - if user went, let npc know that we left conf
 
 - ai
