@@ -93,13 +93,6 @@ export class MovementController {
       targetPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)]
     }
 
-    console.log(
-      `Received command to move to position`,
-      worldToGrid(playerData.x, playerData.y),
-      targetPosition,
-      moveTarget,
-    )
-
     try {
       const startPostion = worldToGrid(playerData.x, playerData.y)
       if (JSON.stringify(startPostion) === JSON.stringify(targetPosition)) {
