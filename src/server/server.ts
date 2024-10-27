@@ -45,11 +45,12 @@ function getRandomPositionInSpawnArea(): { x: number; y: number } {
 
 function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
   const characterWidth = CONFIG.SPRITE_COLLISION_BOX_HEIGHT
+  const characterHeight = CONFIG.SPRITE_COLLISION_BOX_HEIGHT
   return (
     player1.x < player2.x + characterWidth &&
     player1.x + characterWidth > player2.x &&
-    player1.y < player2.y + characterWidth &&
-    player1.y + characterWidth > player2.y
+    player1.y - characterHeight < player2.y &&
+    player1.y > player2.y - characterHeight
   )
 }
 

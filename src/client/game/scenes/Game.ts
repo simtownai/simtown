@@ -277,7 +277,7 @@ export class Game extends Phaser.Scene {
     this.add.existing(speechBubble)
     this.add.existing(actionEmoji)
 
-    this.otherPlayers.set(playerInfo.id, {
+    this.otherPlayers.set(playerInfo.username, {
       sprite: otherPlayerSprite,
       speechBubble,
       playerData: playerInfo,
@@ -358,7 +358,7 @@ export class Game extends Phaser.Scene {
       console.log("Received existing players:", players)
       players.forEach((player) => {
         console.log("Player:", player)
-        if (player.id === this.socket.id) {
+        if (player.username === this.username) {
           this.setupPlayer(player)
         } else {
           this.addOtherPlayer(player)
@@ -368,13 +368,13 @@ export class Game extends Phaser.Scene {
 
     this.socket.on("playerJoined", (player: PlayerData) => {
       console.log("Player joined:", player)
-      if (player.id !== this.socket.id) {
+      if (player.username !== this.username) {
         this.addOtherPlayer(player)
       }
     })
 
     this.socket.on("playerDataChanged", (player: PlayerData) => {
-      const otherPlayerData = this.otherPlayers.get(player.id)
+      const otherPlayerData = this.otherPlayers.get(player.username)
       if (otherPlayerData) {
         otherPlayerData.sprite.body!.reset(player.x, player.y)
         otherPlayerData.sprite.anims.play(player.animation, true)
@@ -406,14 +406,14 @@ export class Game extends Phaser.Scene {
       this.playerSprite.body!.reset(correctPosition.x, correctPosition.y)
     })
 
-    this.socket.on("playerLeft", (playerId: string) => {
-      const otherPlayer = this.otherPlayers.get(playerId)
+    this.socket.on("playerLeft", (username: string) => {
+      const otherPlayer = this.otherPlayers.get(username)
       if (otherPlayer) {
         this.otherPlayersGroup.remove(otherPlayer.sprite, true, true)
         otherPlayer.sprite.destroy()
         otherPlayer.speechBubble.destroy()
         otherPlayer.actionEmoji.destroy()
-        this.otherPlayers.delete(playerId)
+        this.otherPlayers.delete(username)
       }
     })
 
@@ -521,7 +521,7 @@ export class Game extends Phaser.Scene {
       this.lastSentPlayerData = { ...currentPlayerData }
     }
 
-    this.otherPlayers.forEach((otherPlayerData, _playerId) => {
+    this.otherPlayers.forEach((otherPlayerData, _username) => {
       const otherPlayerSprite = otherPlayerData.sprite
       const otherPlayerSpeechBubble = otherPlayerData.speechBubble
       const actionEmoji = otherPlayerData.actionEmoji
