@@ -25,10 +25,10 @@ export class MovementController {
   movementCompleted: boolean = false
 
   constructor(
-    private playerData: PlayerData,
-    private otherPlayers: Map<string, PlayerData>,
+    private getPlayerData: () => PlayerData,
+    private getOtherPlayers: () => Map<string, PlayerData>,
     private sendMoveMessage: (blockingPlayer: PlayerData) => void,
-    private emitUpdatePlayerData: (data: UpdatePlayerData) => void,
+    private updateAndEmitPlayerData: (updatePlayerData: UpdatePlayerData) => void,
   ) {
     this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
     this.roadLayer = mapData.layers.find((layer) => layer.name === "Roads")
@@ -69,7 +69,7 @@ export class MovementController {
     this.movementCompleted = true // Set flag when movement is completed
     if (this.onMovementCompleted) {
       this.onMovementCompleted()
-      this.updateAnimationAndEmit(0, 0)
+      this.setIdleAnimation()
       this.onMovementCompleted = null
     }
   }
@@ -80,10 +80,11 @@ export class MovementController {
       // Find the closest point on the new path to the NPC's current position
       let closestIndex = 0
       let minDistance = Infinity
+      const playerData = this.getPlayerData()
       for (let i = 0; i < path.length; i++) {
         const pathPointWorld = this.gridToWorld(path[i])
-        const dx = pathPointWorld.x - this.playerData.x
-        const dy = pathPointWorld.y - this.playerData.y
+        const dx = pathPointWorld.x - playerData.x
+        const dy = pathPointWorld.y - playerData.y
         const distance = Math.hypot(dx, dy)
 
         if (distance < minDistance) {
@@ -102,7 +103,7 @@ export class MovementController {
 
   pause() {
     this.isPaused = true
-    this.updateIdleState()
+    this.setIdleAnimation()
   }
 
   resume() {
@@ -111,7 +112,7 @@ export class MovementController {
 
   move(deltaTime: number) {
     if (this.isPaused || this.isRecalculatingPath || this.pathIndex >= this.path.length) {
-      this.updateAnimationAndEmit(0, 0)
+      this.setIdleAnimation()
       return
     }
 
@@ -125,15 +126,18 @@ export class MovementController {
 
     if (this.isCellBlocked(nextTile)) {
       this.handleBlockedPath(nextTile)
-      this.updateAnimationAndEmit(0, 0)
+      this.setIdleAnimation()
       return
     }
 
     this.blockedByPlayerInfo = null
     this.moveMessageSent = false
 
-    const dx = worldPos.x - this.playerData.x
-    const dy = worldPos.y - this.playerData.y
+    const playerData = this.getPlayerData()
+    let updatePlayerData: UpdatePlayerData = {}
+
+    const dx = worldPos.x - playerData.x
+    const dy = worldPos.y - playerData.y
 
     const distance = Math.sqrt(dx * dx + dy * dy)
     const moveDistance = (this.speed * deltaTime) / 1000
@@ -144,37 +148,47 @@ export class MovementController {
     if (distance <= moveDistance) {
       moveX = dx
       moveY = dy
-      this.playerData.x = worldPos.x
-      this.playerData.y = worldPos.y
+      updatePlayerData = {
+        x: worldPos.x,
+        y: worldPos.y,
+      }
       this.pathIndex++
     } else {
       moveX = (dx / distance) * moveDistance
       moveY = (dy / distance) * moveDistance
-      this.playerData.x += moveX
-      this.playerData.y += moveY
+      updatePlayerData = {
+        x: playerData.x + moveX,
+        y: playerData.y + moveY,
+      }
     }
 
-    this.updateAnimationAndEmit(moveX, moveY)
+    updatePlayerData.animation = this.getAnimation(playerData.username, moveX, moveY)
+
+    this.updateAndEmitPlayerData(updatePlayerData)
 
     if (this.pathIndex >= this.path.length) {
       this.handleMovementCompleted()
     }
   }
 
-  private updateAnimationAndEmit(deltaX: number, deltaY: number) {
+  private setIdleAnimation() {
+    const playerData = this.getPlayerData()
+    const animation = this.getAnimation(playerData.username, 0, 0)
+    this.updateAndEmitPlayerData({ animation })
+  }
+
+  private getAnimation(username: string, deltaX: number, deltaY: number): string {
     // Increased threshold to account for tiny movements
     const isMoving = Math.abs(deltaX) > tinyMovementThreshold || Math.abs(deltaY) > tinyMovementThreshold
 
     if (isMoving) {
       const direction = this.getDirection(deltaX, deltaY)
-      this.playerData.animation = `${this.playerData.username}-walk-${direction}`
-      this.lastDirection = direction // Update lastDirection
+      this.lastDirection = direction
+      return `${username}-walk-${direction}`
     } else {
       // Use the lastDirection for idle animation
-      this.playerData.animation = `${this.playerData.username}-idle-${this.lastDirection}`
+      return `${username}-idle-${this.lastDirection}`
     }
-
-    this.emitUpdatePlayerData(this.playerData)
   }
 
   private getDirection(deltaX: number, deltaY: number): "left" | "right" | "up" | "down" {
@@ -187,12 +201,6 @@ export class MovementController {
     }
   }
 
-  private updateIdleState() {
-    // Use the lastDirection for idle animation
-    this.playerData.animation = `${this.playerData.username}-idle-${this.lastDirection}`
-    this.emitUpdatePlayerData(this.playerData)
-  }
-
   private handleBlockedPath(nextTile: GridPosition) {
     const blockingPlayer = this.getBlockingPlayer(nextTile)
 
@@ -202,7 +210,7 @@ export class MovementController {
       this.recalculatePath()
     }
 
-    this.updateIdleState()
+    this.setIdleAnimation()
   }
 
   private async handleBlockedByPlayer(blockingPlayer: PlayerData) {
@@ -234,7 +242,8 @@ export class MovementController {
   private async attemptPathRecalculation(considerPlayers: boolean): Promise<GridPosition[] | null> {
     console.log("Attempting to recalculate path due to player blockage")
     try {
-      const currentPos: GridPosition = this.worldToGrid(this.playerData.x, this.playerData.y)
+      const playerData = this.getPlayerData()
+      const currentPos: GridPosition = this.worldToGrid(playerData.x, playerData.y)
       const newPath = await this.calculatePath(currentPos, this.targetPosition, considerPlayers)
       if (newPath && newPath.length > 0) {
         console.log("New path found after recalculation")
@@ -266,8 +275,9 @@ export class MovementController {
   private recalculatePath() {
     if (!this.isRecalculatingPath) {
       this.isRecalculatingPath = true
-      this.updateIdleState()
-      this.calculatePath(this.worldToGrid(this.playerData.x, this.playerData.y), this.targetPosition, false)
+      this.setIdleAnimation()
+      const playerData = this.getPlayerData()
+      this.calculatePath(this.worldToGrid(playerData.x, playerData.y), this.targetPosition, false)
         .then(this.handleRecalculatedPath.bind(this))
         .catch(this.handleRecalculationError.bind(this))
     }
@@ -297,12 +307,12 @@ export class MovementController {
 
   async initiateMovement(moveTarget: MoveTarget) {
     let targetPosition: GridPosition = { gridX: 0, gridY: 0 }
-    console.log("top level move to")
+    const playerData = this.getPlayerData()
 
     if (moveTarget.targetType === "coordinates") {
       targetPosition = this.worldToGrid(moveTarget.x, moveTarget.y)
     } else if (moveTarget.targetType === "person") {
-      const player = this.otherPlayers.get(moveTarget.name)
+      const player = this.getOtherPlayers().get(moveTarget.name)
       if (!player) {
         return "Couldn't find that player"
       }
@@ -337,8 +347,8 @@ export class MovementController {
       possibleTargets.sort((a, b) => {
         const worldPositionA = this.gridToWorld(a)
         const worldPositionB = this.gridToWorld(b)
-        const distA = Math.hypot(worldPositionA.x - this.playerData.x, worldPositionA.y - this.playerData.y)
-        const distB = Math.hypot(worldPositionB.x - this.playerData.x, worldPositionB.y - this.playerData.y)
+        const distA = Math.hypot(worldPositionA.x - playerData.x, worldPositionA.y - playerData.y)
+        const distB = Math.hypot(worldPositionB.x - playerData.x, worldPositionB.y - playerData.y)
         return distA - distB
       })
       targetPosition = possibleTargets[0]
@@ -357,11 +367,7 @@ export class MovementController {
     console.log(`Received command to move to position: (${targetPosition})`, moveTarget)
 
     try {
-      const foundPath = await this.calculatePath(
-        this.worldToGrid(this.playerData.x, this.playerData.y),
-        targetPosition,
-        false,
-      )
+      const foundPath = await this.calculatePath(this.worldToGrid(playerData.x, playerData.y), targetPosition, false)
       if (!foundPath || foundPath.length === 0) {
         throw new Error("Couldn't find path")
       }
@@ -375,8 +381,8 @@ export class MovementController {
   }
 
   getPlayerPosition(_playerId: string): { x: number; y: number } | null {
-    const temp_player = this.otherPlayers.keys().next().value
-    const player = this.otherPlayers.get(temp_player)
+    const temp_player = this.getOtherPlayers().keys().next().value
+    const player = this.getOtherPlayers().get(temp_player)
     return player ? { x: player.x, y: player.y } : null
   }
 
@@ -396,7 +402,7 @@ export class MovementController {
 
   isCellBlocked(cell: GridPosition): boolean {
     // Check for players at the given grid position
-    for (const player of this.otherPlayers.values()) {
+    for (const player of this.getOtherPlayers().values()) {
       const playerGridPos = this.worldToGrid(player.x, player.y)
       if (playerGridPos.gridX === cell.gridX && playerGridPos.gridY === cell.gridY) {
         return true
@@ -417,7 +423,7 @@ export class MovementController {
   }
 
   getBlockingPlayer(cell: GridPosition): PlayerData | null {
-    for (const player of this.otherPlayers.values()) {
+    for (const player of this.getOtherPlayers().values()) {
       const playerGridPos = this.worldToGrid(player.x, player.y)
       if (playerGridPos.gridX === cell.gridX && playerGridPos.gridY === cell.gridY) {
         return player
@@ -462,7 +468,7 @@ export class MovementController {
 
   getGridWithPlayers(): number[][] {
     const gridWithPlayers = this.collisionGrid.map((row) => row.slice())
-    for (const player of this.otherPlayers.values()) {
+    for (const player of this.getOtherPlayers().values()) {
       const gridPos = this.worldToGrid(player.x, player.y)
       if (
         gridPos.gridX >= 0 &&
