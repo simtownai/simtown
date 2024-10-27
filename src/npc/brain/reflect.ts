@@ -1,5 +1,6 @@
 import { Action } from "../actions/Action"
 import { BroadcastAction } from "../actions/BroadcastAction"
+import { IdleAction } from "../actions/IdleAction"
 import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
@@ -15,9 +16,10 @@ export const reflect = async (action: Action) => {
   const actionType = action.constructor.name
   const reflections = action.getBrainDump().getStringifiedBrainDump()
   if (actionType === "IdleAction") {
+    const idleAction = action as IdleAction
     return isInterrupted
-      ? "I was idling, doing nothing but got interrupted."
-      : `I completed Idle Action, did nothing for ${IdleActionDuration / 1000} seconds`
+      ? `I was ${idleAction.activityType}, but got interrupted.`
+      : `I completed ${idleAction.activityType} for ${IdleActionDuration / 1000} seconds`
   } else if (actionType === "MoveAction") {
     const moveAction = action as MoveAction
     //   as we are assuming this is completed, we know we succesfuly got to target

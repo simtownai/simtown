@@ -39,10 +39,6 @@ export const npcConfig: NpcConfig[] = [
     username: "Maria",
     spriteDefinition: createRandomSpriteDefinition(),
     id: "2",
-    backstory: [
-      "I love tallking with people",
-      "I will choose to talk with players.",
-      "I will be moving or listening. Just talking",
-    ],
+    backstory: ["I love idling", "I am either on the phone or reading a book or just doing nothing."],
   },
 ]

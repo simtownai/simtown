@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { Action, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { GeneratedAction, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
@@ -326,7 +326,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  private getTextFromAction(action: Action | undefined): string {
+  private getTextFromAction(action: GeneratedAction | undefined): string {
     if (!action) return ""
     switch (action.type) {
       case "move":
@@ -343,7 +343,13 @@ export class Game extends Phaser.Scene {
       case "talk":
         return `💬${action.name}`
       case "idle":
-        return `😴`
+        if (action.activityType === "phone") {
+          return `📱📱📱`
+        } else if (action.activityType === "reading") {
+          return `📖📖📖`
+        } else {
+          return `😴😴😴`
+        }
       case "broadcast":
         return `📢${action.targetPlace}`
       case "listen":

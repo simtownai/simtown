@@ -13,7 +13,7 @@ import { Socket } from "socket.io-client"
 
 export const convertActionToGeneratedAction = (action: Action): GeneratedAction => {
   if (action instanceof IdleAction) {
-    return { type: "idle" }
+    return { type: "idle", activityType: action.activityType }
   } else if (action instanceof MoveAction) {
     const moveAction = action as MoveAction
     const target = moveAction.moveTarget
@@ -80,7 +80,7 @@ export const convertGeneratedPlanToActions = (
   return planData.flatMap((actionData: GeneratedAction) => {
     switch (actionData.type) {
       case "idle":
-        return new IdleAction(getBrainDump, socket)
+        return new IdleAction(getBrainDump, socket, actionData.activityType)
       case "move":
         return new MoveAction(getBrainDump, socket, movementController, setAndEmitPlayerData, actionData.target)
       case "talk":

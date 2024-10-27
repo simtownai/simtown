@@ -15,14 +15,14 @@ export interface PlayerData {
   x: number
   y: number
   animation: string
-  action?: Action
+  action?: GeneratedAction
 }
 
 export interface UpdatePlayerData {
   x?: number
   y?: number
   animation?: string
-  action?: Action
+  action?: GeneratedAction
 }
 
 export interface ChatMessage {
@@ -72,8 +72,13 @@ const TalkSchema = z.object({
   name: z.string(),
 })
 
+const IdleActivityTypeSchema = z.enum(["phone", "reading", "idling"])
+
+export type IdleActivityType = z.infer<typeof IdleActivityTypeSchema>
+
 const IdleSchema = z.object({
   type: z.literal("idle"),
+  activityType: IdleActivityTypeSchema,
 })
 const BroadcastSchema = z.object({
   type: z.literal("broadcast"),

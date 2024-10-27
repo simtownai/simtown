@@ -2,9 +2,11 @@
 
 ## top priority
 
-- to idling add subtype (just idling / reading / phone)
+- Optimize prompts
 
 - overhearing mechanic for real players
+
+- figure out timing of broadcasts and how to make npcs aware about this
 
 - map
 
@@ -35,9 +37,7 @@
 - ai
 
   - broadcast & listening & talking -> add check if we are in place (and also propagate the emoji updatePlayerData) - did that for talking nowm, let's discuss how to best calcualte the position for all those actions
-  - add action reason to the reflection if needed
-  - figure out timing of broadcasts and how to make npcs aware about this
-  - figure out what happens when 2 npcs decide to talk with each other at the same time
+  - add action reason to the reflection if reason exists
   - create kamala and trump chars
 
 - fix movements to place
