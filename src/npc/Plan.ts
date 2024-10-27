@@ -1,5 +1,5 @@
 import { ActionPlan, ActionPlanSchema } from "../shared/types"
-import { NPC } from "./client"
+import { AiBrainReflections } from "./AiBrain"
 import client from "./openai"
 import { planning_prompt } from "./prompts"
 import { zodResponseFormat } from "openai/helpers/zod.mjs"
@@ -55,10 +55,11 @@ const validateActions = (
   return { isValid: true }
 }
 
-export const generatePlanForTheday = async (npc: NPC): Promise<ActionPlan> => {
-  const npcBackground = npc.aiBrain.getNPCMemories()
-  const playerNames = Array.from(npc.otherPlayers.keys())
-  const places = npc.objectLayer!.map((obj) => obj.name)
+export const generatePlanForTheday = async (
+  npcBackground: AiBrainReflections,
+  playerNames: string[],
+  places: string[],
+): Promise<ActionPlan> => {
   let attemps = 0
   let maxAttemps = 5
 

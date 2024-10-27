@@ -8,26 +8,26 @@ import { reflect } from "./reflect"
 // Assuming you have a plan function that generates plans based on reflections
 
 export class ActionManager {
-  private currentAction: Action | null = null
   actionQueue: Action[] = []
-  private npc: NPC
+  private currentAction: Action | null = null
   private isProcessingAction: boolean = false
 
-  setNPC(npc: NPC) {
-    this.npc = npc
-    this.generatePlanAndSetActions()
-  }
+  constructor(private npc: NPC) {}
 
   /**
    * Generates the initial plan for the day and seeds the action queue
    */
-  private async generatePlanAndSetActions() {
+  async generatePlanAndSetActions() {
     console.log("================================")
     console.log("Generating new plan for the day")
     console.log("================================")
 
     try {
-      const initialPlanData = await generatePlanForTheday(this.npc)
+      const initialPlanData = await generatePlanForTheday(
+        this.npc.aiBrain.getNPCMemories(),
+        Array.from(this.npc.otherPlayers.keys()),
+        this.npc.aiBrain.places,
+      )
       this.actionQueue = createActionsFromPlanData(initialPlanData, this.npc)
       // console.log("Generated new plan for the day:", initialPlanData)
     } catch (error) {
