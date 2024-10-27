@@ -205,10 +205,13 @@ io.on("connection", (socket) => {
   })
 
   socket.on("disconnect", () => {
-    const username = players.get(playerId)!.username
-    players.delete(playerId)
-    io.emit("playerLeft", username)
-    logger.info(`User ${socket.id} disconnected. Number of players: ${players.size}`)
+    const player = players.get(playerId)
+    if (player) {
+      const { username } = player
+      players.delete(playerId)
+      io.emit("playerLeft", username)
+      logger.info(`User ${socket.id} disconnected. Number of players: ${players.size}`)
+    }
   })
 })
 
