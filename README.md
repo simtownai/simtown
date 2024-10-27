@@ -14,6 +14,24 @@
   - coffe shop
   - playground
 
+- movement
+
+  - move move action logic to movement controller
+
+  - when was walking to empty place near a person but it became occupied, you should initiate whole movement from scratch instead of recalculatin path
+
+  - rotate to somebody when talking to them
+
+  - writes without finishing movement
+
+  - smooth path recalculation when approaching smbd
+
+    - rm this.pathIndex = closestIndex + 1 // Smoothing the direction after recalculation
+
+  - not coming close enough
+
+  - if user went, let npc know that we left conf
+
 - ai
 
   - broadcast & listening & talking -> add check if we are in place (and also propagate the emoji updatePlayerData)
