@@ -82,10 +82,15 @@ export class MovementController {
         return
       }
 
-      const randomX = Math.round(place.x + 2 + Math.random() * (place.width - 2))
-      const randomY = Math.round(place.y + 2 + Math.random() * (place.height - 2))
+      const availablePositions = this.findAvailablePositionsInPlace(place)
+      if (availablePositions.length === 0) {
+        console.error("No available positions in place")
+        this.handleMovementCompleted()
+        return
+      }
 
-      targetPosition = this.worldToGrid(randomX, randomY)
+      // Choose random position from available positions
+      targetPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)]
     }
 
     console.log(
@@ -255,6 +260,27 @@ export class MovementController {
     }
 
     return false
+  }
+
+  private findAvailablePositionsInPlace(
+    place: NonNullable<(typeof mapData.layers)[0]["objects"]>[number],
+  ): GridPosition[] {
+    const availablePositions: GridPosition[] = []
+
+    const minGridPos = worldToGrid(place.x + 1, place.y + 1)
+    const maxGridPos = worldToGrid(place.x + place.width, place.y + place.height)
+
+    for (let y = minGridPos.gridY; y <= maxGridPos.gridY; y++) {
+      for (let x = minGridPos.gridX; x <= maxGridPos.gridX; x++) {
+        const gridPos: GridPosition = { gridX: x, gridY: y }
+
+        if (!this.isCellBlocked(gridPos)) {
+          availablePositions.push(gridPos)
+        }
+      }
+    }
+
+    return availablePositions
   }
 
   private initializeCollisionGrid() {
