@@ -1,6 +1,20 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { PlayerData, PlayerSpriteDefinition } from "./types"
+import { GridPosition, PlayerData, PlayerSpriteDefinition } from "./types"
+
+export function worldToGrid(x: number, y: number): GridPosition {
+  return {
+    gridX: Math.floor((x - 1) / CONFIG.TILE_SIZE),
+    gridY: Math.floor((y - 1) / CONFIG.TILE_SIZE),
+  }
+}
+
+export function gridToWorld(cell: GridPosition): { x: number; y: number } {
+  return {
+    x: cell.gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+    y: cell.gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE,
+  }
+}
 
 const currentDate = new Date()
 const realTimeDifferenceMs = CONFIG.TARGET_DATE.getTime() - currentDate.getTime()
