@@ -49,7 +49,6 @@ export class MovementController {
 
   async initiateMovement(moveTarget: MoveTarget) {
     this.currentMoveTarget = moveTarget
-    this.lastPathRecalculationTime = 0 // Reset recalculation timer
 
     let targetPosition: GridPosition = { gridX: 0, gridY: 0 }
     const playerData = this.getPlayerData()
