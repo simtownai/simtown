@@ -26,7 +26,7 @@ export class NPC {
     setTimeout(() => {
       this.setupSocketEvents()
       this.socket.connect()
-      this.socket.emit("joinGame", this.npcConfig.username, this.npcConfig.spriteDefinition)
+      this.socket.emit("joinGame", true, this.npcConfig.username, this.npcConfig.spriteDefinition)
     }, 7000)
   }
 

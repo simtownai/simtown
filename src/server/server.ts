@@ -1,6 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
 import {
   BroadcastMessage,
   ChatMessage,
@@ -75,10 +75,11 @@ function findValidPosition(): { x: number; y: number } {
 
 io.on("connection", (socket) => {
   const playerId = socket.id
-  socket.on("joinGame", (username: string, spriteDefinition: PlayerSpriteDefinition) => {
+  socket.on("joinGame", (isNPC: boolean, username: string, spriteDefinition: PlayerSpriteDefinition) => {
     const spawnPosition = findValidPosition()
     let playerData: PlayerData = {
       id: playerId,
+      isNPC: isNPC,
       username: username,
       spriteDefinition: spriteDefinition,
       x: spawnPosition.x,
@@ -176,10 +177,29 @@ io.on("connection", (socket) => {
           const recipientSocket = io.sockets.sockets.get(player.id)
           if (recipientSocket) {
             recipientSocket.emit("newMessage", message)
+
+            // Overhear logic
+            const sender = players.get(playerId)!
+            players.forEach((potentialOverhearPlayer) => {
+              if (
+                !potentialOverhearPlayer.isNPC &&
+                potentialOverhearPlayer.username !== message.from &&
+                potentialOverhearPlayer.username !== message.to &&
+                calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+                  CONFIG.INTERACTION_PROXIMITY_THRESHOLD
+              ) {
+                const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
+                if (potentialOverhearSocket) {
+                  potentialOverhearSocket.emit("overhearMessage", message)
+                }
+              }
+            })
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
         }
+
+        //distance emit to overhear
       })
     }
   })

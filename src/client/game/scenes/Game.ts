@@ -68,7 +68,7 @@ export class Game extends Phaser.Scene {
     this.setupCameras()
     this.setupInput()
 
-    this.socket.emit("joinGame", this.username, this.spriteDefinition)
+    this.socket.emit("joinGame", false, this.username, this.spriteDefinition)
 
     EventBus.emit("current-scene-ready", this)
   }

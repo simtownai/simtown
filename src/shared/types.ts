@@ -10,6 +10,7 @@ export type PlayerSpriteDefinition = {
 
 export interface PlayerData {
   id: string
+  isNPC: boolean
   username: string
   spriteDefinition: PlayerSpriteDefinition
   x: number

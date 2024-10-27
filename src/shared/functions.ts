@@ -1,6 +1,10 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { GridPosition, PlayerData, PlayerSpriteDefinition } from "./types"
+import { GridPosition, PlayerSpriteDefinition } from "./types"
+
+export function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+}
 
 export function worldToGrid(x: number, y: number): GridPosition {
   return {
