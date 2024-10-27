@@ -1,15 +1,17 @@
-import { NPC } from "../client"
+import { BrainDump } from "../brain/AIBrain"
+import { Socket } from "socket.io-client"
 
-// Action.ts
 export abstract class Action {
-  npc: NPC
   isInterrupted: boolean = false
   protected isStarted: boolean = false
   protected isCompletedFlag: boolean = false
-  reason: string
+  protected reason: string
+  getBrainDump: () => BrainDump
+  protected socket: Socket
 
-  constructor(npc: NPC, reason: string = "") {
-    this.npc = npc
+  constructor(getBrainDump: () => BrainDump, socket: Socket, reason: string = "") {
+    this.getBrainDump = getBrainDump
+    this.socket = socket
     this.reason = reason
   }
 

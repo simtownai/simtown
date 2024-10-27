@@ -86,7 +86,7 @@ const ListenSchema = z.object({
 })
 
 const ActionSchema = z.discriminatedUnion("type", [MoveSchema, TalkSchema, IdleSchema, BroadcastSchema, ListenSchema])
-export type Action = z.infer<typeof ActionSchema>
+export type GeneratedAction = z.infer<typeof ActionSchema>
 
 export const ActionPlanSchema = z.array(ActionSchema)
-export type ActionPlan = z.infer<typeof ActionPlanSchema>
+export type GeneratedActionPlan = z.infer<typeof ActionPlanSchema>

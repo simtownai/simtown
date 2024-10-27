@@ -1,7 +1,7 @@
-import { ChatMessage } from "../shared/types"
+import { ChatMessage } from "../../../shared/types"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 
-class Thread {
+export class Thread {
   messages: ChatMessage[]
   aiMessages: ChatCompletionMessageParam[]
   finished: boolean

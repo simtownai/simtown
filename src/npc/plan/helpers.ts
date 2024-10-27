@@ -1,14 +1,16 @@
 // Assuming you have access to the Action classes and their properties
-import { ActionPlan, Action as ActionType } from "../shared/types"
-import { Action } from "./actions/Action"
-import { BroadcastAction } from "./actions/BroadcastAction"
-import { IdleAction } from "./actions/IdleAction"
-import { ListenAction } from "./actions/ListenAction"
-import { MoveAction } from "./actions/MoveAction"
-import { TalkAction } from "./actions/TalkAction"
-import { NPC } from "./client"
+import { GeneratedAction, GeneratedActionPlan, PlayerData } from "../../shared/types"
+import { MovementController } from "../MovementController"
+import { Action } from "../actions/Action"
+import { BroadcastAction } from "../actions/BroadcastAction"
+import { IdleAction } from "../actions/IdleAction"
+import { ListenAction } from "../actions/ListenAction"
+import { MoveAction } from "../actions/MoveAction"
+import { TalkAction } from "../actions/TalkAction"
+import { BrainDump } from "../brain/AIBrain"
+import { Socket } from "socket.io-client"
 
-export const transformActionToActionPlan = (action: Action): ActionType => {
+export const convertActionToGeneratedAction = (action: Action): GeneratedAction => {
   if (action instanceof IdleAction) {
     return { type: "idle" }
   } else if (action instanceof MoveAction) {
@@ -39,7 +41,7 @@ export const transformActionToActionPlan = (action: Action): ActionType => {
     const talkAction = action as TalkAction
     return {
       type: "talk",
-      name: talkAction.targetPlayerUsername,
+      name: talkAction.getTargetPlayerUsername(),
     }
   } else if (action instanceof BroadcastAction) {
     const broadcastAction = action as BroadcastAction
@@ -60,26 +62,32 @@ export const transformActionToActionPlan = (action: Action): ActionType => {
 }
 
 // Function to serialize Actions into ActionPlan data
-export const createPlanDataFromActions = (actions: Action[]): ActionPlan => {
-  return actions.map(transformActionToActionPlan)
+export const convertActionsToGeneratedPlan = (actions: Action[]): GeneratedActionPlan => {
+  return actions.map(convertActionToGeneratedAction)
 }
 
 /**
  * Converts plan data into Action instances
  */
-export const createActionsFromPlanData = (planData: ActionPlan, npc: NPC): Action[] => {
-  return planData.map((actionData: ActionType) => {
+export const convertGeneratedPlanToActions = (
+  planData: GeneratedActionPlan,
+  getBrainDump: () => BrainDump,
+  socket: Socket,
+  movementController: MovementController,
+  setAndEmitPlayerData: (playerData: PlayerData) => void,
+): Action[] => {
+  return planData.map((actionData: GeneratedAction) => {
     switch (actionData.type) {
       case "idle":
-        return new IdleAction(npc)
+        return new IdleAction(getBrainDump, socket)
       case "move":
-        return new MoveAction(npc, actionData.target)
+        return new MoveAction(getBrainDump, socket, movementController, setAndEmitPlayerData, actionData.target)
       case "talk":
-        return new TalkAction(npc, actionData.name, { type: "new" })
+        return new TalkAction(getBrainDump, socket, actionData.name, { type: "new" })
       case "broadcast":
-        return new BroadcastAction(npc, actionData.targetPlace)
+        return new BroadcastAction(getBrainDump, socket, actionData.targetPlace)
       case "listen":
-        return new ListenAction(npc, actionData.targetPlace)
+        return new ListenAction(getBrainDump, actionData.targetPlace, socket)
       default:
         throw new Error("Unknown action type:")
     }

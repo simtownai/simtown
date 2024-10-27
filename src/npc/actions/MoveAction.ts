@@ -1,32 +1,43 @@
-// In MoveAction.ts
 import { CONFIG } from "../../shared/config"
-import { MoveTarget } from "../../shared/types"
-import { NPC } from "../client"
+import { MoveTarget, PlayerData } from "../../shared/types"
+import { MovementController } from "../MovementController"
+import { BrainDump } from "../brain/AIBrain"
 import { Action } from "./Action"
+import { Socket } from "socket.io-client"
 
 export class MoveAction extends Action {
   moveTarget: MoveTarget
-  isStarted: boolean = false
   isFailed: boolean = false
   lastKnownPlayerPosition: { x: number; y: number } | null = null
   pathRecalculationThreshold: number = 2
   pathRecalculationInterval: number = 500 // Minimum time between path recalculations in ms
   lastPathRecalculationTime: number = 0
+  movementController: MovementController
+  setAndEmitPlayerData: (playerData: PlayerData) => void
 
-  constructor(npc: NPC, moveTarget: MoveTarget) {
-    super(npc)
+  constructor(
+    getBrainDump: () => BrainDump,
+    socket: Socket,
+    movementController: MovementController,
+    setAndEmitPlayerData: (playerData: PlayerData) => void,
+    moveTarget: MoveTarget,
+    reason: string = "",
+  ) {
+    super(getBrainDump, socket, reason)
     this.moveTarget = moveTarget
+    this.movementController = movementController
+    this.setAndEmitPlayerData = setAndEmitPlayerData
   }
 
   async start() {
     console.log("MoveAction start", this.moveTarget)
 
     this.isStarted = true
-    this.npc.movementController.setMovementFailedCallback(() => {
+    this.movementController.setMovementFailedCallback(() => {
       console.log("Movement failed callback received in MoveAction")
       this.isFailed = true
     })
-    this.npc.movementController.setMovementCompletedCallback(() => {
+    this.movementController.setMovementCompletedCallback(() => {
       console.log("Movement completed callback received in MoveAction")
       if (CONFIG.ENABLE_NPC_AUTOMATION && this.moveTarget.targetType !== "person") {
         this.isCompletedFlag = true
@@ -34,7 +45,7 @@ export class MoveAction extends Action {
     })
 
     if (this.moveTarget.targetType === "person") {
-      const player = this.npc.otherPlayers.get(this.moveTarget.name)
+      const player = this.getBrainDump().otherPlayers.get(this.moveTarget.name)
       if (player) {
         this.lastKnownPlayerPosition = { x: player.x, y: player.y }
       } else {
@@ -44,8 +55,8 @@ export class MoveAction extends Action {
       }
     }
 
-    await this.npc.movementController.initiateMovement(this.moveTarget)
-    this.npc.movementController.resume()
+    await this.movementController.initiateMovement(this.moveTarget)
+    this.movementController.resume()
   }
 
   async update(deltaTime: number) {
@@ -58,7 +69,7 @@ export class MoveAction extends Action {
     }
 
     if (this.moveTarget.targetType === "person") {
-      const player = this.npc.otherPlayers.get(this.moveTarget.name)
+      const player = this.getBrainDump().otherPlayers.get(this.moveTarget.name)
       if (!player) {
         console.log("Player not found, action failed.")
         this.isCompletedFlag = true
@@ -67,35 +78,19 @@ export class MoveAction extends Action {
 
       const currentTime = Date.now()
 
-      // Check if movement is completed
-      console.log(
-        this.npc.movementController.movementCompleted,
-        currentTime - this.lastPathRecalculationTime,
-        this.pathRecalculationInterval,
-      )
       if (
-        this.npc.movementController.movementCompleted &&
+        this.movementController.movementCompleted &&
         currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval
       ) {
-        // const npcGridPos = this.npc.worldToGrid(
-        //   this.npc.playerData.x,
-        //   this.npc.playerData.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
-        // )
-        // const targetGridPos = this.npc.worldToGrid(player.x, player.y - CONFIG.SPRITE_COLLISION_BOX_HEIGHT)
-
-        // const isAdjacent =
-        //   (Math.abs(npcGridPos.x - targetGridPos.x) === 1 && npcGridPos.y === targetGridPos.y) || // Adjacent horizontally
-        //   (Math.abs(npcGridPos.y - targetGridPos.y) === 1 && npcGridPos.x === targetGridPos.x) // Adjacent vertically
-
-        // console.log("Movement completed, checking adjacency...", isAdjacent)
-
-        // if (isAdjacent) {
-        // Face the person
-        const dx = player.x - this.npc.playerData.x
-        const dy = player.y - this.npc.playerData.y
+        const dx = player.x - this.getBrainDump().playerData.x
+        const dy = player.y - this.getBrainDump().playerData.y
         const direction = this.getFacingDirection(dx, dy)
-        this.npc.playerData.animation = `${this.npc.playerData.username}-idle-${direction}`
-        this.npc.movementController.emitUpdatePlayerData(this.npc.playerData)
+
+        const newPlayerData = {
+          ...this.getBrainDump().playerData,
+          animation: `${this.getBrainDump().playerData.username}-idle-${direction}`,
+        }
+        this.setAndEmitPlayerData(newPlayerData)
 
         this.isCompletedFlag = true
         // return
@@ -113,12 +108,12 @@ export class MoveAction extends Action {
           console.log("Player moved significantly, recalculating path.")
           this.lastKnownPlayerPosition = { x: player.x, y: player.y }
           this.lastPathRecalculationTime = currentTime
-          await this.npc.movementController.initiateMovement(this.moveTarget)
+          await this.movementController.initiateMovement(this.moveTarget)
         }
       }
     }
 
-    this.npc.movementController.move(deltaTime)
+    this.movementController.move(deltaTime)
   }
 
   private getFacingDirection(dx: number, dy: number): "left" | "right" | "up" | "down" {
@@ -131,12 +126,12 @@ export class MoveAction extends Action {
 
   interrupt(): void {
     super.interrupt()
-    this.npc.movementController.pause()
+    this.movementController.pause()
   }
 
   resume(): void {
     super.resume()
-    this.npc.movementController.initiateMovement(this.moveTarget)
-    this.npc.movementController.resume()
+    this.movementController.initiateMovement(this.moveTarget)
+    this.movementController.resume()
   }
 }

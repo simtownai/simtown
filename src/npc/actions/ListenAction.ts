@@ -1,27 +1,28 @@
 import { ChatMessage } from "../../shared/types"
-import { NPC } from "../client"
+import { BrainDump } from "../brain/AIBrain"
 import { Action } from "./Action"
+import { Socket } from "socket.io-client"
 
 export class ListenAction extends Action {
   accumulatedBroadcast: string = ""
   private broadcastListener: (message: ChatMessage) => void
   targetPlace: string
 
-  constructor(npc: NPC, targetPlace: string, reason: string = "") {
-    super(npc, reason)
+  constructor(getBrainDump: () => BrainDump, targetPlace: string, socket: Socket, reason: string = "") {
+    super(getBrainDump, socket, reason)
     this.targetPlace = targetPlace
     this.broadcastListener = this.handleBroadcast.bind(this)
   }
 
   start(): void {
     this.isStarted = true
-    this.npc.socket.on("listenBroadcast", this.broadcastListener)
+    this.socket.on("listenBroadcast", this.broadcastListener)
   }
 
   private handleBroadcast(message: ChatMessage): void {
-    if (this.npc.actionManager.getCurrentAction() instanceof ListenAction) {
+    if (this.getBrainDump().currentAction instanceof ListenAction) {
       this.accumulatedBroadcast += message.message
-      console.log(`${this.npc.playerData.username} received broadcast: ${message.message}`)
+      console.log(`${this.getBrainDump().playerData.username} received broadcast: ${message.message}`)
     }
   }
 
@@ -37,12 +38,12 @@ export class ListenAction extends Action {
 
   interrupt(): void {
     super.interrupt()
-    this.npc.socket.off("broadcast", this.broadcastListener)
+    this.socket.off("broadcast", this.broadcastListener)
   }
 
   resume(): void {
     super.resume()
-    this.npc.socket.on("broadcast", this.broadcastListener)
+    this.socket.on("broadcast", this.broadcastListener)
   }
 
   getAccumulatedBroadcast(): string {

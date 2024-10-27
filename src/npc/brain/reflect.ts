@@ -1,20 +1,19 @@
-import { AiBrainReflections } from "./AiBrain"
-import { Action } from "./actions/Action"
-import { BroadcastAction } from "./actions/BroadcastAction"
-import { ListenAction } from "./actions/ListenAction"
-import { MoveAction } from "./actions/MoveAction"
-import { TalkAction } from "./actions/TalkAction"
-import { IdleActionDuration } from "./npcConfig"
-import client from "./openai"
-import { summarize_broadcast_prompt, summarize_conversation_prompt, summarize_speech_prompt } from "./prompts"
+import { Action } from "../actions/Action"
+import { BroadcastAction } from "../actions/BroadcastAction"
+import { ListenAction } from "../actions/ListenAction"
+import { MoveAction } from "../actions/MoveAction"
+import { TalkAction } from "../actions/TalkAction"
+import { IdleActionDuration } from "../npcConfig"
+import client from "../openai/openai"
+import { summarize_broadcast_prompt, summarize_conversation_prompt, summarize_speech_prompt } from "../prompts"
+import { StringifiedBrainDump } from "./AIBrain"
 
 export const reflect = async (action: Action) => {
   const isInterrupted = action.isInterrupted
   console.log("Is interrupted", isInterrupted)
   // for now we are only reflecting on completed actions
   const actionType = action.constructor.name
-  const aiBrain = action.npc.aiBrain
-  const reflections = aiBrain.getNPCMemories()
+  const reflections = action.getBrainDump().getStringifiedBrainDump()
   if (actionType === "IdleAction") {
     return isInterrupted
       ? "I was idling, doing nothing but got interrupted."
@@ -35,20 +34,14 @@ export const reflect = async (action: Action) => {
   } else if (actionType === "TalkAction") {
     const talkAction = action as TalkAction
     const lastTalkedPlayerName = talkAction.targetPlayerUsername
-    const latestThread = talkAction.npc.aiBrain.memory.conversations.getLatestThread(lastTalkedPlayerName)
+    const latestThread = talkAction.getBrainDump().getLatestThread(lastTalkedPlayerName)
     if (!latestThread.finished) {
       throw new Error("This thread should be finished!")
     }
     const messages = latestThread.messages
-    // const { firstDate, lastDate } = messages.reduce(
-    //   (acc, item) => ({
-    //     firstDate: new Date(item.date) < new Date(acc.firstDate) ? item.date : acc.firstDate,
-    //     lastDate: new Date(item.date) > new Date(acc.lastDate) ? item.date : acc.lastDate,
-    //   }),
-    //   { firstDate: messages[0].date, lastDate: messages[0].date },
-    // )
+
     const content = messages.map((item) => {
-      if (item.from == talkAction.npc.playerData.username) {
+      if (item.from == talkAction.getBrainDump().playerData.username) {
         return `I said: ${item.message}`
       } else {
         return `${item.from} said: ${item.message}`
@@ -74,7 +67,7 @@ export const reflect = async (action: Action) => {
   throw new Error(`Could not reflect for action: ${actionType}`)
 }
 
-const summarizeConversation = async (reflections: AiBrainReflections, content: string) => {
+const summarizeConversation = async (reflections: StringifiedBrainDump, content: string) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
@@ -88,7 +81,7 @@ const summarizeConversation = async (reflections: AiBrainReflections, content: s
   return completion.choices[0].message.content
 }
 
-const summarizeBroadcast = async (reflections: AiBrainReflections, broadcastContent: string) => {
+const summarizeBroadcast = async (reflections: StringifiedBrainDump, broadcastContent: string) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "system", content: summarize_broadcast_prompt(reflections, broadcastContent) }],
@@ -96,7 +89,7 @@ const summarizeBroadcast = async (reflections: AiBrainReflections, broadcastCont
   return completion.choices[0].message.content
 }
 
-const summarizeSpeech = async (reflections: AiBrainReflections, speechContent: string) => {
+const summarizeSpeech = async (reflections: StringifiedBrainDump, speechContent: string) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "system", content: summarize_speech_prompt(reflections, speechContent) }],

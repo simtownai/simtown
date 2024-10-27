@@ -1,24 +1,22 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
-import { ActionManager } from "./ActionManager"
-import { AiBrain } from "./AiBrain"
 import { MovementController } from "./MovementController"
 import { BroadcastAction } from "./actions/BroadcastAction"
 import { TalkAction } from "./actions/TalkAction"
-import { NPCConfig, npcConfig } from "./npcConfig"
+import { AIBrain } from "./brain/AIBrain"
+import { NpcConfig, npcConfig } from "./npcConfig"
 import { Socket, io } from "socket.io-client"
 
 export class NPC {
   movementController: MovementController
-  aiBrain: AiBrain
+  aiBrain: AIBrain
   private socket: Socket
   private playerData: PlayerData
   private otherPlayers: Map<string, PlayerData>
   private lastUpdateTime: number
-  private actionManager: ActionManager
   private placesNames: string[]
 
-  constructor(private npcConfig: NPCConfig) {
+  constructor(private npcConfig: NpcConfig) {
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.otherPlayers = new Map()
     this.lastUpdateTime = Date.now()
@@ -48,9 +46,16 @@ export class NPC {
 
             setTimeout(async () => {
               try {
-                this.actionManager = new ActionManager(this)
-                this.aiBrain = new AiBrain(this.npcConfig, this.otherPlayers, this.placesNames, this.actionManager)
-                this.actionManager.generatePlanAndSetActions()
+                this.aiBrain = new AIBrain({
+                  config: this.npcConfig,
+                  getOtherPlayers: () => this.otherPlayers,
+                  getPlayerData: () => this.playerData,
+                  getMovementController: () => this.movementController,
+                  places: this.placesNames,
+                  socket: this.socket,
+                  setAndEmitPlayerData: (playerData: PlayerData) => this.emitUpdatePlayerData(playerData),
+                })
+                this.aiBrain.generatePlanAndSetActions()
                 this.startUpdateLoop()
               } catch (error) {
                 console.error("Error generating plan for the day:", error)
@@ -76,12 +81,12 @@ export class NPC {
 
       this.socket.on("endConversation", (message: ChatMessage) => {
         if (message.to === this.npcConfig.username) {
-          this.aiBrain.memory.conversations.addChatMessage(message.from, message)
-          this.aiBrain.memory.conversations.addAIMessage(message.from, {
+          this.aiBrain.addChatMessage(message.from, message)
+          this.aiBrain.addAIMessage(message.from, {
             role: "user",
             content: message.message,
           })
-          this.aiBrain.memory.conversations.closeThread(message.from)
+          this.aiBrain.closeThread(message.from)
         }
       })
 
@@ -93,9 +98,9 @@ export class NPC {
       this.socket.on("newMessage", async (message: ChatMessage) => {
         if (message.to === this.npcConfig.username) {
           // Check if we're already in a TalkAction with this person
-          const currentAction = this.actionManager.getCurrentAction()
+          const currentAction = this.aiBrain.getCurrentAction()
           console.log("currentAction is talkaction", currentAction instanceof TalkAction)
-          if (currentAction instanceof TalkAction && currentAction.targetPlayerUsername === message.from) {
+          if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
             // Update the current TalkAction with the new message
             currentAction.handleMessage(message)
           } else if (currentAction instanceof BroadcastAction) {
@@ -106,11 +111,12 @@ export class NPC {
               message: "I'm sorry, but I'm in the middle of broadcasting right now.",
               date: new Date().toISOString(),
             }
-            this.socket.emit("sendMessage", refusalMessage)
+            this.socket.emit("endConversation", refusalMessage)
           } else if (currentAction instanceof TalkAction) {
             // Create a new action to handle the message
             const action = new TalkAction(
-              this,
+              this.aiBrain.getBrainDump,
+              this.socket,
               message.from,
               {
                 type: "existing",
@@ -125,17 +131,22 @@ export class NPC {
               date: new Date().toISOString(),
             }
             this.socket.emit("sendMessage", refusalMessage)
-            return this.actionManager.pushNewAction(action, 0)
+            return this.aiBrain.pushNewAction(action, 0)
           } else {
-            const action = new TalkAction(this, message.from, {
+            const action = new TalkAction(this.aiBrain.getBrainDump, this.socket, message.from, {
               type: "existing",
               message: message,
             })
-            this.actionManager.interruptCurrentActionAndExecuteNew(action)
+            this.aiBrain.interruptCurrentActionAndExecuteNew(action)
           }
         }
       })
     })
+  }
+
+  setAndEmitPlayerData(playerData: PlayerData) {
+    this.playerData = playerData
+    this.emitUpdatePlayerData(playerData)
   }
 
   emitUpdatePlayerData(data: UpdatePlayerData) {
@@ -150,8 +161,8 @@ export class NPC {
       date: new Date().toISOString(),
     }
 
-    this.aiBrain.memory.conversations.addChatMessage(blockingPlayer.username, replyMessage)
-    this.aiBrain.memory.conversations.addAIMessage(blockingPlayer.username, {
+    this.aiBrain.addChatMessage(blockingPlayer.username, replyMessage)
+    this.aiBrain.addAIMessage(blockingPlayer.username, {
       role: "assistant",
       content: "Please move, you're blocking my path.",
     })
@@ -167,7 +178,7 @@ export class NPC {
       const deltaTime = now - this.lastUpdateTime
       this.lastUpdateTime = now
 
-      await this.actionManager.update(deltaTime)
+      await this.aiBrain.update(deltaTime)
     }, 1000 / 30)
   }
 }

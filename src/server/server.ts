@@ -1,6 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { isInZone, isWithinListenThreshold } from "../shared/functions"
+import { isInZone } from "../shared/functions"
 import { BroadcastMessage, ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import cors from "cors"
 import express from "express"

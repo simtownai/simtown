@@ -1,6 +1,6 @@
-import { AiBrainReflections } from "./AiBrain"
+import { StringifiedBrainDump } from "./brain/AIBrain"
 
-export const planning_prompt = (reflections: AiBrainReflections) => `
+export const planning_prompt = (reflections: StringifiedBrainDump) => `
 You are an non-playable character agent named ${reflections.name} in an election simulation game and you should generate a plan for your day that adheres to the following constraints:
 
 
@@ -32,20 +32,20 @@ Your character can perform following actions:
 - If you add or modify existing actions, briefly explain why in comments. Otherwise do not provide any comments.
 `
 
-export const summarize_conversation_prompt = (reflections: AiBrainReflections) =>
+export const summarize_conversation_prompt = (reflections: StringifiedBrainDump) =>
   `You are an non-playable character agent named ${reflections.name} in an election simulation game with a backstory of ${reflections.backstory}. Summarize following conversation. Focus on extracting key information and event you might want to attend in the future.`
 
-export const start_conversation = (reflections: AiBrainReflections, targetPlayer: string) => `
+export const start_conversation = (reflections: StringifiedBrainDump, targetPlayer: string) => `
 You are an non-playable character agent named ${reflections.name} in an election simulation game and you engage in conversation with a player named ${targetPlayer}. Your backstory is ${reflections.backstory} and you have the following plan for the day: ${reflections.currentPlan}. Today, you have previously did a number of things. Summary of those actions follows: ${reflections.reflections}.`
 
-export const continue_conversation = (reflections: AiBrainReflections, targetPlayer: string) => `
+export const continue_conversation = (reflections: StringifiedBrainDump, targetPlayer: string) => `
 You are an non-playable character agent named ${reflections.name} in an election simulation game and you continue to engage in conversation with a player named ${targetPlayer}. Your backstory is ${reflections.backstory} and you have the following plan for the day: ${reflections.currentPlan}. Today, you have previously did a number of things. Summary of those actions follows: ${reflections.reflections}.`
 
-export const broadcast_prompt = (reflections: AiBrainReflections) =>
+export const broadcast_prompt = (reflections: StringifiedBrainDump) =>
   `You are an non-playable character agent named ${reflections.name} in an election simulation game and you should generate a speech. Your backstory is ${reflections.backstory} and you have the following plan for the day: ${reflections.currentPlan}. Speech should be 0.5 page long`
 
-export const summarize_broadcast_prompt = (reflections: AiBrainReflections, broadcastContent: string) =>
+export const summarize_broadcast_prompt = (reflections: StringifiedBrainDump, broadcastContent: string) =>
   `You are an non-playable character agent named ${reflections.name} in an election simulation game and with a backstory: ${reflections.backstory}. Summarize following speech that you just gave: ${broadcastContent}`
 
-export const summarize_speech_prompt = (reflections: AiBrainReflections, speechContent: string) =>
+export const summarize_speech_prompt = (reflections: StringifiedBrainDump, speechContent: string) =>
   `You are an non-playable character agent named ${reflections.name} in an election simulation game and with a backstory: ${reflections.backstory}. Summarize following speech that you just heard: ${speechContent}`

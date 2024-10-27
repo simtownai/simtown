@@ -1,13 +1,14 @@
 // IdleAction.ts
-import { NPC } from "../client"
+import { BrainDump } from "../brain/AIBrain"
 import { IdleActionDuration } from "../npcConfig"
 import { Action } from "./Action"
+import { Socket } from "socket.io-client"
 
 export class IdleAction extends Action {
   private elapsedTime: number = 0
 
-  constructor(npc: NPC) {
-    super(npc)
+  constructor(getBrainDump: () => BrainDump, socket: Socket, reason: string = "") {
+    super(getBrainDump, socket, reason)
   }
 
   start() {

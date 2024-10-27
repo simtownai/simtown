@@ -1,8 +1,9 @@
 import { BroadcastMessage } from "../../shared/types"
-import { NPC } from "../client"
-import client from "../openai"
+import { BrainDump } from "../brain/AIBrain"
+import client from "../openai/openai"
 import { broadcast_prompt } from "../prompts"
 import { Action } from "./Action"
+import { Socket } from "socket.io-client"
 
 export class BroadcastAction extends Action {
   broadcastContent: string = ""
@@ -11,8 +12,8 @@ export class BroadcastAction extends Action {
   private chunkSize: number = 100 // Characters per chunk
   targetPlace: string
 
-  constructor(npc: NPC, targetPlace: string, reason: string = "") {
-    super(npc, reason)
+  constructor(getBrainDump: () => BrainDump, socket: Socket, targetPlace: string, reason: string = "") {
+    super(getBrainDump, socket, reason)
     this.targetPlace = targetPlace
   }
 
@@ -24,8 +25,7 @@ export class BroadcastAction extends Action {
 
   private async generateBroadcast(): Promise<void> {
     try {
-      const aiBrainSummary = await this.npc.aiBrain.getNPCMemories()
-      const system_message = broadcast_prompt(aiBrainSummary)
+      const system_message = broadcast_prompt(this.getBrainDump().getStringifiedBrainDump())
       const completion = await client.chat.completions.create({
         model: "gpt-4",
         messages: [{ role: "system", content: system_message }],
@@ -49,13 +49,13 @@ export class BroadcastAction extends Action {
       this.broadcastIndex += this.chunkSize
 
       const broadcastMessage: BroadcastMessage = {
-        from: this.npc.playerData.username,
+        from: this.getBrainDump().playerData.username,
         message: chunk,
         place: this.targetPlace,
         date: new Date().toISOString(),
       }
 
-      this.npc.socket.emit("broadcast", broadcastMessage)
+      this.socket.emit("broadcast", broadcastMessage)
     }, 5000) // Emit every 5 seconds
   }
 

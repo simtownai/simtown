@@ -1,7 +1,7 @@
-import { ActionPlan, ActionPlanSchema } from "../shared/types"
-import { AiBrainReflections } from "./AiBrain"
-import client from "./openai"
-import { planning_prompt } from "./prompts"
+import { ActionPlanSchema, GeneratedActionPlan } from "../../shared/types"
+import { StringifiedBrainDump } from "../brain/AIBrain"
+import client from "../openai/openai"
+import { planning_prompt } from "../prompts"
 import { zodResponseFormat } from "openai/helpers/zod.mjs"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 import { z } from "zod"
@@ -11,7 +11,7 @@ const ResponseSchema = z.object({
 })
 
 const validateActions = (
-  plan: ActionPlan,
+  plan: GeneratedActionPlan,
   places: string[],
   playerNames: string[],
 ): { isValid: boolean; error?: string } => {
@@ -56,18 +56,18 @@ const validateActions = (
 }
 
 export const generatePlanForTheday = async (
-  npcBackground: AiBrainReflections,
+  stringifiedBrainDump: StringifiedBrainDump,
   playerNames: string[],
   places: string[],
-): Promise<ActionPlan> => {
+): Promise<GeneratedActionPlan> => {
   let attemps = 0
   let maxAttemps = 5
 
   let isValid = false
   let errorMessage = ""
-  let plan: ActionPlan
+  let plan: GeneratedActionPlan
 
-  const prompt = planning_prompt(npcBackground)
+  const prompt = planning_prompt(stringifiedBrainDump)
   let messages = [{ role: "system", content: prompt }] as ChatCompletionMessageParam[]
 
   while (attemps < maxAttemps) {
