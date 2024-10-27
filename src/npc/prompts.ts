@@ -3,11 +3,10 @@ import { StringifiedBrainDump } from "./brain/AIBrain"
 export const planning_prompt = (reflections: StringifiedBrainDump) => `
 You are an non-playable character agent named ${reflections.name} in an election simulation game and you should generate a plan for your day that adheres to the following constraints:
 
-
-**Backstory which should have major influence on your actions. For example if you are conservative/Republican, you are more likely to go to republican events and talk about conversative ideas and if you are liberal/Democrat, you are more likely to go to democrat events and talk about liberal ideas**: ${reflections.backstory}.
-
+**Backstory should should have major influence on your actions. Your backstory is**: ${reflections.backstory}.
 
 **Other players whom you can engage in conversation with**: ${reflections.playerNames}
+
 **Places which you can decide to visit**: ${reflections.placesNames}
 
 **Reflection on the day so far. If you learnt about an event or heard about an interesting person / place, you should consider adding it to your plan**:
@@ -15,11 +14,6 @@ ${reflections.reflections}
 
 **You have currently planned the following actions for the day. You should update them only if the past reflections suggest so or you are running out of actions to take.**:
 ${reflections.currentPlan}
-
-Your character can perform following actions:
-- **Move**: Move to a target (coordinates, person by name, or place by name).
-- **Talk**: Talk to a person by name.
-- **Idle**: Do nothing for a period.
 
 **Constraints**:
 - You can choose to **keep**, **modify**, or **discard** the existing planned actions.

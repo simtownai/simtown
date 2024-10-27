@@ -1,4 +1,5 @@
 // Assuming you have access to the Action classes and their properties
+import { isWithinTalkDistanceThreshold } from "../../shared/functions"
 import { GeneratedAction, GeneratedActionPlan, PlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { Action } from "../actions/Action"
@@ -76,14 +77,37 @@ export const convertGeneratedPlanToActions = (
   movementController: MovementController,
   setAndEmitPlayerData: (playerData: PlayerData) => void,
 ): Action[] => {
-  return planData.map((actionData: GeneratedAction) => {
+  return planData.flatMap((actionData: GeneratedAction) => {
     switch (actionData.type) {
       case "idle":
         return new IdleAction(getBrainDump, socket)
       case "move":
         return new MoveAction(getBrainDump, socket, movementController, setAndEmitPlayerData, actionData.target)
       case "talk":
-        return new TalkAction(getBrainDump, socket, actionData.name, { type: "new" })
+        const playerData = getBrainDump().playerData
+        const targetPosition = movementController.getPlayerPosition(actionData.name)
+        if (!targetPosition) {
+          throw new Error("Target position not found")
+        }
+        const talkAction = new TalkAction(getBrainDump, socket, actionData.name, { type: "new" })
+
+        if (!isWithinTalkDistanceThreshold(playerData, targetPosition.x, targetPosition.y)) {
+          return [
+            new MoveAction(
+              getBrainDump,
+              socket,
+              movementController,
+              setAndEmitPlayerData,
+              {
+                targetType: "person",
+                name: actionData.name,
+              },
+              "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
+            ),
+            talkAction,
+          ]
+        }
+        return talkAction
       case "broadcast":
         return new BroadcastAction(getBrainDump, socket, actionData.targetPlace)
       case "listen":

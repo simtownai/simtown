@@ -90,7 +90,6 @@ export class AIBrain {
     }
   }
   getBrainDump = (): BrainDump => {
-    console.log("getPlayerData", this.getPlayerData)
     return {
       closeThread: (targetPlayerName: string) => this.closeThread(targetPlayerName),
       currentAction: this.currentAction,

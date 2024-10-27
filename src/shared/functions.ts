@@ -20,11 +20,11 @@ export function getTime(): Date {
   return inGameDate
 }
 
-export function isWithinListenThreshold(playerData: PlayerData, x: number, y: number): boolean {
-  const dx = playerData.x - x
-  const dy = playerData.y - y
+export function isWithinTalkDistanceThreshold(player: PlayerData, x: number, y: number): boolean {
+  const dx = player.x - x
+  const dy = player.y - y
   const distance = Math.sqrt(dx * dx + dy * dy)
-  return distance <= CONFIG.LISTEN_THRESHOLD
+  return distance <= CONFIG.INTERACTION_PROXIMITY_THRESHOLD
 }
 
 export function isInZone(

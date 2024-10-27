@@ -72,6 +72,7 @@ export const generatePlanForTheday = async (
 
   while (attemps < maxAttemps) {
     attemps++
+    console.log("messages", messages)
     const completion = await client.beta.chat.completions.parse({
       model: "gpt-4o-mini",
       messages: messages,

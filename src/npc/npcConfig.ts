@@ -12,36 +12,37 @@ export type NpcConfig = {
 }
 
 export const npcConfig: NpcConfig[] = [
-  {
-    username: "Donald",
-    spriteDefinition: {
-      body: "Body_07",
-      eyes: "Eyes_04",
-      outfit: "Outfit_06_04",
-      hairstyle: "Hairstyle_01_01",
-      accessory: "Accessory_04_Snapback_01",
-    },
-    id: "1",
-    // backstory: ["I used to live in a small village.", "I love talking with people."],
-    backstory: ["You are Donald Trump. You should broadcast your message to the world at Trump place."],
-  },
-  {
-    username: "John",
-    spriteDefinition: createRandomSpriteDefinition(),
-    id: "1",
-    // backstory: ["I used to live in a small village.", "I love talking with people."],
-    backstory: [
-      "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will go to Trump place to listen to his broadcast.",
-    ],
-  },
+  // {
+  //   username: "Donald",
+  //   spriteDefinition: {
+  //     body: "Body_07",
+  //     eyes: "Eyes_04",
+  //     outfit: "Outfit_06_04",
+  //     hairstyle: "Hairstyle_01_01",
+  //     accessory: "Accessory_04_Snapback_01",
+  //   },
+  //   id: "1",
+  //   // backstory: ["I used to live in a small village.", "I love talking with people."],
+  //   backstory: ["You are Donald Trump. You should broadcast your message to the world at Trump place."],
   // },
   // {
-  //   username: "Maria",
+  //   username: "John",
   //   spriteDefinition: createRandomSpriteDefinition(),
-  //   id: "2",
+  //   id: "1",
+  //   // backstory: ["I used to live in a small village.", "I love talking with people."],
   //   backstory: [
-  //     "I am a woman who is deeply liberal and pro-choice. I want to make sure that everyone has access to safe and legal abortion services.",
-  //     "I like to talk with people and share my beliefs.",
+  //     "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will go to Trump place to listen to his broadcast.",
   //   ],
   // },
+  // },
+  {
+    username: "Maria",
+    spriteDefinition: createRandomSpriteDefinition(),
+    id: "2",
+    backstory: [
+      "I love tallking with people",
+      "I will choose to talk with players.",
+      "I will be moving or listening. Just talking",
+    ],
+  },
 ]
