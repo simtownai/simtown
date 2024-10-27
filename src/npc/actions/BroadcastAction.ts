@@ -1,9 +1,9 @@
 import { BroadcastMessage } from "../../shared/types"
+import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import client from "../openai/openai"
 import { broadcast_prompt } from "../prompts"
 import { Action } from "./Action"
-import { Socket } from "socket.io-client"
 
 export class BroadcastAction extends Action {
   broadcastContent: string = ""
@@ -12,8 +12,13 @@ export class BroadcastAction extends Action {
   private chunkSize: number = 100 // Characters per chunk
   targetPlace: string
 
-  constructor(getBrainDump: () => BrainDump, socket: Socket, targetPlace: string, reason: string = "") {
-    super(getBrainDump, socket, reason)
+  constructor(
+    getBrainDump: () => BrainDump,
+    getEmitMethods: () => EmitInterface,
+    targetPlace: string,
+    reason: string = "",
+  ) {
+    super(getBrainDump, getEmitMethods, reason)
     this.targetPlace = targetPlace
   }
 
@@ -54,8 +59,7 @@ export class BroadcastAction extends Action {
         place: this.targetPlace,
         date: new Date().toISOString(),
       }
-
-      this.socket.emit("broadcast", broadcastMessage)
+      this.getEmitMethods().emitBroadcast(broadcastMessage)
     }, 5000) // Emit every 5 seconds
   }
 

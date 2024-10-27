@@ -1,9 +1,9 @@
 import { CONFIG } from "../../shared/config"
 import { MoveTarget, PlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
+import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { Action } from "./Action"
-import { Socket } from "socket.io-client"
 
 export class MoveAction extends Action {
   moveTarget: MoveTarget
@@ -17,13 +17,13 @@ export class MoveAction extends Action {
 
   constructor(
     getBrainDump: () => BrainDump,
-    socket: Socket,
+    getEmitMethods: () => EmitInterface,
     movementController: MovementController,
     setAndEmitPlayerData: (playerData: PlayerData) => void,
     moveTarget: MoveTarget,
     reason: string = "",
   ) {
-    super(getBrainDump, socket, reason)
+    super(getBrainDump, getEmitMethods, reason)
     this.moveTarget = moveTarget
     this.movementController = movementController
     this.setAndEmitPlayerData = setAndEmitPlayerData

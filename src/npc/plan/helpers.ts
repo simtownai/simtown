@@ -2,6 +2,7 @@
 import { isWithinTalkDistanceThreshold } from "../../shared/functions"
 import { GeneratedAction, GeneratedActionPlan, PlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
+import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
 import { BroadcastAction } from "../actions/BroadcastAction"
 import { IdleAction } from "../actions/IdleAction"
@@ -9,7 +10,6 @@ import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { BrainDump } from "../brain/AIBrain"
-import { Socket } from "socket.io-client"
 
 export const convertActionToGeneratedAction = (action: Action): GeneratedAction => {
   if (action instanceof IdleAction) {
@@ -73,29 +73,29 @@ export const convertActionsToGeneratedPlan = (actions: Action[]): GeneratedActio
 export const convertGeneratedPlanToActions = (
   planData: GeneratedActionPlan,
   getBrainDump: () => BrainDump,
-  socket: Socket,
+  getEmitMethods: () => EmitInterface,
   movementController: MovementController,
   setAndEmitPlayerData: (playerData: PlayerData) => void,
 ): Action[] => {
   return planData.flatMap((actionData: GeneratedAction) => {
     switch (actionData.type) {
       case "idle":
-        return new IdleAction(getBrainDump, socket, actionData.activityType)
+        return new IdleAction(getBrainDump, getEmitMethods, actionData.activityType)
       case "move":
-        return new MoveAction(getBrainDump, socket, movementController, setAndEmitPlayerData, actionData.target)
+        return new MoveAction(getBrainDump, getEmitMethods, movementController, setAndEmitPlayerData, actionData.target)
       case "talk":
         const playerData = getBrainDump().playerData
         const targetPosition = movementController.getPlayerPosition(actionData.name)
         if (!targetPosition) {
           throw new Error("Target position not found")
         }
-        const talkAction = new TalkAction(getBrainDump, socket, actionData.name, { type: "new" })
+        const talkAction = new TalkAction(getBrainDump, getEmitMethods, actionData.name, { type: "new" })
 
         if (!isWithinTalkDistanceThreshold(playerData, targetPosition.x, targetPosition.y)) {
           return [
             new MoveAction(
               getBrainDump,
-              socket,
+              getEmitMethods,
               movementController,
               setAndEmitPlayerData,
               {
@@ -109,9 +109,9 @@ export const convertGeneratedPlanToActions = (
         }
         return talkAction
       case "broadcast":
-        return new BroadcastAction(getBrainDump, socket, actionData.targetPlace)
+        return new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace)
       case "listen":
-        return new ListenAction(getBrainDump, actionData.targetPlace, socket)
+        return new ListenAction(getBrainDump, getEmitMethods, actionData.targetPlace)
       default:
         throw new Error("Unknown action type:")
     }

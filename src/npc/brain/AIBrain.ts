@@ -1,5 +1,6 @@
 import { ChatMessage, PlayerData, UpdatePlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
+import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
 import { NpcConfig } from "../npcConfig"
 import { generatePlanForTheday } from "../plan/generatePlan"
@@ -12,7 +13,6 @@ import { Thread } from "./memory/ConversationMemory"
 import { Memory } from "./memory/Memory"
 import { reflect } from "./reflect"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
-import { Socket } from "socket.io-client"
 
 export type StringifiedBrainDump = {
   name: string
@@ -23,6 +23,7 @@ export type StringifiedBrainDump = {
   currentPlan: string
   currentAction: string
 }
+
 export type BrainDump = {
   currentAction: Action | null
   playerData: PlayerData
@@ -43,7 +44,7 @@ type AIBrainInterface = {
   getMovementController: () => MovementController
   setAndEmitPlayerData: (playerData: PlayerData) => void
   places: string[]
-  socket: Socket
+  getEmitMethods: () => EmitInterface
 }
 
 export class AIBrain {
@@ -54,17 +55,17 @@ export class AIBrain {
   private isProcessingAction: boolean = false
   private places: string[]
   private getOtherPlayers: () => Map<string, PlayerData>
-  private socket: Socket
   private getPlayerData: () => PlayerData
   private getMovementController: () => MovementController
   private setAndEmitPlayerData: (playerData: PlayerData) => void
+  private getEmitMethods: () => EmitInterface
 
   constructor(args: AIBrainInterface) {
+    this.getEmitMethods = args.getEmitMethods
     this.npcConfig = args.config
     this.memory = new Memory(args.config)
     this.places = args.places
     this.getOtherPlayers = args.getOtherPlayers
-    this.socket = args.socket
     this.getPlayerData = args.getPlayerData
     this.setAndEmitPlayerData = args.setAndEmitPlayerData
     this.getMovementController = args.getMovementController
@@ -81,7 +82,7 @@ export class AIBrain {
       this.actionQueue = convertGeneratedPlanToActions(
         initialPlanData,
         this.getBrainDump,
-        this.socket,
+        this.getEmitMethods,
         movementController,
         this.setAndEmitPlayerData,
       )
@@ -89,6 +90,7 @@ export class AIBrain {
       console.error("Error generating new plan:", error)
     }
   }
+
   getBrainDump = (): BrainDump => {
     return {
       closeThread: (targetPlayerName: string) => this.closeThread(targetPlayerName),
@@ -184,7 +186,7 @@ export class AIBrain {
     this.currentAction = nextAction
     console.error("Starting next action:", nextAction.constructor.name)
 
-    this.socket.emit("updatePlayerData", {
+    this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
     } as UpdatePlayerData)
 
@@ -239,9 +241,9 @@ export class AIBrain {
 
     // Start the new action immediately
     this.currentAction = newAction
-    this.socket.emit("updatePlayerData", {
+    this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
-    } as UpdatePlayerData)
+    })
 
     this.currentAction.start()
   }

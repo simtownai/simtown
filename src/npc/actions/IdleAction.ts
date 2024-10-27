@@ -1,16 +1,22 @@
 // IdleAction.ts
 import { IdleActivityType } from "../../shared/types"
+import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { IdleActionDuration } from "../npcConfig"
 import { Action } from "./Action"
-import { Socket } from "socket.io-client"
 
 export class IdleAction extends Action {
   private elapsedTime: number = 0
   activityType: IdleActivityType
 
-  constructor(getBrainDump: () => BrainDump, socket: Socket, activityType: IdleActivityType, reason: string = "") {
-    super(getBrainDump, socket, reason)
+  constructor(
+    getBrainDump: () => BrainDump,
+    getEmitMethods: () => EmitInterface,
+
+    activityType: IdleActivityType,
+    reason: string = "",
+  ) {
+    super(getBrainDump, getEmitMethods, reason)
     this.activityType = activityType
   }
 

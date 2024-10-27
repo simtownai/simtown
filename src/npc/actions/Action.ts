@@ -1,5 +1,5 @@
+import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
-import { Socket } from "socket.io-client"
 
 export abstract class Action {
   isInterrupted: boolean = false
@@ -7,11 +7,11 @@ export abstract class Action {
   protected isCompletedFlag: boolean = false
   protected reason: string
   getBrainDump: () => BrainDump
-  protected socket: Socket
+  getEmitMethods: () => EmitInterface
 
-  constructor(getBrainDump: () => BrainDump, socket: Socket, reason: string = "") {
+  constructor(getBrainDump: () => BrainDump, getEmitMethods: () => EmitInterface, reason: string = "") {
     this.getBrainDump = getBrainDump
-    this.socket = socket
+    this.getEmitMethods = getEmitMethods
     this.reason = reason
   }
 

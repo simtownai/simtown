@@ -1,4 +1,5 @@
 import { ChatMessage } from "../../shared/types"
+import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { ConversationTimeoutThreshold } from "../npcConfig"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
@@ -6,7 +7,6 @@ import client from "../openai/openai"
 import { continue_conversation, start_conversation } from "../prompts"
 import { Action } from "./Action"
 import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/index.mjs"
-import { Socket } from "socket.io-client"
 import { z } from "zod"
 
 type ExistingConversationType = { type: "existing"; message: ChatMessage }
@@ -22,12 +22,13 @@ export class TalkAction extends Action {
 
   constructor(
     getBrainDump: () => BrainDump,
-    socket: Socket,
+    getEmitMethods: () => EmitInterface,
+
     targetPlayerUsername: string,
     conversationType: ConversationType,
     reason: string = "",
   ) {
-    super(getBrainDump, socket, reason)
+    super(getBrainDump, getEmitMethods, reason)
     this.tools = [this.endConversationTool]
     this.functionMap = {
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
@@ -57,7 +58,7 @@ export class TalkAction extends Action {
 
     if (this.getBrainDump().isLatestThreadActive(targetPlayerUsername)) {
       const response = this.handleFinalChatResponse(responseContent, targetPlayerUsername)
-      this.socket.emit("sendMessage", response)
+      this.getEmitMethods().emitSendMessage(response)
       this.setConversationTimeout(targetPlayerUsername)
     }
   }
@@ -130,7 +131,7 @@ export class TalkAction extends Action {
               if (functionName === "endConversation") {
                 this.clearConversationTimeout()
                 const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
-                this.socket.emit("endConversation", response)
+                this.getEmitMethods().emitEndConversation(response)
                 this.getBrainDump().closeThread(targetPlayerUsername)
                 return ""
               }
@@ -169,7 +170,7 @@ export class TalkAction extends Action {
 
     if (this.getBrainDump().isLatestThreadActive(chatMessage.from)) {
       const response = this.handleFinalChatResponse(responseContent, chatMessage.from)
-      this.socket.emit("sendMessage", response)
+      this.getEmitMethods().emitSendMessage(response)
     }
   }
 
@@ -193,7 +194,7 @@ export class TalkAction extends Action {
       "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
     const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerUsername)
     this.getBrainDump().closeThread(targetPlayerUsername)
-    this.socket.emit("endConversation", response)
+    this.getEmitMethods().emitEndConversation(response)
     this.isCompletedFlag = true
   }
 

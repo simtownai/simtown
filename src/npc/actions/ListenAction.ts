@@ -1,22 +1,27 @@
 import { ChatMessage } from "../../shared/types"
+import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { Action } from "./Action"
-import { Socket } from "socket.io-client"
 
 export class ListenAction extends Action {
   accumulatedBroadcast: string = ""
   private broadcastListener: (message: ChatMessage) => void
   targetPlace: string
 
-  constructor(getBrainDump: () => BrainDump, targetPlace: string, socket: Socket, reason: string = "") {
-    super(getBrainDump, socket, reason)
+  constructor(
+    getBrainDump: () => BrainDump,
+    getEmitMethods: () => EmitInterface,
+    targetPlace: string,
+    reason: string = "",
+  ) {
+    super(getBrainDump, getEmitMethods, reason)
     this.targetPlace = targetPlace
     this.broadcastListener = this.handleBroadcast.bind(this)
   }
 
   start(): void {
     this.isStarted = true
-    this.socket.on("listenBroadcast", this.broadcastListener)
+    this.getEmitMethods().setListener("listenBroadcast", this.broadcastListener)
   }
 
   private handleBroadcast(message: ChatMessage): void {
@@ -38,12 +43,12 @@ export class ListenAction extends Action {
 
   interrupt(): void {
     super.interrupt()
-    this.socket.off("broadcast", this.broadcastListener)
+    this.getEmitMethods().removeListener("listenBroadcast", this.broadcastListener)
   }
 
   resume(): void {
     super.resume()
-    this.socket.on("broadcast", this.broadcastListener)
+    this.getEmitMethods().setListener("listenBroadcast", this.broadcastListener)
   }
 
   getAccumulatedBroadcast(): string {
