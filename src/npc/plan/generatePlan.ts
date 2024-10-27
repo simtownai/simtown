@@ -48,7 +48,7 @@ const validateActions = (
     if (action.type === "talk" && !playerNames.includes(action.name)) {
       return {
         isValid: false,
-        error: `Invalid person for talk: ${action.name}. Only ${playerNames.join(", ")} are available`,
+        error: `Invalid person for talk action: ${action.name}. Only ${playerNames.join(", ")} are available`,
       }
     }
   }

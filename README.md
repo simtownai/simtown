@@ -34,11 +34,11 @@
 
 - ai
 
-  - broadcast & listening & talking -> add check if we are in place (and also propagate the emoji updatePlayerData)
+  - broadcast & listening & talking -> add check if we are in place (and also propagate the emoji updatePlayerData) - did that for talking nowm, let's discuss how to best calcualte the position for all those actions
+  - add action reason to the reflection if needed
   - figure out timing of broadcasts and how to make npcs aware about this
   - figure out what happens when 2 npcs decide to talk with each other at the same time
   - create kamala and trump chars
-  - handle multiple newmessages from a single user when npc is busy (currently we continue on adding to the quee of things to do)
 
 - fix movements to place
 - chat interface with other players

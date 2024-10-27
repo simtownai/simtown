@@ -88,11 +88,16 @@ export class TalkAction extends Action {
 
   async generateAssistantResponse(system_message: string, targetPlayerUsername: string): Promise<string> {
     let responseContent = ""
+    let errorMessage: string = ""
     while (true) {
-      const toSubmit = [
+      let toSubmit = [
         { role: "system", content: system_message } as ChatCompletionMessageParam,
         ...this.getBrainDump().getNewestActiveThread(targetPlayerUsername).aiMessages,
       ]
+      if (errorMessage) {
+        toSubmit.push({ role: "system", content: errorMessage })
+        errorMessage = ""
+      }
 
       console.log("toSubmit", toSubmit)
 
@@ -108,28 +113,30 @@ export class TalkAction extends Action {
 
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
           for (const toolCall of responseMessage.tool_calls) {
-            this.getBrainDump().addAIMessage(targetPlayerUsername, responseMessage)
+            try {
+              const functionName = toolCall.function.name
+              const functionArgs = JSON.parse(toolCall.function.arguments)
 
-            const functionName = toolCall.function.name
-            const functionArgs = JSON.parse(toolCall.function.arguments)
-            const functionResult = await this.executeFunction(functionName, functionArgs)
+              const functionResult = await this.executeFunction(functionName, functionArgs)
 
-            if (!functionResult) {
-              throw new Error(`Function ${functionName} returned undefined`)
-            }
+              this.getBrainDump().addAIMessage(targetPlayerUsername, responseMessage)
 
-            this.getBrainDump().addAIMessage(targetPlayerUsername, {
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: functionResult,
-            })
+              this.getBrainDump().addAIMessage(targetPlayerUsername, {
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: functionResult,
+              })
 
-            if (functionName === "endConversation") {
-              this.clearConversationTimeout()
-              const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
-              this.socket.emit("endConversation", response)
-              this.getBrainDump().closeThread(targetPlayerUsername)
-              return ""
+              if (functionName === "endConversation") {
+                this.clearConversationTimeout()
+                const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
+                this.socket.emit("endConversation", response)
+                this.getBrainDump().closeThread(targetPlayerUsername)
+                return ""
+              }
+            } catch (error: any) {
+              errorMessage = error.message
+              console.error("Error executing function:", error)
             }
           }
           continue
