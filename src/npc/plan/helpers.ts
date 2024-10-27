@@ -1,5 +1,3 @@
-// Assuming you have access to the Action classes and their properties
-import { isWithinTalkDistanceThreshold } from "../../shared/functions"
 import { GeneratedAction, GeneratedActionPlan, MoveTarget, PlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { Action } from "../actions/Action"
