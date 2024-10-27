@@ -21,6 +21,11 @@ export class MovementController {
   private onMovementFailed: (() => void) | null = null
   private onMovementCompleted: (() => void) | null = null
   private lastDirection: "left" | "right" | "up" | "down" = "down"
+  private pathRecalculationThreshold: number = 2
+  private pathRecalculationInterval: number = 500
+  private lastPathRecalculationTime: number = 0
+  private lastKnownTargetPosition: { x: number; y: number } | null = null
+  private currentMoveTarget: MoveTarget | null = null
 
   movementCompleted: boolean = false
 
@@ -116,6 +121,35 @@ export class MovementController {
       return
     }
 
+    // Handle person following recalculation
+    if (this.currentMoveTarget?.targetType === "person") {
+      const currentTime = Date.now()
+      if (currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval) {
+        const player = this.getOtherPlayers().get(this.currentMoveTarget.name)
+
+        if (!player) {
+          console.log("Target player not found")
+          this.handleMovementCompleted()
+          return
+        }
+
+        if (this.lastKnownTargetPosition) {
+          const distanceMoved = Math.hypot(
+            player.x - this.lastKnownTargetPosition.x,
+            player.y - this.lastKnownTargetPosition.y,
+          )
+
+          if (distanceMoved > this.pathRecalculationThreshold) {
+            console.log("Target moved significantly, recalculating path.")
+            this.lastKnownTargetPosition = { x: player.x, y: player.y }
+            this.lastPathRecalculationTime = currentTime
+            this.initiateMovement(this.currentMoveTarget)
+            return
+          }
+        }
+      }
+    }
+
     // Ensure pathIndex is within bounds
     if (this.pathIndex < 0) {
       this.pathIndex = 0
@@ -166,6 +200,7 @@ export class MovementController {
 
     this.updateAndEmitPlayerData(updatePlayerData)
 
+    console.log("end of move", this.pathIndex, this.path.length)
     if (this.pathIndex >= this.path.length) {
       this.handleMovementCompleted()
     }
@@ -306,6 +341,9 @@ export class MovementController {
   }
 
   async initiateMovement(moveTarget: MoveTarget) {
+    this.currentMoveTarget = moveTarget
+    this.lastPathRecalculationTime = 0 // Reset recalculation timer
+
     let targetPosition: GridPosition = { gridX: 0, gridY: 0 }
     const playerData = this.getPlayerData()
 
@@ -314,48 +352,27 @@ export class MovementController {
     } else if (moveTarget.targetType === "person") {
       const player = this.getOtherPlayers().get(moveTarget.name)
       if (!player) {
-        return "Couldn't find that player"
+        console.error("Couldn't find that player")
+        this.handleMovementCompleted()
+        return
       }
 
+      this.lastKnownTargetPosition = { x: player.x, y: player.y }
       const playerGridPos = this.worldToGrid(player.x, player.y)
 
-      const adjacentOffsets: GridPosition[] = [
-        { gridX: 0, gridY: -1 }, // North
-        { gridX: 1, gridY: 0 }, // East
-        { gridX: 0, gridY: 1 }, // South
-        { gridX: -1, gridY: 0 }, // West
-      ]
-
-      let possibleTargets: GridPosition[] = []
-
-      for (const offset of adjacentOffsets) {
-        const adjPos: GridPosition = {
-          gridX: playerGridPos.gridX + offset.gridX,
-          gridY: playerGridPos.gridY + offset.gridY,
-        }
-
-        if (!this.isCellBlocked(adjPos)) {
-          possibleTargets.push(adjPos)
-        }
+      const bestAdjacentPosition = await this.findBestAdjacentPosition(playerGridPos, playerData)
+      if (!bestAdjacentPosition) {
+        console.error("Couldn't find a valid adjacent position")
+        this.handleMovementCompleted()
+        return
       }
-
-      if (possibleTargets.length === 0) {
-        return "No adjacent position available to move to"
-      }
-
-      // Choose the closest target
-      possibleTargets.sort((a, b) => {
-        const worldPositionA = this.gridToWorld(a)
-        const worldPositionB = this.gridToWorld(b)
-        const distA = Math.hypot(worldPositionA.x - playerData.x, worldPositionA.y - playerData.y)
-        const distB = Math.hypot(worldPositionB.x - playerData.x, worldPositionB.y - playerData.y)
-        return distA - distB
-      })
-      targetPosition = possibleTargets[0]
+      targetPosition = bestAdjacentPosition
     } else if (moveTarget.targetType === "place") {
       const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
       if (!place) {
-        return "Couldn't find that place"
+        console.error("Couldn't find that place")
+        this.handleMovementCompleted()
+        return
       }
 
       const randomX = Math.round(place.x + 2 + Math.random() * (place.width - 2))
@@ -364,10 +381,21 @@ export class MovementController {
       targetPosition = this.worldToGrid(randomX, randomY)
     }
 
-    console.log(`Received command to move to position: (${targetPosition})`, moveTarget)
+    console.log(
+      `Received command to move to position`,
+      this.worldToGrid(playerData.x, playerData.y),
+      targetPosition,
+      moveTarget,
+    )
 
     try {
-      const foundPath = await this.calculatePath(this.worldToGrid(playerData.x, playerData.y), targetPosition, false)
+      const startPostion = this.worldToGrid(playerData.x, playerData.y)
+      if (JSON.stringify(startPostion) === JSON.stringify(targetPosition)) {
+        console.log("Already at target position")
+        this.handleMovementCompleted()
+        return
+      }
+      const foundPath = await this.calculatePath(startPostion, targetPosition, false)
       if (!foundPath || foundPath.length === 0) {
         throw new Error("Couldn't find path")
       }
@@ -378,6 +406,46 @@ export class MovementController {
       console.error("Error in move_to:", error)
       return "Couldn't move there, those numbers are not valid coordinates"
     }
+  }
+
+  private async findBestAdjacentPosition(
+    targetGridPos: GridPosition,
+    playerData: PlayerData,
+  ): Promise<GridPosition | null> {
+    const adjacentOffsets: GridPosition[] = [
+      { gridX: 0, gridY: -1 }, // North
+      { gridX: 1, gridY: 0 }, // East
+      { gridX: 0, gridY: 1 }, // South
+      { gridX: -1, gridY: 0 }, // West
+    ]
+
+    let possibleTargets: GridPosition[] = []
+
+    for (const offset of adjacentOffsets) {
+      const adjPos: GridPosition = {
+        gridX: targetGridPos.gridX + offset.gridX,
+        gridY: targetGridPos.gridY + offset.gridY,
+      }
+
+      if (!this.isCellBlocked(adjPos)) {
+        possibleTargets.push(adjPos)
+      }
+    }
+
+    if (possibleTargets.length === 0) {
+      return null
+    }
+
+    // Choose the closest target
+    possibleTargets.sort((a, b) => {
+      const worldPositionA = this.gridToWorld(a)
+      const worldPositionB = this.gridToWorld(b)
+      const distA = Math.hypot(worldPositionA.x - playerData.x, worldPositionA.y - playerData.y)
+      const distB = Math.hypot(worldPositionB.x - playerData.x, worldPositionB.y - playerData.y)
+      return distA - distB
+    })
+
+    return possibleTargets[0]
   }
 
   getPlayerPosition(_playerId: string): { x: number; y: number } | null {
@@ -464,6 +532,49 @@ export class MovementController {
       )
       easystar.calculate()
     })
+  }
+
+  ifMoveTargetReached(moveTarget: MoveTarget): boolean {
+    const playerData = this.getPlayerData()
+    const currentPosition = this.worldToGrid(playerData.x, playerData.y)
+
+    if (moveTarget.targetType === "coordinates") {
+      const targetGridPosition = this.worldToGrid(moveTarget.x, moveTarget.y)
+      return currentPosition.gridX === targetGridPosition.gridX && currentPosition.gridY === targetGridPosition.gridY
+    }
+
+    if (moveTarget.targetType === "person") {
+      const targetPlayer = this.getOtherPlayers().get(moveTarget.name)
+      if (!targetPlayer) return true // Consider reached if target player no longer exists
+
+      const targetGridPosition = this.worldToGrid(targetPlayer.x, targetPlayer.y)
+      // Check if we're in a cardinal direction (N,E,S,W) adjacent to the target player
+      const isHorizontallyAdjacent =
+        Math.abs(currentPosition.gridX - targetGridPosition.gridX) === 1 &&
+        currentPosition.gridY === targetGridPosition.gridY
+      const isVerticallyAdjacent =
+        Math.abs(currentPosition.gridY - targetGridPosition.gridY) === 1 &&
+        currentPosition.gridX === targetGridPosition.gridX
+
+      return isHorizontallyAdjacent || isVerticallyAdjacent
+    }
+
+    if (moveTarget.targetType === "place") {
+      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      if (!place) return true // Consider reached if place no longer exists
+
+      const minGridPos = this.worldToGrid(place.x + 1, place.y + 1)
+      const maxGridPos = this.worldToGrid(place.x + place.width, place.y + place.height)
+
+      return (
+        currentPosition.gridX >= minGridPos.gridX &&
+        currentPosition.gridX <= maxGridPos.gridX &&
+        currentPosition.gridY >= minGridPos.gridY &&
+        currentPosition.gridY <= maxGridPos.gridY
+      )
+    }
+
+    return false
   }
 
   getGridWithPlayers(): number[][] {
