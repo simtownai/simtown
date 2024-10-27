@@ -85,7 +85,9 @@ export const convertGeneratedPlanToActions = (
           ? new MoveAction(getBrainDump, socket, movementController, setAndEmitPlayerData, actionData.target)
           : []
       case "talk":
-        const talkAction = new TalkAction(getBrainDump, socket, actionData.name, { type: "new" })
+        const talkAction = new TalkAction(getBrainDump, socket, "", actionData.name, { type: "new" }, (username) => {
+          movementController.adjustDirection(username)
+        })
 
         supportingMoveTarget = {
           targetType: "person",

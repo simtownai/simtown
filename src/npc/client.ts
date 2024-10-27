@@ -117,12 +117,15 @@ export class NPC {
             const action = new TalkAction(
               this.aiBrain.getBrainDump,
               this.socket,
+              "We received a request to talk but were talking with sb else at the time",
               message.from,
               {
                 type: "existing",
                 message: message,
               },
-              "We received a request to talk but were talking with sb else at the time",
+              (username) => {
+                this.movementController.adjustDirection(username)
+              },
             )
             const refusalMessage: ChatMessage = {
               to: message.from,
@@ -133,10 +136,19 @@ export class NPC {
             this.socket.emit("sendMessage", refusalMessage)
             return this.aiBrain.pushNewAction(action, 0)
           } else {
-            const action = new TalkAction(this.aiBrain.getBrainDump, this.socket, message.from, {
-              type: "existing",
-              message: message,
-            })
+            const action = new TalkAction(
+              this.aiBrain.getBrainDump,
+              this.socket,
+              "",
+              message.from,
+              {
+                type: "existing",
+                message: message,
+              },
+              (username) => {
+                this.movementController.adjustDirection(username)
+              },
+            )
             this.aiBrain.interruptCurrentActionAndExecuteNew(action)
           }
         }

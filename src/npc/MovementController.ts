@@ -47,6 +47,20 @@ export class MovementController {
     this.onMovementFailed = callback
   }
 
+  adjustDirection(username: string) {
+    const playerData = this.getPlayerData()
+    const otherPlayerData = this.getOtherPlayers().get(username)
+    if (!otherPlayerData) return
+
+    const dx = otherPlayerData.x - playerData.x
+    const dy = otherPlayerData.y - playerData.y
+
+    const direction = this.getDirection(dx, dy)
+
+    const animation = `${playerData.username}-idle-${direction}`
+    this.updateAndEmitPlayerData({ animation })
+  }
+
   async initiateMovement(moveTarget: MoveTarget) {
     this.currentMoveTarget = moveTarget
 

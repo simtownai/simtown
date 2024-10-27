@@ -14,26 +14,24 @@ type NewConversationType = { type: "new" }
 export type ConversationType = ExistingConversationType | NewConversationType
 
 export class TalkAction extends Action {
-  targetPlayerUsername: string
-  private conversationTimeout: NodeJS.Timeout | null = null
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
-  private conversationType: ConversationType
+  private conversationTimeout: NodeJS.Timeout | null
 
   constructor(
     getBrainDump: () => BrainDump,
     socket: Socket,
-    targetPlayerUsername: string,
-    conversationType: ConversationType,
     reason: string = "",
+    private targetPlayerUsername: string,
+    private conversationType: ConversationType,
+    private adjustDirection: (username: string) => void,
   ) {
     super(getBrainDump, socket, reason)
     this.tools = [this.endConversationTool]
     this.functionMap = {
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
     }
-    this.targetPlayerUsername = targetPlayerUsername
-    this.conversationType = conversationType
+    this.conversationTimeout = null
   }
 
   getTargetPlayerUsername() {
@@ -57,6 +55,7 @@ export class TalkAction extends Action {
 
     if (this.getBrainDump().isLatestThreadActive(targetPlayerUsername)) {
       const response = this.handleFinalChatResponse(responseContent, targetPlayerUsername)
+      this.adjustDirection(targetPlayerUsername)
       this.socket.emit("sendMessage", response)
       this.setConversationTimeout(targetPlayerUsername)
     }
@@ -130,6 +129,7 @@ export class TalkAction extends Action {
               if (functionName === "endConversation") {
                 this.clearConversationTimeout()
                 const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
+                this.adjustDirection(targetPlayerUsername)
                 this.socket.emit("endConversation", response)
                 this.getBrainDump().closeThread(targetPlayerUsername)
                 return ""
@@ -169,6 +169,7 @@ export class TalkAction extends Action {
 
     if (this.getBrainDump().isLatestThreadActive(chatMessage.from)) {
       const response = this.handleFinalChatResponse(responseContent, chatMessage.from)
+      this.adjustDirection(chatMessage.from)
       this.socket.emit("sendMessage", response)
     }
   }
@@ -193,6 +194,7 @@ export class TalkAction extends Action {
       "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
     const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerUsername)
     this.getBrainDump().closeThread(targetPlayerUsername)
+    this.adjustDirection(targetPlayerUsername)
     this.socket.emit("endConversation", response)
     this.isCompletedFlag = true
   }
