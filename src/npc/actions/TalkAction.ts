@@ -74,6 +74,7 @@ export class TalkAction extends Action {
       this.conversationTimeout = null
     }
   }
+
   private handleFinalChatResponse(responseContent: string, targetPlayerUsername: string): ChatMessage {
     const response: ChatMessage = {
       from: this.getBrainDump().playerData.username,
@@ -88,18 +89,11 @@ export class TalkAction extends Action {
 
   async generateAssistantResponse(system_message: string, targetPlayerUsername: string): Promise<string> {
     let responseContent = ""
-    let errorMessage: string = ""
     while (true) {
       let toSubmit = [
         { role: "system", content: system_message } as ChatCompletionMessageParam,
         ...this.getBrainDump().getNewestActiveThread(targetPlayerUsername).aiMessages,
       ]
-      if (errorMessage) {
-        toSubmit.push({ role: "system", content: errorMessage })
-        errorMessage = ""
-      }
-
-      console.log("toSubmit", toSubmit)
 
       try {
         const completion = await client.chat.completions.create({
@@ -112,14 +106,14 @@ export class TalkAction extends Action {
         const responseMessage = completion.choices[0].message
 
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+          this.getBrainDump().addAIMessage(targetPlayerUsername, responseMessage)
+
           for (const toolCall of responseMessage.tool_calls) {
             try {
               const functionName = toolCall.function.name
               const functionArgs = JSON.parse(toolCall.function.arguments)
 
               const functionResult = await this.executeFunction(functionName, functionArgs)
-
-              this.getBrainDump().addAIMessage(targetPlayerUsername, responseMessage)
 
               this.getBrainDump().addAIMessage(targetPlayerUsername, {
                 role: "tool",
@@ -136,7 +130,11 @@ export class TalkAction extends Action {
                 return ""
               }
             } catch (error: any) {
-              errorMessage = error.message
+              this.getBrainDump().addAIMessage(targetPlayerUsername, {
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: error.message,
+              })
               console.error("Error executing function:", error)
             }
           }
@@ -154,6 +152,15 @@ export class TalkAction extends Action {
       }
     }
     return responseContent
+  }
+
+  private async executeFunction(functionName: string, args: any): Promise<any> {
+    const func = this.functionMap[functionName]
+    if (func) {
+      return await func(args)
+    } else {
+      throw new Error(`Unknown function: ${functionName}`)
+    }
   }
 
   async handleMessage(chatMessage: ChatMessage) {
@@ -175,14 +182,6 @@ export class TalkAction extends Action {
     }
   }
 
-  private async executeFunction(functionName: string, args: any): Promise<any> {
-    const func = this.functionMap[functionName]
-    if (func) {
-      return await func(args)
-    } else {
-      throw new Error(`Unknown function: ${functionName}`)
-    }
-  }
   private setConversationTimeout(targetPlayerUsername: string) {
     this.conversationTimeout = setTimeout(() => {
       this.endConversationDueToTimeout(targetPlayerUsername)

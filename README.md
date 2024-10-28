@@ -40,9 +40,7 @@
 
 - ai
 
-  - broadcast & listening & talking -> add check if we are in place (and also propagate the emoji updatePlayerData) - did that for talking nowm, let's discuss how to best calcualte the position for all those actions
   - add action reason to the reflection if reason exists
-  - create kamala and trump chars
 
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set
