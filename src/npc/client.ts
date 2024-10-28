@@ -21,13 +21,14 @@ export class NPC {
     this.lastUpdateTime = Date.now()
     this.placesNames = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.map((obj) => obj.name)
     this.socketManager = new SocketManager({
-      getBrainDump: () => this.aiBrain.getBrainDump(),
-      setupPlayers: this.setupPlayers,
-      onPlayerJoined: this.onPlayerJoined,
-      onPlayerDataChanged: this.onPlayerDataChanged,
-      onEndConversation: this.onEndConversation,
-      onPlayerLeft: this.onPlayerLeft,
-      onNewMessage: this.onNewMessage,
+      username: this.npcConfig.username,
+      spriteDefinition: this.npcConfig.spriteDefinition,
+      setupPlayers: this.setupPlayers.bind(this),
+      onPlayerJoined: this.onPlayerJoined.bind(this),
+      onPlayerDataChanged: this.onPlayerDataChanged.bind(this),
+      onEndConversation: this.onEndConversation.bind(this),
+      onPlayerLeft: this.onPlayerLeft.bind(this),
+      onNewMessage: this.onNewMessage.bind(this),
     })
   }
 

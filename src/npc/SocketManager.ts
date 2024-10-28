@@ -1,5 +1,4 @@
-import { BroadcastMessage, ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
-import { BrainDump } from "./brain/AIBrain"
+import { BroadcastMessage, ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import { Socket, io } from "socket.io-client"
 
 export type EmitInterface = {
@@ -12,13 +11,14 @@ export type EmitInterface = {
 }
 
 export type SocketManagerConfig = {
+  username: string
+  spriteDefinition: PlayerSpriteDefinition
   onPlayerDataChanged: (player: PlayerData) => void
   setupPlayers: (players: PlayerData[], socketId: string) => void
   onPlayerJoined: (player: PlayerData) => void
   onEndConversation: (message: ChatMessage) => void
   onPlayerLeft: (username: string) => void
   onNewMessage: (message: ChatMessage) => void
-  getBrainDump: () => BrainDump
 }
 
 export class SocketManager {
@@ -26,14 +26,12 @@ export class SocketManager {
   private onEndConversation: (message: ChatMessage) => void
   private onPlayerDataChanged: (player: PlayerData) => void
   private onPlayerJoined: (player: PlayerData) => void
-  private getBrainDump: () => BrainDump
   private setupPlayers: (players: PlayerData[], socketId: string) => void
   private onPlayerLeft: (username: string) => void
   private onNewMessage: (message: ChatMessage) => void
   constructor(args: SocketManagerConfig) {
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.setupPlayers = args.setupPlayers
-    this.getBrainDump = args.getBrainDump
     this.onPlayerJoined = args.onPlayerJoined
     this.onEndConversation = args.onEndConversation
     this.onPlayerLeft = args.onPlayerLeft
@@ -42,11 +40,7 @@ export class SocketManager {
     setTimeout(() => {
       this.setupSocketEvents()
       this.socket.connect()
-      this.socket.emit(
-        "joinGame",
-        this.getBrainDump().playerData.username,
-        this.getBrainDump().playerData.spriteDefinition,
-      )
+      this.socket.emit("joinGame", args.username, args.spriteDefinition)
     }, 7000)
   }
 
@@ -101,12 +95,12 @@ export class SocketManager {
 
   getEmitMethods = (): EmitInterface => {
     return {
-      emitSendMessage: this.emitSendMessage,
-      emitBroadcast: this.emitBroadcast,
-      emitEndConversation: this.emitEndConversation,
-      updatePlayerData: this.emitUpdatePlayerData,
-      setListener: this.setListener,
-      removeListener: this.removeListener,
+      emitSendMessage: (message: ChatMessage) => this.emitSendMessage(message),
+      emitBroadcast: (message: BroadcastMessage) => this.emitBroadcast(message),
+      emitEndConversation: (message: ChatMessage) => this.emitEndConversation(message),
+      updatePlayerData: (data: UpdatePlayerData) => this.emitUpdatePlayerData(data),
+      setListener: (event: string, listener: (...args: any[]) => void) => this.setListener(event, listener),
+      removeListener: (event: string, listener: (...args: any[]) => void) => this.removeListener(event, listener),
     }
   }
 }
