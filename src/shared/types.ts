@@ -6,6 +6,7 @@ export type PlayerSpriteDefinition = {
   outfit: `Outfit_${number}_${number}`
   hairstyle: `Hairstyle_${number}_${number}`
   accessory?: `Accessory_${number}_${string}_${number}`
+  book?: "Book_01" | "Book_02" | "Book_03" | "Book_04" | "Book_05" | "Book_06"
 }
 
 export interface PlayerData {

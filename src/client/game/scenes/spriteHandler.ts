@@ -53,16 +53,68 @@ export class SpriteHandler {
       { keySuffix: "idle", row: 1, frameCount: 6, frameRate: 10, repeat: -1 },
       { keySuffix: "walk", row: 2, frameCount: 6, frameRate: 10, repeat: -1 },
       { keySuffix: "attack", row: 13, frameCount: 6, frameRate: 10, repeat: 0 },
+      { keySuffix: "read", row: 7, frameCount: 12, frameRate: 10, repeat: -1, isDirectional: false },
     ]
 
     for (const anim of animations) {
-      const { keySuffix, row, frameCount, frameRate, repeat } = anim
+      const { keySuffix, row, frameCount, frameRate, repeat, isDirectional = true } = anim
 
-      for (const [directionIndex, direction] of directions.entries()) {
+      if (isDirectional) {
+        // Handle directional animations (idle, walk, attack)
+        for (const [directionIndex, direction] of directions.entries()) {
+          const frames = []
+          for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
+            const frameNumber = row * this.nSpritesPerRow + directionIndex * frameCount + frameIndex
+            const textureKey = `${username}-${keySuffix}-${direction}-frame${frameIndex}`
+
+            // Create a canvas texture for the composite frame
+            const canvasTexture = this.scene.textures.createCanvas(
+              textureKey,
+              CONFIG.SPRITE_WIDTH,
+              CONFIG.SPRITE_HEIGHT,
+            )!
+            const canvas = canvasTexture.getSourceImage() as HTMLCanvasElement
+            const ctx = canvas.getContext("2d")!
+
+            // Draw each component's frame onto the canvas
+            for (const componentKey in spriteDefinition) {
+              const componentFilename = spriteDefinition[componentKey as keyof PlayerSpriteDefinition]
+              if (!componentFilename) continue
+
+              const componentFrame = this.scene.textures.getFrame(componentFilename, frameNumber)
+
+              if (componentFrame && componentFrame.source.image) {
+                ctx.drawImage(
+                  componentFrame.source.image as CanvasImageSource,
+                  componentFrame.cutX,
+                  componentFrame.cutY,
+                  CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+                  componentFrame.cutHeight,
+                  0,
+                  0,
+                  CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+                  componentFrame.cutHeight,
+                )
+              }
+            }
+
+            canvasTexture.refresh()
+            frames.push({ key: textureKey })
+          }
+
+          this.scene.anims.create({
+            key: `${username}-${keySuffix}-${direction}`,
+            frames: frames,
+            frameRate: frameRate,
+            repeat: repeat,
+          })
+        }
+      } else {
+        // Handle non-directional animations (reading)
         const frames = []
         for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
-          const frameNumber = row * this.nSpritesPerRow + directionIndex * frameCount + frameIndex
-          const textureKey = `${username}-${keySuffix}-${direction}-frame${frameIndex}`
+          const frameNumber = row * this.nSpritesPerRow + frameIndex
+          const textureKey = `${username}-${keySuffix}-frame${frameIndex}`
 
           // Create a canvas texture for the composite frame
           const canvasTexture = this.scene.textures.createCanvas(textureKey, CONFIG.SPRITE_WIDTH, CONFIG.SPRITE_HEIGHT)!
@@ -77,12 +129,11 @@ export class SpriteHandler {
             const componentFrame = this.scene.textures.getFrame(componentFilename, frameNumber)
 
             if (componentFrame && componentFrame.source.image) {
-              // Adjust the drawImage parameters to draw only the character portion
               ctx.drawImage(
                 componentFrame.source.image as CanvasImageSource,
                 componentFrame.cutX,
                 componentFrame.cutY,
-                CONFIG.SPRITE_COLLISION_BOX_HEIGHT, // Width of the character within the frame
+                CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
                 componentFrame.cutHeight,
                 0,
                 0,
@@ -92,16 +143,12 @@ export class SpriteHandler {
             }
           }
 
-          // Refresh the canvas texture to update the composite image
           canvasTexture.refresh()
-
-          // Add the composite frame to the animation frames
           frames.push({ key: textureKey })
         }
 
-        // Create the animation using the composite frames
         this.scene.anims.create({
-          key: `${username}-${keySuffix}-${direction}`,
+          key: `${username}-${keySuffix}`,
           frames: frames,
           frameRate: frameRate,
           repeat: repeat,

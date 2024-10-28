@@ -62,6 +62,7 @@ export function createRandomSpriteDefinition(): PlayerSpriteDefinition {
   if (Math.random() < 0.5) {
     spriteDefinition.accessory = randomElement(componentManifest.Accessories) as PlayerSpriteDefinition["accessory"]
   }
+  spriteDefinition.book = randomElement(componentManifest.Books) as PlayerSpriteDefinition["book"]
 
   return spriteDefinition
 }
