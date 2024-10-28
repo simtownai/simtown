@@ -1,11 +1,5 @@
 # ToDo
 
-- (Szymon) NPCs are approaching other's to talk but not talking
-
-  - happens because of replanning after walking
-  - add flag to action to have the ability NOT to reflect after action
-  - add this flag to movemenets that we insert manually to talk/listen/broadcast
-
 - (Szymon) if no incoming message for 15 sec in listening then end listening action
 
 - (Szymon) split messages sending

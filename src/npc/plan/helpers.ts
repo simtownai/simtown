@@ -112,6 +112,7 @@ export const convertGeneratedPlanToActions = (
               setAndEmitPlayerData,
               supportingMoveTarget,
               "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
+              false,
             ),
             talkAction,
           ]
@@ -135,6 +136,7 @@ export const convertGeneratedPlanToActions = (
               setAndEmitPlayerData,
               supportingMoveTarget,
               "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
+              false,
             ),
             broadcastAction,
           ]
@@ -159,6 +161,7 @@ export const convertGeneratedPlanToActions = (
               setAndEmitPlayerData,
               supportingMoveTarget,
               "We are not close to the target place, so before we initialize the listen action, we need to move towards it.",
+              false,
             ),
             listenAction,
           ]

@@ -22,8 +22,9 @@ export class MoveAction extends Action {
     setAndEmitPlayerData: (playerData: PlayerData) => void,
     moveTarget: MoveTarget,
     reason: string = "",
+    shouldReflect: boolean = true,
   ) {
-    super(getBrainDump, getEmitMethods, reason)
+    super(getBrainDump, getEmitMethods, reason, shouldReflect)
     this.moveTarget = moveTarget
     this.movementController = movementController
     this.setAndEmitPlayerData = setAndEmitPlayerData

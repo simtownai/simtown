@@ -203,16 +203,18 @@ export class AIBrain {
     }
 
     try {
-      // Process reflection
-      const reflections = await reflect(this.currentAction)
-      if (!reflections) {
-        throw new Error(`Could not reflect for completed action: ${this.currentAction.constructor.name}`)
+      if (this.currentAction.shouldReflect) {
+        const reflections = await reflect(this.currentAction)
+        if (!reflections) {
+          throw new Error(`Could not reflect for completed action: ${this.currentAction.constructor.name}`)
+        }
+
+        this.memory.reflections.push(reflections)
+
+        await this.generatePlanAndSetActions()
+      } else {
+        console.log("Not reflecting on the action")
       }
-
-      this.memory.reflections.push(reflections)
-
-      await this.generatePlanAndSetActions()
-
       // Clear the current action
       this.currentAction = null
 
@@ -227,11 +229,13 @@ export class AIBrain {
   public async interruptCurrentActionAndExecuteNew(newAction: Action) {
     if (this.currentAction) {
       this.currentAction.interrupt()
-      const reflections = await reflect(this.currentAction)
-      if (!reflections) {
-        throw new Error(`Could not reflect for interrupted action: ${this.currentAction.constructor.name}`)
+      if (this.currentAction.shouldReflect) {
+        const reflections = await reflect(this.currentAction)
+        if (!reflections) {
+          throw new Error(`Could not reflect for interrupted action: ${this.currentAction.constructor.name}`)
+        }
+        this.memory.reflections.push(reflections)
       }
-      this.memory.reflections.push(reflections)
       // Add the interrupted action back to the front of the queue
       this.actionQueue.unshift(this.currentAction)
       this.currentAction = null
