@@ -209,8 +209,6 @@ export class AIBrain {
         throw new Error(`Could not reflect for completed action: ${this.currentAction.constructor.name}`)
       }
 
-      // console.log("Processing reflections:", reflections)
-
       this.memory.reflections.push(reflections)
 
       await this.generatePlanAndSetActions()

@@ -1,7 +1,14 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { isInZone } from "../shared/functions"
-import { BroadcastMessage, ChatMessage, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
+import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import {
+  BroadcastMessage,
+  ChatMessage,
+  GridPosition,
+  PlayerData,
+  PlayerSpriteDefinition,
+  UpdatePlayerData,
+} from "../shared/types"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -36,67 +43,49 @@ const players: Map<string, PlayerData> = new Map()
 
 const spawnArea = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.find((obj) => obj.name === "spawn")!
 
-function getRandomPositionInSpawnArea(): { x: number; y: number } {
-  return {
-    x: spawnArea.x + Math.random() * spawnArea.width,
-    y: spawnArea.y + Math.random() * spawnArea.height,
+function isCellBlocked(cell: GridPosition): boolean {
+  for (const player of players.values()) {
+    const playerGridPos = worldToGrid(player.x, player.y)
+    if (playerGridPos.gridX === cell.gridX && playerGridPos.gridY === cell.gridY) {
+      return true
+    }
   }
+  return false
 }
 
-function checkCollision(player1: PlayerData, player2: PlayerData): boolean {
-  const characterWidth = CONFIG.SPRITE_COLLISION_BOX_HEIGHT
-  const characterHeight = CONFIG.SPRITE_COLLISION_BOX_HEIGHT
-  return (
-    player1.x < player2.x + characterWidth &&
-    player1.x + characterWidth > player2.x &&
-    player1.y - characterHeight < player2.y &&
-    player1.y > player2.y - characterHeight
-  )
-}
+function findValidPosition(): { x: number; y: number } {
+  const availablePositions: GridPosition[] = []
 
-function findValidPosition(newPlayer: PlayerData): PlayerData {
-  let attempts = 0
-  const maxAttempts = 10
+  const minGridPos = worldToGrid(spawnArea.x + 1, spawnArea.y + 1)
+  const maxGridPos = worldToGrid(spawnArea.x + spawnArea.width, spawnArea.y + spawnArea.height)
 
-  while (attempts < maxAttempts) {
-    let collisionFound = false
+  for (let y = minGridPos.gridY; y <= maxGridPos.gridY; y++) {
+    for (let x = minGridPos.gridX; x <= maxGridPos.gridX; x++) {
+      const gridPos: GridPosition = { gridX: x, gridY: y }
 
-    for (const [, otherPlayer] of players) {
-      if (checkCollision(newPlayer, otherPlayer)) {
-        collisionFound = true
-        break
+      if (!isCellBlocked(gridPos)) {
+        availablePositions.push(gridPos)
       }
     }
-
-    if (!collisionFound) {
-      return newPlayer
-    }
-
-    // If collision found, try a new random position within the spawn area
-    const newPosition = getRandomPositionInSpawnArea()
-    newPlayer.x = newPosition.x
-    newPlayer.y = newPosition.y
-    attempts++
   }
 
-  // If we couldn't find a valid position after max attempts, return the last tried position
-  return newPlayer
+  const randomGridPos = availablePositions[Math.floor(Math.random() * availablePositions.length)]
+  return gridToWorld(randomGridPos)
 }
 
 io.on("connection", (socket) => {
   const playerId = socket.id
-  socket.on("joinGame", (username: string, spriteDefinition: PlayerSpriteDefinition) => {
-    const spawnPosition = getRandomPositionInSpawnArea()
+  socket.on("joinGame", (isNPC: boolean, username: string, spriteDefinition: PlayerSpriteDefinition) => {
+    const spawnPosition = findValidPosition()
     let playerData: PlayerData = {
       id: playerId,
+      isNPC: isNPC,
       username: username,
       spriteDefinition: spriteDefinition,
       x: spawnPosition.x,
       y: spawnPosition.y,
       animation: `${username}-idle-down`,
     }
-    // Find a valid initial position without collisions
-    playerData = findValidPosition(playerData)
 
     players.set(playerId, playerData)
 
@@ -188,19 +177,41 @@ io.on("connection", (socket) => {
           const recipientSocket = io.sockets.sockets.get(player.id)
           if (recipientSocket) {
             recipientSocket.emit("newMessage", message)
+
+            // Overhear logic
+            const sender = players.get(playerId)!
+            players.forEach((potentialOverhearPlayer) => {
+              if (
+                !potentialOverhearPlayer.isNPC &&
+                potentialOverhearPlayer.username !== message.from &&
+                potentialOverhearPlayer.username !== message.to &&
+                calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+                  CONFIG.INTERACTION_PROXIMITY_THRESHOLD
+              ) {
+                const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
+                if (potentialOverhearSocket) {
+                  potentialOverhearSocket.emit("overhearMessage", message)
+                }
+              }
+            })
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
         }
+
+        //distance emit to overhear
       })
     }
   })
 
   socket.on("disconnect", () => {
-    const username = players.get(playerId)!.username
-    players.delete(playerId)
-    io.emit("playerLeft", username)
-    logger.info(`User ${socket.id} disconnected. Number of players: ${players.size}`)
+    const player = players.get(playerId)
+    if (player) {
+      const { username } = player
+      players.delete(playerId)
+      io.emit("playerLeft", username)
+      logger.info(`User ${socket.id} disconnected. Number of players: ${players.size}`)
+    }
   })
 })
 

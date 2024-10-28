@@ -67,6 +67,20 @@ function App() {
       })
     })
 
+    newSocket.on("overhearMessage", (message: ChatMessage) => {
+      setMessages((prevMessages) => {
+        const [first, second] = [message.from, message.to].sort()
+        const key = `${first}-${second} (overheard)`
+        const oldMessages = prevMessages.get(key) || []
+        const newMessage = {
+          ...message,
+          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(key, newMessages)
+      })
+    })
+
     newSocket.on("listenBroadcast", (message: BroadcastMessage) => {
       setMessages((prevMessages) => {
         const key = `${message.from} (broadcast)`

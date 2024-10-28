@@ -39,21 +39,10 @@ export class MoveAction extends Action {
     })
     this.movementController.setMovementCompletedCallback(() => {
       console.log("Movement completed callback received in MoveAction")
-      if (CONFIG.ENABLE_NPC_AUTOMATION && this.moveTarget.targetType !== "person") {
+      if (CONFIG.ENABLE_NPC_AUTOMATION) {
         this.isCompletedFlag = true
       }
     })
-
-    if (this.moveTarget.targetType === "person") {
-      const player = this.getBrainDump().otherPlayers.get(this.moveTarget.name)
-      if (player) {
-        this.lastKnownPlayerPosition = { x: player.x, y: player.y }
-      } else {
-        console.log("Player not found at start.")
-        this.isCompletedFlag = true
-        return
-      }
-    }
 
     await this.movementController.initiateMovement(this.moveTarget)
     this.movementController.resume()
@@ -68,60 +57,7 @@ export class MoveAction extends Action {
       return
     }
 
-    if (this.moveTarget.targetType === "person") {
-      const player = this.getBrainDump().otherPlayers.get(this.moveTarget.name)
-      if (!player) {
-        console.log("Player not found, action failed.")
-        this.isCompletedFlag = true
-        return
-      }
-
-      const currentTime = Date.now()
-
-      if (
-        this.movementController.movementCompleted &&
-        currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval
-      ) {
-        const dx = player.x - this.getBrainDump().playerData.x
-        const dy = player.y - this.getBrainDump().playerData.y
-        const direction = this.getFacingDirection(dx, dy)
-
-        const newPlayerData = {
-          ...this.getBrainDump().playerData,
-          animation: `${this.getBrainDump().playerData.username}-idle-${direction}`,
-        }
-        this.setAndEmitPlayerData(newPlayerData)
-
-        this.isCompletedFlag = true
-        // return
-        // }
-        // console.log("Movement completed but not adjacent. Recalculating path...")
-        // this.lastKnownPlayerPosition = { x: player.x, y: player.y }
-        // this.lastPathRecalculationTime = currentTime
-        // await this.npc.initiateMovement(this.moveTarget)
-        // this.npc.movementController.movementCompleted = false // Reset the flag
-      } else if (currentTime - this.lastPathRecalculationTime > this.pathRecalculationInterval) {
-        const lastPos = this.lastKnownPlayerPosition!
-        const distanceMoved = Math.hypot(player.x - lastPos.x, player.y - lastPos.y)
-
-        if (distanceMoved > this.pathRecalculationThreshold) {
-          console.log("Player moved significantly, recalculating path.")
-          this.lastKnownPlayerPosition = { x: player.x, y: player.y }
-          this.lastPathRecalculationTime = currentTime
-          await this.movementController.initiateMovement(this.moveTarget)
-        }
-      }
-    }
-
     this.movementController.move(deltaTime)
-  }
-
-  private getFacingDirection(dx: number, dy: number): "left" | "right" | "up" | "down" {
-    if (Math.abs(dx) > Math.abs(dy)) {
-      return dx > 0 ? "right" : "left"
-    } else {
-      return dy > 0 ? "down" : "up"
-    }
   }
 
   interrupt(): void {

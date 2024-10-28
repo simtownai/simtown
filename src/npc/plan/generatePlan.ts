@@ -19,13 +19,17 @@ const validateActions = (
     if (action.type === "broadcast" && !places.includes(action.targetPlace)) {
       return {
         isValid: false,
-        error: `Invalid place: ${action.targetPlace} for the broadcast action. Only ${places.join(", ")} are available`,
+        error: `Invalid place: ${JSON.stringify(action.targetPlace)} for the broadcast action. Only ${JSON.stringify(
+          places.join(", "),
+        )} are available`,
       }
     }
     if (action.type === "listen" && !places.includes(action.targetPlace)) {
       return {
         isValid: false,
-        error: `Invalid place: ${action.targetPlace} for the listen action. Only ${places.join(", ")} are available`,
+        error: `Invalid place: ${JSON.stringify(action.targetPlace)} for the listen action. Only ${JSON.stringify(
+          places.join(", "),
+        )} are available`,
       }
     }
 
@@ -33,14 +37,16 @@ const validateActions = (
       if (action.target.targetType === "place" && !places.includes(action.target.name)) {
         return {
           isValid: false,
-          error: `Invalid place: ${action.target.name} for the move action. Only ${places.join(", ")} are available`,
+          error: `Invalid place: ${JSON.stringify(action.target.name)} for the move action. Only ${JSON.stringify(
+            places.join(", "),
+          )} are available`,
         }
       }
       if (action.target.targetType === "person" && !playerNames.includes(action.target.name)) {
         return {
           isValid: false,
-          error: `Invalid person ${action.target.name} for the move action. Only ${playerNames.join(
-            ", ",
+          error: `Invalid person ${JSON.stringify(action.target.name)} for the move action. Only ${JSON.stringify(
+            playerNames.join(", "),
           )} are available`,
         }
       }
@@ -48,7 +54,9 @@ const validateActions = (
     if (action.type === "talk" && !playerNames.includes(action.name)) {
       return {
         isValid: false,
-        error: `Invalid person for talk action: ${action.name}. Only ${playerNames.join(", ")} are available`,
+        error: `Invalid person for talk action: ${JSON.stringify(action.name)}. Only ${JSON.stringify(
+          playerNames,
+        )} are available`,
       }
     }
   }

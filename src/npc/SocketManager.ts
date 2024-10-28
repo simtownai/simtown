@@ -40,7 +40,7 @@ export class SocketManager {
     setTimeout(() => {
       this.setupSocketEvents()
       this.socket.connect()
-      this.socket.emit("joinGame", args.username, args.spriteDefinition)
+      this.socket.emit("joinGame", true, args.username, args.spriteDefinition)
     }, 7000)
   }
 

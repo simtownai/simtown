@@ -440,5 +440,13 @@
     "Accessory_19_Party_Cone_02",
     "Accessory_19_Party_Cone_03",
     "Accessory_19_Party_Cone_04"
+  ],
+  "Books": [
+    "Book_01",
+    "Book_02",
+    "Book_03",
+    "Book_04",
+    "Book_05",
+    "Book_06"
   ]
 }

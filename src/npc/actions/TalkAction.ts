@@ -14,27 +14,25 @@ type NewConversationType = { type: "new" }
 export type ConversationType = ExistingConversationType | NewConversationType
 
 export class TalkAction extends Action {
-  targetPlayerUsername: string
-  private conversationTimeout: NodeJS.Timeout | null = null
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
-  private conversationType: ConversationType
+  private conversationTimeout: NodeJS.Timeout | null
 
   constructor(
     getBrainDump: () => BrainDump,
     getEmitMethods: () => EmitInterface,
 
-    targetPlayerUsername: string,
-    conversationType: ConversationType,
     reason: string = "",
+    private targetPlayerUsername: string,
+    private conversationType: ConversationType,
+    private adjustDirection: (username: string) => void,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.tools = [this.endConversationTool]
     this.functionMap = {
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
     }
-    this.targetPlayerUsername = targetPlayerUsername
-    this.conversationType = conversationType
+    this.conversationTimeout = null
   }
 
   getTargetPlayerUsername() {
@@ -59,6 +57,7 @@ export class TalkAction extends Action {
     if (this.getBrainDump().isLatestThreadActive(targetPlayerUsername)) {
       const response = this.handleFinalChatResponse(responseContent, targetPlayerUsername)
       this.getEmitMethods().emitSendMessage(response)
+      this.adjustDirection(targetPlayerUsername)
       this.setConversationTimeout(targetPlayerUsername)
     }
   }
@@ -132,6 +131,7 @@ export class TalkAction extends Action {
                 this.clearConversationTimeout()
                 const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
                 this.getEmitMethods().emitEndConversation(response)
+                this.adjustDirection(targetPlayerUsername)
                 this.getBrainDump().closeThread(targetPlayerUsername)
                 return ""
               }
@@ -171,6 +171,7 @@ export class TalkAction extends Action {
     if (this.getBrainDump().isLatestThreadActive(chatMessage.from)) {
       const response = this.handleFinalChatResponse(responseContent, chatMessage.from)
       this.getEmitMethods().emitSendMessage(response)
+      this.adjustDirection(chatMessage.from)
     }
   }
 
@@ -195,6 +196,7 @@ export class TalkAction extends Action {
     const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerUsername)
     this.getBrainDump().closeThread(targetPlayerUsername)
     this.getEmitMethods().emitEndConversation(response)
+    this.adjustDirection(targetPlayerUsername)
     this.isCompletedFlag = true
   }
 

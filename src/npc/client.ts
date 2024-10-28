@@ -1,5 +1,5 @@
 import mapData from "../../public/assets/maps/simple-map.json"
-import { ChatMessage, PlayerData } from "../shared/types"
+import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
@@ -17,7 +17,7 @@ export class NPC {
   private socketManager: SocketManager
 
   constructor(private npcConfig: NpcConfig) {
-    this.otherPlayers = new Map()
+    this.otherPlayers = new Map<string, PlayerData>()
     this.lastUpdateTime = Date.now()
     this.placesNames = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.map((obj) => obj.name)
     this.socketManager = new SocketManager({
@@ -37,10 +37,10 @@ export class NPC {
       if (player.id === playerId) {
         this.playerData = player
         this.movementController = new MovementController(
-          this.playerData,
-          this.otherPlayers,
+          () => this.playerData,
+          () => this.otherPlayers,
           this.sendMoveMessage.bind(this),
-          this.socketManager.getEmitMethods().updatePlayerData.bind(this),
+          (playerData: UpdatePlayerData) => this.updateAndEmitPlayerData(playerData),
         )
 
         setTimeout(async () => {
@@ -51,8 +51,7 @@ export class NPC {
               getPlayerData: () => this.playerData,
               getMovementController: () => this.movementController,
               places: this.placesNames,
-              setAndEmitPlayerData: (playerData: PlayerData) =>
-                this.socketManager.getEmitMethods().updatePlayerData(playerData),
+              setAndEmitPlayerData: (playerData: PlayerData) => this.updateAndEmitPlayerData(playerData),
               getEmitMethods: () => this.socketManager.getEmitMethods(),
             })
 
@@ -93,16 +92,16 @@ export class NPC {
     }
   }
 
-  setAndEmitPlayerData(playerData: PlayerData) {
-    this.playerData = playerData
-    this.socketManager.getEmitMethods().updatePlayerData(playerData)
+  updateAndEmitPlayerData(updatePlayerData: UpdatePlayerData) {
+    this.playerData = { ...this.playerData, ...updatePlayerData }
+    this.socketManager.emitUpdatePlayerData(updatePlayerData)
   }
 
   onNewMessage(message: ChatMessage) {
     if (message.to === this.npcConfig.username) {
       // Check if we're already in a TalkAction with this person
       const currentAction = this.aiBrain.getCurrentAction()
-      console.log("currentAction is talkaction", currentAction instanceof TalkAction)
+
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         // Update the current TalkAction with the new message
         currentAction.handleMessage(message)
@@ -120,12 +119,15 @@ export class NPC {
         const action = new TalkAction(
           this.aiBrain.getBrainDump,
           () => this.socketManager.getEmitMethods(),
+          "We received a request to talk but were talking with sb else at the time",
           message.from,
           {
             type: "existing",
             message: message,
           },
-          "We received a request to talk but were talking with sb else at the time",
+          (username) => {
+            this.movementController.adjustDirection(username)
+          },
         )
         const refusalMessage: ChatMessage = {
           to: message.from,
@@ -139,10 +141,14 @@ export class NPC {
         const action = new TalkAction(
           this.aiBrain.getBrainDump,
           () => this.socketManager.getEmitMethods(),
+          "",
           message.from,
           {
             type: "existing",
             message: message,
+          },
+          (username) => {
+            this.movementController.adjustDirection(username)
           },
         )
         this.aiBrain.interruptCurrentActionAndExecuteNew(action)

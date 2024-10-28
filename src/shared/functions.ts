@@ -1,6 +1,24 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { PlayerData, PlayerSpriteDefinition } from "./types"
+import { GridPosition, PlayerSpriteDefinition } from "./types"
+
+export function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+}
+
+export function worldToGrid(x: number, y: number): GridPosition {
+  return {
+    gridX: Math.floor((x - 1) / CONFIG.TILE_SIZE),
+    gridY: Math.floor((y - 1) / CONFIG.TILE_SIZE),
+  }
+}
+
+export function gridToWorld(cell: GridPosition): { x: number; y: number } {
+  return {
+    x: cell.gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
+    y: cell.gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE,
+  }
+}
 
 const currentDate = new Date()
 const realTimeDifferenceMs = CONFIG.TARGET_DATE.getTime() - currentDate.getTime()
@@ -18,13 +36,6 @@ export function getTime(): Date {
   // Calculate and return the in-game date
   const inGameDate = new Date(startDateMs + gameTimeDifferenceMs)
   return inGameDate
-}
-
-export function isWithinTalkDistanceThreshold(player: PlayerData, x: number, y: number): boolean {
-  const dx = player.x - x
-  const dy = player.y - y
-  const distance = Math.sqrt(dx * dx + dy * dy)
-  return distance <= CONFIG.INTERACTION_PROXIMITY_THRESHOLD
 }
 
 export function isInZone(
@@ -51,6 +62,7 @@ export function createRandomSpriteDefinition(): PlayerSpriteDefinition {
   if (Math.random() < 0.5) {
     spriteDefinition.accessory = randomElement(componentManifest.Accessories) as PlayerSpriteDefinition["accessory"]
   }
+  spriteDefinition.book = randomElement(componentManifest.Books) as PlayerSpriteDefinition["book"]
 
   return spriteDefinition
 }

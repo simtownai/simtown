@@ -68,7 +68,7 @@ export class Game extends Phaser.Scene {
     this.setupCameras()
     this.setupInput()
 
-    this.socket.emit("joinGame", this.username, this.spriteDefinition)
+    this.socket.emit("joinGame", false, this.username, this.spriteDefinition)
 
     EventBus.emit("current-scene-ready", this)
   }
@@ -343,10 +343,10 @@ export class Game extends Phaser.Scene {
       case "talk":
         return `💬${action.name}`
       case "idle":
-        if (action.activityType === "phone") {
-          return `📱📱📱`
-        } else if (action.activityType === "reading") {
+        if (action.activityType === "read") {
           return `📖📖📖`
+          // } else if (action.activityType === "phone") {
+          //   return `📱📱📱`
         } else {
           return `😴😴😴`
         }
@@ -510,6 +510,7 @@ export class Game extends Phaser.Scene {
 
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
+      isNPC: false,
       username: this.username,
       spriteDefinition: this.spriteDefinition,
       x: this.playerSprite.x,

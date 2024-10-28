@@ -6,10 +6,12 @@ export type PlayerSpriteDefinition = {
   outfit: `Outfit_${number}_${number}`
   hairstyle: `Hairstyle_${number}_${number}`
   accessory?: `Accessory_${number}_${string}_${number}`
+  book?: "Book_01" | "Book_02" | "Book_03" | "Book_04" | "Book_05" | "Book_06"
 }
 
 export interface PlayerData {
   id: string
+  isNPC: boolean
   username: string
   spriteDefinition: PlayerSpriteDefinition
   x: number
@@ -72,7 +74,7 @@ const TalkSchema = z.object({
   name: z.string(),
 })
 
-const IdleActivityTypeSchema = z.enum(["phone", "reading", "idling"])
+const IdleActivityTypeSchema = z.enum(["idle", "read"])
 
 export type IdleActivityType = z.infer<typeof IdleActivityTypeSchema>
 

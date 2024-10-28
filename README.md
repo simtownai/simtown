@@ -2,11 +2,26 @@
 
 ## top priority
 
-- Optimize prompts
+- NPCs are approaching other's to talk but not talking
 
-- overhearing mechanic for real players
+- rotate to somebody when talking to them (embed in broadcast & listen as well)
+
+- add `username-read` animation propagation to idle task (set animation at start and go back to default idle animation on interupt/end)
 
 - figure out timing of broadcasts and how to make npcs aware about this
+
+- Separate area for broadcaster and listeners
+
+- Optimize prompts
+
+- display game events for NPCs and for player
+
+- NPC's initialization desync (minor) (when we haven't received info about ourselves but already receiving other players updates)
+
+- log everything to database
+
+  - NPC's state
+  - messages
 
 - map
 
@@ -18,20 +33,9 @@
 
 - movement
 
-  - move move action logic to movement controller (finish move action refactor)
-
-  - when was walking to empty place near a person but it became occupied, you should initiate whole movement from scratch instead of recalculatin path
-
-  - rotate to somebody when talking to them
-
   - writes without finishing movement
-
   - smooth path recalculation when approaching smbd
-
     - rm this.pathIndex = closestIndex + 1 // Smoothing the direction after recalculation
-
-  - not coming close enough
-
   - if user went, let npc know that we left conf
 
 - ai
@@ -40,29 +44,20 @@
   - add action reason to the reflection if reason exists
   - create kamala and trump chars
 
-- fix movements to place
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set
   - able to send msg to somebody only if within range (add new property to Chat, like isAllowedToSend)
-  - UI
-    - buttons: send, resize, close, go to chats
-    - messages themselves (add full date like in discord )
-  - top right icon to open chat + key C open closest (if no closest then just Chats)
   - check if loading chats from localstorage actually works
   - header is not attached to top of the screen when typing on iphone -> other user's messages are not visible
   - (?)when clicking outside of chat return control to the game
-  - add time to msgs
   - group chat for humans
-  - preload font
 - anonymous loggin with just name
 - nice map
 
 ## nice to have
 
 - make movements of other players smoother even on high ping
-- render chatprompt bubble on top of everything
 - login with google
-- loading screen
 - cache all sprites
 - sounds (moving, dependent on terrain; actions, clicks, etc)
 - walk behind big tree bushes
