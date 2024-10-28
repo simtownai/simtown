@@ -74,7 +74,7 @@ const TalkSchema = z.object({
   name: z.string(),
 })
 
-const IdleActivityTypeSchema = z.enum(["phone", "reading", "idling"])
+const IdleActivityTypeSchema = z.enum(["idle", "read"])
 
 export type IdleActivityType = z.infer<typeof IdleActivityTypeSchema>
 

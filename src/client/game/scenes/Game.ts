@@ -343,10 +343,10 @@ export class Game extends Phaser.Scene {
       case "talk":
         return `💬${action.name}`
       case "idle":
-        if (action.activityType === "phone") {
-          return `📱📱📱`
-        } else if (action.activityType === "reading") {
+        if (action.activityType === "read") {
           return `📖📖📖`
+          // } else if (action.activityType === "phone") {
+          //   return `📱📱📱`
         } else {
           return `😴😴😴`
         }
