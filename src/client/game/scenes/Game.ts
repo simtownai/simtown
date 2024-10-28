@@ -510,6 +510,7 @@ export class Game extends Phaser.Scene {
 
     const currentPlayerData: PlayerData = {
       id: this.socket.id!,
+      isNPC: false,
       username: this.username,
       spriteDefinition: this.spriteDefinition,
       x: this.playerSprite.x,
