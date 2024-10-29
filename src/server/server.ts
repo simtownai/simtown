@@ -1,6 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import { calculateDistance, getTime, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
 import {
   BroadcastMessage,
   ChatMessage,

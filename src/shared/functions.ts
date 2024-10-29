@@ -52,6 +52,16 @@ export function formatDate(date: Date) {
   }
 }
 
+export function formatTimeAMPM(date: Date) {
+  let hours = date.getHours()
+  const minutes = date.getMinutes()
+  const ampm = hours >= 12 ? "PM" : "AM"
+  hours = hours % 12
+  hours = hours ? hours : 12 // Convert 0 to 12
+  const minutesStr = minutes < 10 ? "0" + minutes : minutes
+  return `${hours}:${minutesStr} ${ampm}`
+}
+
 export function isInZone(
   playerX: number,
   playerY: number,
