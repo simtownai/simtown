@@ -44,13 +44,13 @@ export const npcConfig: NpcConfig[] = [
     spriteDefinition: createRandomSpriteDefinition(),
     backstory: ["You are undecided voter and want to talk with people to learn more about their opinions."],
   },
-  {
-    username: "John",
-    spriteDefinition: createRandomSpriteDefinition(),
-    backstory: [
-      "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will go and listen to his broadcasts and rally. You will never vote for Kamala Harris.",
-    ],
-  },
+  // {
+  //   username: "John",
+  //   spriteDefinition: createRandomSpriteDefinition(),
+  //   backstory: [
+  //     "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will go and listen to his broadcasts and rally. You will never vote for Kamala Harris.",
+  //   ],
+  // },
   {
     username: "Maria",
     spriteDefinition: createRandomSpriteDefinition(),

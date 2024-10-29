@@ -6,7 +6,12 @@ import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { IdleActionDuration } from "../npcConfig"
 import client from "../openai/openai"
-import { summarize_broadcast_prompt, summarize_conversation_prompt, summarize_speech_prompt } from "../prompts"
+import {
+  summarize_broadcast_prompt,
+  summarize_conversation_prompt,
+  summarize_reflections_prompt,
+  summarize_speech_prompt,
+} from "../prompts"
 import { StringifiedBrainDump } from "./AIBrain"
 
 export const reflect = async (action: Action) => {
@@ -66,6 +71,14 @@ export const reflect = async (action: Action) => {
       : `I completed Listen Action, listened to a broadcast: ${summary}`
   }
   throw new Error(`Could not reflect for action: ${actionType}`)
+}
+
+export const summarizeReflections = async (reflections: string[], braindump: StringifiedBrainDump[]) => {
+  const completion = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "system", content: summarize_reflections_prompt(reflections, braindump) }],
+  })
+  return completion.choices[0].message.content
 }
 
 const summarizeConversation = async (reflections: StringifiedBrainDump, content: string) => {

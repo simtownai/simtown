@@ -11,7 +11,7 @@ import {
 } from "../plan/helpers"
 import { Thread } from "./memory/ConversationMemory"
 import { Memory } from "./memory/Memory"
-import { reflect } from "./reflect"
+import { reflect, summarizeReflections } from "./reflect"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 
 export type StringifiedBrainDump = {
@@ -210,6 +210,14 @@ export class AIBrain {
         }
 
         this.memory.reflections.push(reflections)
+
+        if (this.memory.reflections.length > 10) {
+          const new_reflections = await summarizeReflections(this.memory.reflections, [this.getStringifiedBrainDump()])
+          if (!new_reflections) {
+            throw new Error("Could not summarize reflections")
+          }
+          this.memory.reflections = [new_reflections]
+        }
 
         await this.generatePlanAndSetActions()
       } else {

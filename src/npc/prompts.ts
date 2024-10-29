@@ -43,3 +43,6 @@ export const summarize_broadcast_prompt = (reflections: StringifiedBrainDump, br
 
 export const summarize_speech_prompt = (reflections: StringifiedBrainDump, speechContent: string) =>
   `You are an non-playable character agent named ${reflections.name} in an election simulation game and with a backstory: ${reflections.backstory}. Summarize following speech that you just heard: ${speechContent}`
+
+export const summarize_reflections_prompt = (reflections: string[], braindump: StringifiedBrainDump[]) =>
+  `You are an non-playable character agent named ${braindump[0].name} in an election simulation game and with a backstory: ${braindump[0].backstory}. Summarize following reflections: ${reflections}`
