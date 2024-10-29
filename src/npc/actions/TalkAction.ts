@@ -110,7 +110,6 @@ export class TalkAction extends Action {
       content: reason,
     })
     const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
-    this.adjustDirection(this.targetPlayerUsername)
     this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
     this.getBrainDump().closeThread(this.targetPlayerUsername)
     console.log("Emitting end conversation")

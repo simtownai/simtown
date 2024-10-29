@@ -131,6 +131,8 @@ io.on("connection", (socket) => {
         const recipientSocket = io.sockets.sockets.get(player.id)
         if (recipientSocket) {
           recipientSocket.emit("endConversation", message)
+          const sender = players.get(playerId)!
+          emitOverhear(players, sender, message)
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
         }
@@ -180,20 +182,7 @@ io.on("connection", (socket) => {
 
             // Overhear logic
             const sender = players.get(playerId)!
-            players.forEach((potentialOverhearPlayer) => {
-              if (
-                !potentialOverhearPlayer.isNPC &&
-                potentialOverhearPlayer.username !== message.from &&
-                potentialOverhearPlayer.username !== message.to &&
-                calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
-                  CONFIG.INTERACTION_PROXIMITY_THRESHOLD
-              ) {
-                const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
-                if (potentialOverhearSocket) {
-                  potentialOverhearSocket.emit("overhearMessage", message)
-                }
-              }
-            })
+            emitOverhear(players, sender, message)
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
@@ -203,6 +192,23 @@ io.on("connection", (socket) => {
       })
     }
   })
+
+  function emitOverhear(players: Map<string, PlayerData>, sender: PlayerData, message: ChatMessage) {
+    players.forEach((potentialOverhearPlayer) => {
+      if (
+        !potentialOverhearPlayer.isNPC &&
+        potentialOverhearPlayer.username !== message.from &&
+        potentialOverhearPlayer.username !== message.to &&
+        calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+          CONFIG.INTERACTION_PROXIMITY_THRESHOLD
+      ) {
+        const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
+        if (potentialOverhearSocket) {
+          potentialOverhearSocket.emit("overhearMessage", message)
+        }
+      }
+    })
+  }
 
   socket.on("disconnect", () => {
     const player = players.get(playerId)
