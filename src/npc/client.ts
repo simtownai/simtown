@@ -126,6 +126,20 @@ export class NPC {
         }
         this.socketManager.emitEndConversation(refusalMessage)
       } else if (currentAction instanceof TalkAction) {
+        // Create a new action to handle the message
+        const action = new TalkAction(
+          this.aiBrain.getBrainDump,
+          () => this.socketManager.getEmitMethods(),
+          "We received a request to talk but were talking with sb else at the time",
+          message.from,
+          {
+            type: "existing",
+            message: message,
+          },
+          (username) => {
+            this.movementController.adjustDirection(username)
+          },
+        )
         const refusalMessage: ChatMessage = {
           to: message.from,
           from: this.npcConfig.username,
@@ -133,6 +147,7 @@ export class NPC {
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)
+        return this.aiBrain.pushNewAction(action, 0)
       } else {
         const action = new TalkAction(
           this.aiBrain.getBrainDump,
