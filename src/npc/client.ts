@@ -174,7 +174,6 @@ export class NPC {
   onNews(news: NewsItem | NewsItem[]) {
     const newsArray = Array.isArray(news) ? news : [news]
     this.newsPaper = [...this.newsPaper, ...newsArray]
-    console.log("onNews", news)
   }
 
   sendMoveMessage(blockingPlayer: PlayerData) {

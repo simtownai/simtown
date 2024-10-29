@@ -15,6 +15,8 @@ ${reflections.reflections}
 **You have currently planned the following actions for the day. You should update them only if the past reflections suggest so or you are running out of actions to take.**:
 ${reflections.currentPlan}
 
+**News for the day**: ${reflections.newsPaper}
+
 **Constraints**:
 - You can choose to **keep**, **modify**, or **discard** the existing planned actions.
 - You can only talk or move to existing players or locations.

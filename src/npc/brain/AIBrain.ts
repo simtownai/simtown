@@ -19,6 +19,7 @@ export type StringifiedBrainDump = {
   backstory: string
   playerNames: string
   placesNames: string
+  newsPaper: string
   reflections: string
   currentPlan: string
   currentAction: string
@@ -28,6 +29,7 @@ export type BrainDump = {
   currentAction: Action | null
   playerData: PlayerData
   otherPlayers: Map<string, PlayerData>
+  newsPaper: NewsItem[]
   getLatestThread: (playerName: string) => Thread
   getStringifiedBrainDump: () => StringifiedBrainDump
   getNewestActiveThread: (playerName: string) => Thread
@@ -100,6 +102,7 @@ export class AIBrain {
       currentAction: this.currentAction,
       playerData: this.getPlayerData(),
       otherPlayers: this.getOtherPlayers(),
+      newsPaper: this.getNewsPaper(),
       getLatestThread: (targetPlayerName: string) => this.memory.conversations.getLatestThread(targetPlayerName),
       getStringifiedBrainDump: () => this.getStringifiedBrainDump(),
       getNewestActiveThread: (targetPlayerName: string) =>
@@ -120,6 +123,9 @@ export class AIBrain {
     const playerNamesString =
       playerNames.length > 0 ? `Available players: ${playerNames.join(", ")}` : "No other players available"
     const placesNames = this.places
+    const newsPaperString = `News:\n${this.getNewsPaper()
+      .map((newsItem) => `${newsItem.date}: ${newsItem.message} ${newsItem.place ? `at ${newsItem.place}` : ""}`)
+      .join("\n")}`
     const placesNamesString =
       placesNames.length > 0 ? `Available places: ${placesNames.join(", ")}` : "No other places available"
     const reflections = this.memory.reflections
@@ -139,6 +145,7 @@ export class AIBrain {
       backstory,
       playerNames: playerNamesString,
       placesNames: placesNamesString,
+      newsPaper: newsPaperString,
       reflections: reflectionsString,
       currentPlan: currentActionQueueString,
       currentAction: currentActionString,
