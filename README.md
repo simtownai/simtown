@@ -1,6 +1,10 @@
 # ToDo
 
+- (Szymon) hunt down TalkAction bugs
+
 - (Szymon) give NPC's sense of time to prompt and add start time to the plan
+
+- (Szymon) add the voting action
 
 - (Szymon) summarize long reflections
 
