@@ -11,7 +11,6 @@ export class IdleAction extends Action {
   constructor(
     getBrainDump: () => BrainDump,
     getEmitMethods: () => EmitInterface,
-
     activityType: IdleActivityType,
     reason: string = "",
   ) {
@@ -20,17 +19,40 @@ export class IdleAction extends Action {
   }
 
   start() {
+    this.setAnimation()
     this.isStarted = true
     console.log("Idle action started")
   }
 
   update(deltaTime: number) {
-    if (this.isInterrupted || !this.isStarted) return
+    if (this.isInterrupted || !this.isStarted) {
+      this.resetAnimation()
+      return
+    }
 
     this.elapsedTime += deltaTime
     if (this.elapsedTime >= IdleActionDuration) {
+      this.resetAnimation()
       this.isCompletedFlag = true
       console.log("Idle action completed")
+    }
+  }
+
+  private setAnimation() {
+    const playerData = this.getBrainDump().playerData
+    if (this.activityType === "read") {
+      this.getEmitMethods().updatePlayerData({
+        animation: `${playerData.username}-read`,
+      })
+    }
+  }
+
+  private resetAnimation() {
+    const playerData = this.getBrainDump().playerData
+    if (this.activityType === "read") {
+      this.getEmitMethods().updatePlayerData({
+        animation: `${playerData.username}-idle-down`,
+      })
     }
   }
 }
