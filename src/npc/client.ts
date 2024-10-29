@@ -67,7 +67,7 @@ export class NPC {
     })
   }
   onPlayerDataChanged(player: PlayerData) {
-    if (player.id !== this.playerData.id) {
+    if (player.username !== this.npcConfig.username) {
       this.otherPlayers.set(player.username, player)
     }
   }
