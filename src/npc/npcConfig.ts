@@ -53,7 +53,13 @@ export const npcConfig: NpcConfig[] = [
   // },
   {
     username: "Maria",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_01",
+      eyes: "Eyes_05",
+      outfit: "Outfit_18_04",
+      hairstyle: "Hairstyle_15_04",
+      book: "Book_05",
+    },
     backstory: ["I very liberal and love talking to people."],
   },
 ]

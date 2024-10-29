@@ -99,12 +99,22 @@ export class TalkAction extends Action {
     }
   }
 
-  endConversation(reason: string) {
+  clearAllListenersAndMarkAsCompleted() {
     this.resetEmissionState()
     this.incomingMessageState.messageBuffer = []
-    this.incomingMessageState.responseTimer = null
+    if (this.conversationTimeout) {
+      clearTimeout(this.conversationTimeout)
+      this.conversationTimeout = null
+    }
+    if (this.incomingMessageState.responseTimer) {
+      clearTimeout(this.incomingMessageState.responseTimer)
+      this.incomingMessageState.responseTimer = null
+    }
     this.isCompletedFlag = true
-    this.conversationTimeout = null
+  }
+
+  endConversation(reason: string) {
+    this.clearAllListenersAndMarkAsCompleted()
     this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
       role: "assistant",
       content: reason,
@@ -112,7 +122,6 @@ export class TalkAction extends Action {
     const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
     this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
     this.getBrainDump().closeThread(this.targetPlayerUsername)
-    console.log("Emitting end conversation")
     this.getEmitMethods().emitEndConversation(finalMessage)
     return reason
   }
@@ -149,6 +158,9 @@ export class TalkAction extends Action {
   )
 
   async handleMessage(chatMessage: ChatMessage) {
+    console.log("Handling message")
+    this.resetConversationTimeout()
+
     if (this.emissionState.chunksToBeEmitted.length > 0) {
       console.log("Interrupting current emission due to new message")
       this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
@@ -166,6 +178,7 @@ export class TalkAction extends Action {
   private endConversationDueToTimeout() {
     const timeoutMessage =
       "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
+
     this.endConversation(timeoutMessage)
   }
 
@@ -228,9 +241,6 @@ export class TalkAction extends Action {
     this.isStarted = true
     this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
-    // then we set a new conversation timeout
-    this.resetConversationTimeout()
-
     if (this.conversationType.type === "new") {
       await this.startConversation()
     } else {
@@ -261,8 +271,14 @@ export class TalkAction extends Action {
   }
   interrupt(): void {
     super.interrupt()
-    this.conversationTimeout = null
-    this.incomingMessageState.responseTimer = null
+    if (this.conversationTimeout) {
+      clearTimeout(this.conversationTimeout)
+      this.conversationTimeout = null
+    }
+    if (this.incomingMessageState.responseTimer) {
+      clearTimeout(this.incomingMessageState.responseTimer)
+      this.incomingMessageState.responseTimer = null
+    }
   }
 
   resume(): void {

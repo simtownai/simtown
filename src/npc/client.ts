@@ -81,7 +81,7 @@ export class NPC {
       })
       const currentAction = this.aiBrain.getCurrentAction()
       if (currentAction instanceof TalkAction) {
-        currentAction.setIsCompletedFlag(true)
+        currentAction.clearAllListenersAndMarkAsCompleted()
       }
       console.error(
         "Received end conversation message from",

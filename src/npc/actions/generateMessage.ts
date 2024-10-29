@@ -47,7 +47,6 @@ export const generateAssistantResponse = async (
       ...newAIMessages,
     ]
     try {
-      console.log("toSubmit", toSubmit)
       const completion = await client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: toSubmit,

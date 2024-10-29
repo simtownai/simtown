@@ -40,7 +40,10 @@ export const reflect = async (action: Action) => {
   } else if (actionType === "TalkAction") {
     const talkAction = action as TalkAction
     const lastTalkedPlayerName = talkAction.getTargetPlayerUsername()
+    console.log("Get threads")
+    console.log(talkAction.getBrainDump().getLatestThread(lastTalkedPlayerName))
     const latestThread = talkAction.getBrainDump().getLatestThread(lastTalkedPlayerName)
+
     if (!latestThread.finished) {
       throw new Error("This thread should be finished!")
     }
