@@ -35,15 +35,25 @@ export const npcConfig: NpcConfig[] = [
   //   backstory: ["You are Kamala Harris. You should broadcast your message to the world at Kamala place."],
   // },
   {
+    username: "Mike",
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: ["You are undecided voter and want to talk with people to learn more about their opinions."],
+  },
+  {
+    username: "Marta",
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: ["You are undecided voter and want to talk with people to learn more about their opinions."],
+  },
+  {
     username: "John",
     spriteDefinition: createRandomSpriteDefinition(),
     backstory: [
       "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will go and listen to his broadcasts and rally. You will never vote for Kamala Harris.",
     ],
   },
-  // {
-  //   username: "Maria",
-  //   spriteDefinition: createRandomSpriteDefinition(),
-  //   backstory: ["I very liberal and love talking to people."],
-  // },
+  {
+    username: "Maria",
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: ["I very liberal and love talking to people."],
+  },
 ]

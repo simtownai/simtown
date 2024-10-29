@@ -72,12 +72,23 @@ export class NPC {
     }
   }
   onEndConversation(message: ChatMessage) {
+    console.log("onEndConversation", message)
     if (message.to === this.npcConfig.username) {
       this.aiBrain.addChatMessage(message.from, message)
       this.aiBrain.addAIMessage(message.from, {
         role: "user",
         content: message.message,
       })
+      const currentAction = this.aiBrain.getCurrentAction()
+      if (currentAction instanceof TalkAction) {
+        currentAction.setIsCompletedFlag(true)
+      }
+      console.error(
+        "Received end conversation message from",
+        message.from,
+        "action is",
+        this.aiBrain.getCurrentAction()?.isCompleted(),
+      )
       this.aiBrain.closeThread(message.from)
     }
   }
@@ -115,28 +126,13 @@ export class NPC {
         }
         this.socketManager.emitEndConversation(refusalMessage)
       } else if (currentAction instanceof TalkAction) {
-        // Create a new action to handle the message
-        const action = new TalkAction(
-          this.aiBrain.getBrainDump,
-          () => this.socketManager.getEmitMethods(),
-          "We received a request to talk but were talking with sb else at the time",
-          message.from,
-          {
-            type: "existing",
-            message: message,
-          },
-          (username) => {
-            this.movementController.adjustDirection(username)
-          },
-        )
         const refusalMessage: ChatMessage = {
           to: message.from,
           from: this.npcConfig.username,
           message: "I'm sorry, but I'm already talking with someone else right now.",
           date: new Date().toISOString(),
         }
-        this.socketManager.emitSendMessage(refusalMessage)
-        return this.aiBrain.pushNewAction(action, 0)
+        this.socketManager.emitEndConversation(refusalMessage)
       } else {
         const action = new TalkAction(
           this.aiBrain.getBrainDump,

@@ -72,8 +72,6 @@ export class TalkAction extends Action {
   }
 
   handleEmittedChunk(chunk: string) {
-    this.resetConversationTimeout()
-    console.log("We got a chugnk and are emitting it ", chunk)
     // Add to accumulated content
     this.emissionState.emittedContent += chunk
     console.log("Emitted content over time is", this.emissionState.emittedContent)
@@ -106,6 +104,7 @@ export class TalkAction extends Action {
     this.incomingMessageState.messageBuffer = []
     this.incomingMessageState.responseTimer = null
     this.isCompletedFlag = true
+    this.conversationTimeout = null
     this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
       role: "assistant",
       content: reason,
@@ -240,8 +239,12 @@ export class TalkAction extends Action {
     }
   }
 
+  setIsCompletedFlag(flag: boolean) {
+    this.isCompletedFlag = flag
+  }
+
   async update(deltaTime: number) {
-    if (this.isInterrupted || !this.isStarted) return
+    if (this.isInterrupted || !this.isStarted || this.isCompletedFlag) return
 
     this.elapsedTime += deltaTime
 
@@ -252,6 +255,7 @@ export class TalkAction extends Action {
       if (this.emissionState.timeSinceLastChunk >= this.CHUNK_DELAY) {
         const chunk = this.emissionState.chunksToBeEmitted.shift()!
         this.handleEmittedChunk(chunk)
+        this.resetConversationTimeout()
         this.emissionState.timeSinceLastChunk = 0
       }
     }
