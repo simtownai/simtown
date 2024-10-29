@@ -37,6 +37,24 @@ export default function Overlay({
     }
   }, [])
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isChatsContainerCollapsed) {
+        if (event.key.toLowerCase() === "i") {
+          setIsNewsContainerCollapsed((prev) => !prev)
+        } else if (event.key === "?") {
+          event.preventDefault()
+          setIsHelpContainerCollapsed((prev) => !prev)
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isChatsContainerCollapsed, setIsNewsContainerCollapsed, setIsHelpContainerCollapsed])
+
   const formatTimeAMPM = (date: Date) => {
     let hours = date.getHours()
     const minutes = date.getMinutes()
