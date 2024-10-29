@@ -1,8 +1,9 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { BroadcastMessage, ChatMessage, PlayerSpriteDefinition } from "../shared/types"
+import { BroadcastMessage, ChatMessage, NewsItem, PlayerSpriteDefinition } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
+import NewsContainer from "./ui/NewsContainer"
 import Overlay from "./ui/Overlay"
 import { useEffect, useMemo, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
@@ -22,6 +23,8 @@ function App() {
   const [messages, setMessages] = useState<Map<string, ChatMessage[]>>(new Map())
   const [composeValue, setComposeValue] = useState("")
   const [isMessageLoading, setIsMessageLoading] = useState(false)
+  const [newsPaper, setNewsPaper] = useState<NewsItem[]>([])
+  const [isNewsContainerCollapsed, setIsNewsContainerCollapsed] = useState(true)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -110,6 +113,17 @@ function App() {
       })
     })
 
+    newSocket.on("news", (news: NewsItem | NewsItem[]) => {
+      setNewsPaper((prevNews) => {
+        const newsArray = Array.isArray(news) ? news : [news]
+        const newNews = newsArray.map((newsItem) => ({
+          ...newsItem,
+          isRead: !isNewsContainerCollapsed,
+        }))
+        return [...prevNews, ...newNews]
+      })
+    })
+
     return () => {
       newSocket.off("newMessage")
       newSocket.disconnect()
@@ -145,6 +159,16 @@ function App() {
   }, [isChatsContainerCollapsed, isChatCollapsed, chatmate])
 
   useEffect(() => {
+    setNewsPaper((prevNews) => {
+      const updatedNews = prevNews.map((news) => ({
+        ...news,
+        isRead: true,
+      }))
+      return updatedNews
+    })
+  }, [isNewsContainerCollapsed])
+
+  useEffect(() => {
     if (username) {
       localStorage.setItem(`chat-history-${username}`, JSON.stringify(Array.from(messages.entries())))
     }
@@ -166,6 +190,10 @@ function App() {
     })
     return count
   }, [messages])
+
+  const totalNewsUnreadCount = useMemo(() => {
+    return newsPaper.filter((news) => !news.isRead).length
+  }, [newsPaper])
 
   const handleGameLoaded = () => {
     setIsGameLoaded(true)
@@ -193,6 +221,8 @@ function App() {
           isChatsContainerCollapsed={isChatsContainerCollapsed}
           setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}
           totalUnreadCount={totalUnreadCount}
+          setIsNewsContainerCollapsed={setIsNewsContainerCollapsed}
+          totalNewsUnreadCount={totalNewsUnreadCount}
         />
       )}
       {socket && isGameLoaded && !isChatsContainerCollapsed && (
@@ -214,6 +244,13 @@ function App() {
           isMessageLoading={isMessageLoading}
           setIsMessageLoading={setIsMessageLoading}
           handleClearConversation={null}
+        />
+      )}
+      {socket && isGameLoaded && !isNewsContainerCollapsed && (
+        <NewsContainer
+          isMobile={isMobile}
+          newsPaper={newsPaper}
+          setIsNewsContainerCollapsed={setIsNewsContainerCollapsed}
         />
       )}
     </>

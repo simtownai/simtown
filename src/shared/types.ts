@@ -44,6 +44,13 @@ export interface BroadcastMessage {
 
 export type GridPosition = { gridX: number; gridY: number }
 
+export type NewsItem = {
+  date: string
+  message: string
+  place?: string
+  isRead?: boolean
+}
+
 const MoveToCoordinatesTargetSchema = z.object({
   targetType: z.literal("coordinates"),
   x: z.number(),

@@ -1,3 +1,4 @@
+import { formatDate } from "../../../../../shared/functions"
 import styles from "./styles.module.css"
 import React from "react"
 
@@ -11,20 +12,6 @@ interface ChatListItemProps {
 }
 
 const ChatListItem: React.FC<ChatListItemProps> = ({ name, lastMessage, date, isActive, isRead, onClick }) => {
-  const formatDate = (date: Date) => {
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const dayInMs = 24 * 60 * 60 * 1000
-    const weekInMs = 7 * dayInMs
-    if (diff < dayInMs) {
-      return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-    } else if (diff < weekInMs) {
-      return date.toLocaleDateString("en-US", { weekday: "short" })
-    } else {
-      return date.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" })
-    }
-  }
-
   return (
     <li
       className={`${styles.item} ${isActive ? styles.itemActive : ""}`}

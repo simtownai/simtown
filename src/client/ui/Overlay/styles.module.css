@@ -66,6 +66,11 @@
   right: 20px;
 }
 
+.overlayTopLeft {
+  top: 20px;
+  left: 20px;
+}
+
 .buttonImage {
   width: 48px;
   height: 48px;

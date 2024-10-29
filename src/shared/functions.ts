@@ -38,6 +38,20 @@ export function getTime(): Date {
   return inGameDate
 }
 
+export function formatDate(date: Date) {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const dayInMs = 24 * 60 * 60 * 1000
+  const weekInMs = 7 * dayInMs
+  if (diff < dayInMs) {
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+  } else if (diff < weekInMs) {
+    return date.toLocaleDateString("en-US", { weekday: "short" })
+  } else {
+    return date.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" })
+  }
+}
+
 export function isInZone(
   playerX: number,
   playerY: number,

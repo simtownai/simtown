@@ -2,6 +2,7 @@ import { CONFIG } from "../../../shared/config"
 import { getTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
+import newsIcon from "../_images/overlay/news-icon.png"
 import HelpContainer from "./HelpContainer"
 import styles from "./styles.module.css"
 import React, { useEffect, useState } from "react"
@@ -11,6 +12,8 @@ interface OverlayProps {
   isChatsContainerCollapsed: boolean
   setIsChatsContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   totalUnreadCount: number
+  setIsNewsContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+  totalNewsUnreadCount: number
 }
 
 export default function Overlay({
@@ -18,6 +21,8 @@ export default function Overlay({
   isChatsContainerCollapsed,
   setIsChatsContainerCollapsed,
   totalUnreadCount,
+  setIsNewsContainerCollapsed,
+  totalNewsUnreadCount,
 }: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
   const [currentTime, setCurrentTime] = useState(getTime())
@@ -66,7 +71,7 @@ export default function Overlay({
           <div>{getDaysRemaining()} days left</div>
         </div>
       </div>
-      <div className={`${styles.overlay} ${styles.overlayBottomLeft}`}>
+      <div className={`${styles.overlay} ${styles.overlayTopLeft}`}>
         <button
           className={`${styles.iconButton}`}
           onClick={(e) => {
@@ -75,6 +80,20 @@ export default function Overlay({
           }}
         >
           <img src={hintsIcon} className={styles.buttonImage} />
+        </button>
+      </div>
+      <div className={`${styles.overlay} ${styles.overlayBottomLeft}`}>
+        <button
+          className={`${styles.iconButton}`}
+          onClick={(e) => {
+            handleClick(e)
+            setIsNewsContainerCollapsed((prev) => !prev)
+          }}
+        >
+          <img src={newsIcon} className={styles.buttonImage} />
+          {totalNewsUnreadCount > 0 && (
+            <div className={styles.unreadBadge}>{totalNewsUnreadCount > 99 ? "99+" : totalNewsUnreadCount}</div>
+          )}
         </button>
       </div>
       <div className={`${styles.overlay} ${styles.overlayBottomRight}`}>

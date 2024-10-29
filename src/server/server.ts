@@ -5,6 +5,7 @@ import {
   BroadcastMessage,
   ChatMessage,
   GridPosition,
+  NewsItem,
   PlayerData,
   PlayerSpriteDefinition,
   UpdatePlayerData,
@@ -40,6 +41,7 @@ const io = new Server(server, {
 })
 
 const players: Map<string, PlayerData> = new Map()
+const newsPaper: NewsItem[] = [{ date: new Date().toISOString(), message: "Welcome to the game!", place: "spawn" }]
 
 const spawnArea = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.find((obj) => obj.name === "spawn")!
 
@@ -92,6 +94,7 @@ io.on("connection", (socket) => {
     logger.info(`User ${socket.id} connected. Number of players: ${players.size}`)
 
     socket.emit("existingPlayers", Array.from(players.values()))
+    socket.emit("news", newsPaper)
     socket.broadcast.emit("playerJoined", playerData)
   })
 
@@ -209,6 +212,11 @@ io.on("connection", (socket) => {
       }
     })
   }
+
+  socket.on("sendNews", (newsItem: NewsItem) => {
+    newsPaper.push(newsItem)
+    io.emit("news", newsItem)
+  })
 
   socket.on("disconnect", () => {
     const player = players.get(playerId)
