@@ -69,6 +69,7 @@ export const reflect = async (action: Action) => {
 }
 
 const summarizeConversation = async (reflections: StringifiedBrainDump, content: string) => {
+  console.log("Conversation content:", content)
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [

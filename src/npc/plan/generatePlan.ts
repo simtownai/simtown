@@ -101,7 +101,7 @@ export const generatePlanForTheday = async (
       console.error("Invalid plan, retrying...", errorMessage)
     }
     if (isValid) {
-      // console.log("Plan created:", plan)
+      console.log("Plan created:", plan)
       return plan
     }
   }

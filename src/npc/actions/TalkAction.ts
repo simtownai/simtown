@@ -102,6 +102,9 @@ export class TalkAction extends Action {
   }
 
   endConversation(reason: string) {
+    this.resetEmissionState()
+    this.incomingMessageState.messageBuffer = []
+    this.incomingMessageState.responseTimer = null
     this.isCompletedFlag = true
     this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
       role: "assistant",

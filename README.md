@@ -2,8 +2,6 @@
 
 - (Szymon) give NPC's sense of time to prompt and add start time to the plan
 
-- (Szymon) if no response in listening to broadcast for 15sec, then end it
-
 - (Szymon) summarize long reflections
 
 - (Alex) newspaper on server

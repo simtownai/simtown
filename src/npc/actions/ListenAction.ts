@@ -7,6 +7,8 @@ export class ListenAction extends Action {
   accumulatedBroadcast: string = ""
   private broadcastListener: (message: ChatMessage) => void
   targetPlace: string
+  private readonly ListenTimeoutThreshold = 15000
+  private conversationTimeout: NodeJS.Timeout | null = null // for automatically timing out if no more messages
 
   constructor(
     getBrainDump: () => BrainDump,
@@ -19,13 +21,26 @@ export class ListenAction extends Action {
     this.broadcastListener = this.handleBroadcast.bind(this)
   }
 
+  private resetListenTimeout() {
+    if (this.conversationTimeout) {
+      clearTimeout(this.conversationTimeout)
+    }
+
+    this.conversationTimeout = setTimeout(() => {
+      this.isCompletedFlag = true
+      console.log("ListenAction timed out")
+    }, this.ListenTimeoutThreshold)
+  }
+
   start(): void {
     this.isStarted = true
+    this.resetListenTimeout()
     this.getEmitMethods().setListener("listenBroadcast", this.broadcastListener)
   }
 
   private handleBroadcast(message: ChatMessage): void {
     if (this.getBrainDump().currentAction instanceof ListenAction) {
+      this.resetListenTimeout()
       this.accumulatedBroadcast += message.message
       console.log(`${this.getBrainDump().playerData.username} received broadcast: ${message.message}`)
     }
@@ -36,20 +51,18 @@ export class ListenAction extends Action {
     // No need for update logic, listening is handled by socket event
   }
 
-  isCompleted(): boolean {
-    // You might want to implement a condition to end the listening
-    // For now, it will continue listening indefinitely
-    return false
-  }
-
   interrupt(): void {
     super.interrupt()
+    if (this.conversationTimeout) {
+      clearTimeout(this.conversationTimeout)
+    }
     this.getEmitMethods().removeListener("listenBroadcast", this.broadcastListener)
   }
 
   resume(): void {
     super.resume()
     this.getEmitMethods().setListener("listenBroadcast", this.broadcastListener)
+    this.resetListenTimeout()
   }
 
   getAccumulatedBroadcast(): string {
