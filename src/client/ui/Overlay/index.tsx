@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { getTime } from "../../../shared/functions"
+import { formatTimeAMPM, getTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import newsIcon from "../_images/overlay/news-icon.png"
@@ -54,16 +54,6 @@ export default function Overlay({
       window.removeEventListener("keydown", handleKeyDown)
     }
   }, [isChatsContainerCollapsed, setIsNewsContainerCollapsed, setIsHelpContainerCollapsed])
-
-  const formatTimeAMPM = (date: Date) => {
-    let hours = date.getHours()
-    const minutes = date.getMinutes()
-    const ampm = hours >= 12 ? "PM" : "AM"
-    hours = hours % 12
-    hours = hours ? hours : 12 // Convert 0 to 12
-    const minutesStr = minutes < 10 ? "0" + minutes : minutes
-    return `${hours}:${minutesStr} ${ampm}`
-  }
 
   const getDaysRemaining = () => {
     const now = currentTime
