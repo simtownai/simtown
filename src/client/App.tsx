@@ -114,11 +114,12 @@ function App() {
     })
 
     newSocket.on("news", (news: NewsItem | NewsItem[]) => {
+      const ifNewsInitialization = Array.isArray(news)
       setNewsPaper((prevNews) => {
         const newsArray = Array.isArray(news) ? news : [news]
         const newNews = newsArray.map((newsItem) => ({
           ...newsItem,
-          isRead: !isNewsContainerCollapsed,
+          isRead: ifNewsInitialization || !isNewsContainerCollapsed,
         }))
         return [...prevNews, ...newNews]
       })
