@@ -76,9 +76,6 @@ export const generatePlanForTheday = async (
   let plan: GeneratedActionPlan
 
   const prompt = planning_prompt(stringifiedBrainDump)
-  console.log("Reflections", stringifiedBrainDump.reflections)
-  console.log("Current actions", stringifiedBrainDump.currentAction)
-  console.log("Current plan", stringifiedBrainDump.currentPlan)
 
   let messages = [{ role: "system", content: prompt }] as ChatCompletionMessageParam[]
 
@@ -104,7 +101,7 @@ export const generatePlanForTheday = async (
       console.error("Invalid plan, retrying...", errorMessage)
     }
     if (isValid) {
-      console.log("Plan created:", plan)
+      // console.log("Plan created:", plan)
       return plan
     }
   }

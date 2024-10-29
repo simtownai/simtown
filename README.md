@@ -1,13 +1,10 @@
 # ToDo
 
-- (Szymon) if no incoming message for 15 sec in listening then end listening action
-
-- (Szymon) split messages sending
-
-  - send them 1 sensentence by 1 sentence with a delay dependent on sensense size
-  - reply only after 5 seconds since last message; reply to combined last messages (not just the last one)
-
 - (Szymon) give NPC's sense of time to prompt and add start time to the plan
+
+- (Szymon) if no response in listening to broadcast for 15sec, then end it
+
+- (Szymon) summarize long reflections
 
 - (Alex) newspaper on server
 

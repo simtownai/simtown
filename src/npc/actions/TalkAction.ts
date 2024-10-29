@@ -3,12 +3,20 @@ import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { ConversationTimeoutThreshold } from "../npcConfig"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
-import client from "../openai/openai"
 import { continue_conversation, start_conversation } from "../prompts"
 import { Action } from "./Action"
-import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/index.mjs"
+import { TalkAIResponse, createChatMessage, generateAssistantResponse } from "./generateMessage"
 import { z } from "zod"
 
+type EmissionState = {
+  chunksToBeEmitted: string[]
+  emittedContent: string
+  timeSinceLastChunk: number
+}
+type IncomingMessageState = {
+  messageBuffer: ChatMessage[]
+  responseTimer: NodeJS.Timeout | null // for delaying response after getting a message
+}
 type ExistingConversationType = { type: "existing"; message: ChatMessage }
 type NewConversationType = { type: "new" }
 export type ConversationType = ExistingConversationType | NewConversationType
@@ -16,7 +24,21 @@ export type ConversationType = ExistingConversationType | NewConversationType
 export class TalkAction extends Action {
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
-  private conversationTimeout: NodeJS.Timeout | null
+  private conversationTimeout: NodeJS.Timeout | null = null // for automatically timing out if no response after sending a message
+  private elapsedTime: number = 0
+
+  private readonly MESSAGE_BUFFER_DELAY = 3000 // 3 seconds
+  private readonly CHUNK_DELAY = 1000 // 1 second
+
+  private emissionState: EmissionState = {
+    chunksToBeEmitted: [],
+    emittedContent: "",
+    timeSinceLastChunk: 0,
+  }
+  private incomingMessageState: IncomingMessageState = {
+    messageBuffer: [],
+    responseTimer: null,
+  }
 
   constructor(
     getBrainDump: () => BrainDump,
@@ -32,34 +54,92 @@ export class TalkAction extends Action {
     this.functionMap = {
       endConversation: (args: { reason: string }) => this.endConversation(args.reason),
     }
-    this.conversationTimeout = null
+  }
+
+  resetEmissionState() {
+    this.emissionState = {
+      chunksToBeEmitted: [],
+      emittedContent: "",
+      timeSinceLastChunk: 0,
+    }
   }
 
   getTargetPlayerUsername() {
     return this.targetPlayerUsername
   }
+
+  private splitMessageIntoChunks(message: string): string[] {
+    return message.match(/[^.!?]+[.!?]+/g) || [message]
+  }
+
+  handleEmittedChunk(chunk: string) {
+    this.resetConversationTimeout()
+    console.log("We got a chugnk and are emitting it ", chunk)
+    // Add to accumulated content
+    this.emissionState.emittedContent += chunk
+    console.log("Emitted content over time is", this.emissionState.emittedContent)
+
+    // Create and emit the message
+    const chatMessage = createChatMessage(chunk, this.targetPlayerUsername, this.getBrainDump().playerData.username)
+    this.getEmitMethods().emitSendMessage(chatMessage)
+
+    // Save the individual chunk as a chat message
+    this.getBrainDump().addChatMessage(this.targetPlayerUsername, chatMessage)
+
+    // If this was the last chunk, save the complete message to AI messages
+    if (this.emissionState.chunksToBeEmitted.length === 0) {
+      if (this.emissionState.emittedContent) {
+        this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
+          role: "assistant",
+          content: this.emissionState.emittedContent,
+        })
+      }
+      // Reset emitted content after saving
+      this.emissionState.emittedContent = ""
+
+      // Reset timers and prepare for next message
+      this.resetResponseTimer()
+    }
+  }
+
   endConversation(reason: string) {
-    console.log("Ending conversation with reason", reason)
     this.isCompletedFlag = true
+    this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
+      role: "assistant",
+      content: reason,
+    })
+    const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
+    this.adjustDirection(this.targetPlayerUsername)
+    this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
+    this.getBrainDump().closeThread(this.targetPlayerUsername)
+    console.log("Emitting end conversation")
+    this.getEmitMethods().emitEndConversation(finalMessage)
     return reason
   }
 
-  async startConversation(targetPlayerUsername: string) {
-    this.getBrainDump().getNewestActiveThread(targetPlayerUsername)
-    this.clearConversationTimeout()
+  handleGeneratedResponse(response: TalkAIResponse) {
+    console.log("We got a generated response", response)
+    if (response.type === "endedConversation") {
+      return
+    }
+    const chunks = this.splitMessageIntoChunks(response.finalChatMessage)
+    this.emissionState.chunksToBeEmitted.push(...chunks)
+  }
 
+  async startConversation() {
+    console.log("starting conversation")
     const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
 
     const system_message = start_conversation(aiBrainSummary, this.targetPlayerUsername)
 
-    const responseContent = await this.generateAssistantResponse(system_message, targetPlayerUsername)
+    const response = await generateAssistantResponse(
+      system_message,
+      this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername).aiMessages,
+      this.tools,
+      this.functionMap,
+    )
 
-    if (this.getBrainDump().isLatestThreadActive(targetPlayerUsername)) {
-      const response = this.handleFinalChatResponse(responseContent, targetPlayerUsername)
-      this.getEmitMethods().emitSendMessage(response)
-      this.adjustDirection(targetPlayerUsername)
-      this.setConversationTimeout(targetPlayerUsername)
-    }
+    this.handleGeneratedResponse(response)
   }
 
   private endConversationTool = functionToSchema(
@@ -68,166 +148,120 @@ export class TalkAction extends Action {
     "Use this function to decline or finish the conversation by giving a reason.",
   )
 
-  private clearConversationTimeout() {
+  async handleMessage(chatMessage: ChatMessage) {
+    if (this.emissionState.chunksToBeEmitted.length > 0) {
+      console.log("Interrupting current emission due to new message")
+      this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
+        role: "assistant",
+        content: this.emissionState.emittedContent,
+      })
+      this.resetEmissionState()
+    }
+
+    this.resetResponseTimer()
+    this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
+    this.incomingMessageState.messageBuffer.push(chatMessage)
+  }
+
+  private endConversationDueToTimeout() {
+    const timeoutMessage =
+      "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
+    this.endConversation(timeoutMessage)
+  }
+
+  private resetConversationTimeout() {
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
-      this.conversationTimeout = null
     }
-  }
 
-  private handleFinalChatResponse(responseContent: string, targetPlayerUsername: string): ChatMessage {
-    const response: ChatMessage = {
-      from: this.getBrainDump().playerData.username,
-      message: responseContent,
-      to: targetPlayerUsername,
-      date: new Date().toISOString(),
-    }
-    this.getBrainDump().addChatMessage(targetPlayerUsername, response)
-
-    return response
-  }
-
-  async generateAssistantResponse(system_message: string, targetPlayerUsername: string): Promise<string> {
-    let responseContent = ""
-    while (true) {
-      let toSubmit = [
-        { role: "system", content: system_message } as ChatCompletionMessageParam,
-        ...this.getBrainDump().getNewestActiveThread(targetPlayerUsername).aiMessages,
-      ]
-
-      try {
-        const completion = await client.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: toSubmit,
-          tools: this.tools as ChatCompletionTool[],
-          tool_choice: "auto",
-        })
-
-        const responseMessage = completion.choices[0].message
-
-        if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
-          this.getBrainDump().addAIMessage(targetPlayerUsername, responseMessage)
-
-          for (const toolCall of responseMessage.tool_calls) {
-            try {
-              const functionName = toolCall.function.name
-              const functionArgs = JSON.parse(toolCall.function.arguments)
-
-              const functionResult = await this.executeFunction(functionName, functionArgs)
-
-              this.getBrainDump().addAIMessage(targetPlayerUsername, {
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: functionResult,
-              })
-
-              if (functionName === "endConversation") {
-                this.clearConversationTimeout()
-                const response = this.handleFinalChatResponse(functionResult, targetPlayerUsername)
-                this.getEmitMethods().emitEndConversation(response)
-                this.adjustDirection(targetPlayerUsername)
-                this.getBrainDump().closeThread(targetPlayerUsername)
-                return ""
-              }
-            } catch (error: any) {
-              this.getBrainDump().addAIMessage(targetPlayerUsername, {
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: error.message,
-              })
-              console.error("Error executing function:", error)
-            }
-          }
-          continue
-        } else if (responseMessage.content) {
-          responseContent = responseMessage.content
-          this.getBrainDump().addAIMessage(targetPlayerUsername, responseMessage)
-          break
-        } else {
-          break
-        }
-      } catch (error) {
-        console.error("Error generating assistant response:", error)
-        throw error
-      }
-    }
-    return responseContent
-  }
-
-  private async executeFunction(functionName: string, args: any): Promise<any> {
-    const func = this.functionMap[functionName]
-    if (func) {
-      return await func(args)
-    } else {
-      throw new Error(`Unknown function: ${functionName}`)
-    }
-  }
-
-  async handleMessage(chatMessage: ChatMessage) {
-    this.clearConversationTimeout()
-    this.setConversationTimeout(chatMessage.from)
-
-    this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
-    this.getBrainDump().addAIMessage(chatMessage.from, { role: "user", content: chatMessage.message })
-
-    const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
-    const system_message = continue_conversation(aiBrainSummary, chatMessage.from)
-
-    const responseContent = await this.generateAssistantResponse(system_message, chatMessage.from)
-
-    if (this.getBrainDump().isLatestThreadActive(chatMessage.from)) {
-      const response = this.handleFinalChatResponse(responseContent, chatMessage.from)
-      this.getEmitMethods().emitSendMessage(response)
-      this.adjustDirection(chatMessage.from)
-    }
-  }
-
-  private setConversationTimeout(targetPlayerUsername: string) {
     this.conversationTimeout = setTimeout(() => {
-      this.endConversationDueToTimeout(targetPlayerUsername)
+      this.endConversationDueToTimeout()
     }, ConversationTimeoutThreshold)
   }
 
-  private endConversationDueToTimeout(targetPlayerUsername: string) {
-    console.log("ending conversation due to timeout")
-    const timeoutMessage =
-      "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
-    const response = this.handleFinalChatResponse(timeoutMessage, targetPlayerUsername)
-    this.getBrainDump().closeThread(targetPlayerUsername)
-    this.getEmitMethods().emitEndConversation(response)
-    this.adjustDirection(targetPlayerUsername)
-    this.isCompletedFlag = true
+  private resetResponseTimer() {
+    if (this.incomingMessageState.responseTimer) {
+      clearTimeout(this.incomingMessageState.responseTimer)
+    }
+    this.incomingMessageState.responseTimer = setTimeout(() => {
+      this.processBufferedMessages().catch((error) => {
+        console.error("Error processing buffered messages:", error)
+      })
+    }, this.MESSAGE_BUFFER_DELAY)
+  }
+
+  private async processBufferedMessages() {
+    console.log("=========================================")
+    console.log("Processing buffered messages")
+    // Clear the response timer
+    this.incomingMessageState.responseTimer = null
+
+    // Check if there are messages to process
+    if (this.incomingMessageState.messageBuffer.length === 0) {
+      console.log("No messages to process")
+      return
+    }
+
+    // Combine messages into a single content
+    const combinedContent = this.incomingMessageState.messageBuffer.map((msg) => msg.message).join("\n")
+
+    // Add to AI messages after timeout
+    this.getBrainDump().addAIMessage(this.targetPlayerUsername, { role: "user", content: combinedContent })
+
+    // Clear the buffer
+    this.incomingMessageState.messageBuffer = []
+
+    // Generate assistant response
+    const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
+    const system_message = continue_conversation(aiBrainSummary, this.targetPlayerUsername)
+
+    const response = await generateAssistantResponse(
+      system_message,
+      this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername).aiMessages,
+      this.tools,
+      this.functionMap,
+    )
+    this.handleGeneratedResponse(response)
   }
 
   async start() {
     this.isStarted = true
+    this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
+
+    // then we set a new conversation timeout
+    this.resetConversationTimeout()
+
     if (this.conversationType.type === "new") {
-      await this.startConversation(this.targetPlayerUsername)
+      await this.startConversation()
     } else {
       await this.handleMessage(this.conversationType.message)
     }
   }
 
-  async update(_deltaTime: number) {
+  async update(deltaTime: number) {
     if (this.isInterrupted || !this.isStarted) return
 
-    if (!this.getBrainDump().isLatestThreadActive(this.targetPlayerUsername)) {
-      console.log("Conversation completed.")
-      this.isCompletedFlag = true
+    this.elapsedTime += deltaTime
+
+    // Handle chunk emission
+    if (this.emissionState.chunksToBeEmitted.length > 0) {
+      this.emissionState.timeSinceLastChunk += deltaTime
+
+      if (this.emissionState.timeSinceLastChunk >= this.CHUNK_DELAY) {
+        const chunk = this.emissionState.chunksToBeEmitted.shift()!
+        this.handleEmittedChunk(chunk)
+        this.emissionState.timeSinceLastChunk = 0
+      }
     }
   }
-
   interrupt(): void {
     super.interrupt()
-
-    console.log("Interrupting talking action")
-
-    // Clear the conversation timeout
-    this.clearConversationTimeout()
+    this.conversationTimeout = null
+    this.incomingMessageState.responseTimer = null
   }
 
   resume(): void {
     super.resume()
-    this.setConversationTimeout(this.targetPlayerUsername)
+    this.resetConversationTimeout()
   }
 }

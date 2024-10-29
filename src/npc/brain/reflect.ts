@@ -11,7 +11,6 @@ import { StringifiedBrainDump } from "./AIBrain"
 
 export const reflect = async (action: Action) => {
   const isInterrupted = action.isInterrupted
-  console.log("Is interrupted", isInterrupted)
   // for now we are only reflecting on completed actions
   const actionType = action.constructor.name
   const reflections = action.getBrainDump().getStringifiedBrainDump()

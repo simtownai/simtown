@@ -41,9 +41,9 @@ export const npcConfig: NpcConfig[] = [
       "You are deeply conservative man who lost his job from Pitsburg Pensylvia. You love Donald Trump. You will engage in conversation with other players.",
     ],
   },
-  {
-    username: "Maria",
-    spriteDefinition: createRandomSpriteDefinition(),
-    backstory: ["I very liberal and love talking to people."],
-  },
+  // {
+  //   username: "Maria",
+  //   spriteDefinition: createRandomSpriteDefinition(),
+  //   backstory: ["I very liberal and love talking to people."],
+  // },
 ]
