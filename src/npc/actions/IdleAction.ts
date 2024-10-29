@@ -6,7 +6,6 @@ import { IdleActionDuration } from "../npcConfig"
 import { Action } from "./Action"
 
 export class IdleAction extends Action {
-  private elapsedTime: number = 0
   activityType: IdleActivityType
 
   constructor(

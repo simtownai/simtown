@@ -31,7 +31,8 @@ export class ListenAction extends Action {
     }
   }
 
-  update(_deltaTime: number): void {
+  update(deltaTime: number): void {
+    this.elapsedTime += deltaTime
     // No need for update logic, listening is handled by socket event
   }
 

@@ -7,6 +7,7 @@ export abstract class Action {
   protected isStarted: boolean = false
   protected isCompletedFlag: boolean = false
   protected reason: string
+  protected elapsedTime: number = 0
   getBrainDump: () => BrainDump
   getEmitMethods: () => EmitInterface
 

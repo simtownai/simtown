@@ -25,7 +25,6 @@ export class TalkAction extends Action {
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
   private conversationTimeout: NodeJS.Timeout | null = null // for automatically timing out if no response after sending a message
-  private elapsedTime: number = 0
 
   private readonly MESSAGE_BUFFER_DELAY = 3000 // 3 seconds
   private readonly CHUNK_DELAY = 1000 // 1 second
