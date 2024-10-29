@@ -1,4 +1,4 @@
-import { ChatMessage, PlayerData, UpdatePlayerData } from "../../shared/types"
+import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -41,6 +41,7 @@ type AIBrainInterface = {
   getPlayerData: () => PlayerData
   config: NpcConfig
   getOtherPlayers: () => Map<string, PlayerData>
+  getNewsPaper: () => NewsItem[]
   getMovementController: () => MovementController
   setAndEmitPlayerData: (playerData: PlayerData) => void
   places: string[]
@@ -56,6 +57,7 @@ export class AIBrain {
   private places: string[]
   private getOtherPlayers: () => Map<string, PlayerData>
   private getPlayerData: () => PlayerData
+  private getNewsPaper: () => NewsItem[]
   private getMovementController: () => MovementController
   private setAndEmitPlayerData: (playerData: PlayerData) => void
   private getEmitMethods: () => EmitInterface
@@ -67,6 +69,7 @@ export class AIBrain {
     this.places = args.places
     this.getOtherPlayers = args.getOtherPlayers
     this.getPlayerData = args.getPlayerData
+    this.getNewsPaper = args.getNewsPaper
     this.setAndEmitPlayerData = args.setAndEmitPlayerData
     this.getMovementController = args.getMovementController
   }

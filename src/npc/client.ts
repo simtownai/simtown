@@ -1,5 +1,5 @@
 import mapData from "../../public/assets/maps/simple-map.json"
-import { ChatMessage, PlayerData, UpdatePlayerData } from "../shared/types"
+import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
@@ -12,12 +12,14 @@ export class NPC {
   aiBrain: AIBrain
   private playerData: PlayerData
   private otherPlayers: Map<string, PlayerData>
+  private newsPaper: NewsItem[]
   private lastUpdateTime: number
   private placesNames: string[]
   private socketManager: SocketManager
 
   constructor(private npcConfig: NpcConfig) {
     this.otherPlayers = new Map<string, PlayerData>()
+    this.newsPaper = []
     this.lastUpdateTime = Date.now()
     this.placesNames = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.map((obj) => obj.name)
     this.socketManager = new SocketManager({
@@ -29,6 +31,7 @@ export class NPC {
       onEndConversation: this.onEndConversation.bind(this),
       onPlayerLeft: this.onPlayerLeft.bind(this),
       onNewMessage: this.onNewMessage.bind(this),
+      onNews: this.onNews.bind(this),
     })
   }
 
@@ -49,6 +52,7 @@ export class NPC {
               config: this.npcConfig,
               getOtherPlayers: () => this.otherPlayers,
               getPlayerData: () => this.playerData,
+              getNewsPaper: () => this.newsPaper,
               getMovementController: () => this.movementController,
               places: this.placesNames,
               setAndEmitPlayerData: (playerData: PlayerData) => this.updateAndEmitPlayerData(playerData),
@@ -165,6 +169,12 @@ export class NPC {
         this.aiBrain.interruptCurrentActionAndExecuteNew(action)
       }
     }
+  }
+
+  onNews(news: NewsItem | NewsItem[]) {
+    const newsArray = Array.isArray(news) ? news : [news]
+    this.newsPaper = [...this.newsPaper, ...newsArray]
+    console.log("onNews", news)
   }
 
   sendMoveMessage(blockingPlayer: PlayerData) {

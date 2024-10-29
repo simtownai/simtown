@@ -41,7 +41,7 @@ const io = new Server(server, {
 })
 
 const players: Map<string, PlayerData> = new Map()
-const newsPaper: NewsItem[] = [{ date: new Date().toISOString(), message: "Welcome to the game!", place: "spawn" }]
+const newsPaper: NewsItem[] = []
 
 const spawnArea = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.find((obj) => obj.name === "spawn")!
 
