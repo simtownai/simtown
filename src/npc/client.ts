@@ -15,14 +15,14 @@ export class NPC {
   private otherPlayers: Map<string, PlayerData>
   private newsPaper: NewsItem[]
   private lastUpdateTime: number
-  private placesNames: string[]
+  private places: Map<string, { x: number; y: number }>
   private socketManager: SocketManager
 
   constructor(private npcConfig: NpcConfig) {
     this.otherPlayers = new Map<string, PlayerData>()
     this.newsPaper = []
     this.lastUpdateTime = Date.now()
-    this.placesNames = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.map((obj) => obj.name)
+    this.setupPlaces()
     this.socketManager = new SocketManager({
       username: this.npcConfig.username,
       spriteDefinition: this.npcConfig.spriteDefinition,
@@ -34,6 +34,7 @@ export class NPC {
       onNewMessage: this.onNewMessage.bind(this),
       onNews: this.onNews.bind(this),
       adjustDirection: this.adjustDirection.bind(this),
+      adjustDirectionPlace: this.adjustDirectionPlace.bind(this),
     })
   }
 
@@ -56,7 +57,7 @@ export class NPC {
               getPlayerData: () => this.playerData,
               getNewsPaper: () => this.newsPaper,
               getMovementController: () => this.movementController,
-              places: this.placesNames,
+              places: Array.from(this.places.keys()),
               getEmitMethods: () => this.socketManager.getEmitMethods(),
               adjustDirection: (username: string) => this.adjustDirection(username),
             })
@@ -118,6 +119,19 @@ export class NPC {
 
     const dx = otherPlayerData.x - this.playerData.x
     const dy = otherPlayerData.y - this.playerData.y
+
+    const direction = getDirection(dx, dy)
+
+    const animation = `${this.playerData.username}-idle-${direction}`
+    this.updateAndEmitPlayerData({ animation })
+  }
+
+  adjustDirectionPlace(place: string) {
+    const placeData = this.places.get(place)
+    if (!placeData) return
+
+    const dx = placeData.x - this.playerData.x
+    const dy = placeData.y - this.playerData.y
 
     const direction = getDirection(dx, dy)
 
@@ -203,6 +217,16 @@ export class NPC {
       content: message,
     })
     this.socketManager.emitSendMessage(replyMessage)
+  }
+
+  setupPlaces() {
+    const places = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
+
+    this.places = new Map(
+      places
+        .filter((obj) => !obj.name.endsWith("(podium)"))
+        .map((obj) => [obj.name, { x: obj.x + obj.width / 2, y: obj.y + obj.height / 2 }]),
+    )
   }
 
   private startUpdateLoop() {
