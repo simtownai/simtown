@@ -336,8 +336,10 @@ export class MovementController {
 
   private setIdleAnimation() {
     const playerData = this.getPlayerData()
-    const animation = this.getAnimation(playerData.username, 0, 0)
-    this.updateAndEmitPlayerData({ animation })
+    if (!playerData.animation.includes("idle")) {
+      const animation = this.getAnimation(playerData.username, 0, 0)
+      this.updateAndEmitPlayerData({ animation })
+    }
   }
 
   private getAnimation(username: string, deltaX: number, deltaY: number): string {
