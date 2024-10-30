@@ -1,6 +1,7 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
-import { calculateDistance, getTime, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import logger from "../shared/logger"
 import {
   BroadcastMessage,
   ChatMessage,
@@ -13,21 +14,7 @@ import {
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
-import pino from "pino"
 import { Server } from "socket.io"
-
-const logger = pino({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
-  transport:
-    process.env.NODE_ENV !== "production"
-      ? {
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-          },
-        }
-      : undefined,
-})
 
 const app = express()
 app.use(cors())
@@ -91,7 +78,7 @@ io.on("connection", (socket) => {
 
     players.set(playerId, playerData)
 
-    logger.info(`User ${socket.id} connected. Number of players: ${players.size}`)
+    logger.info(`User '${username}' connected. Number of players: ${players.size}`)
 
     socket.emit("existingPlayers", Array.from(players.values()))
     socket.emit("news", newsPaper)
@@ -135,7 +122,7 @@ io.on("connection", (socket) => {
         if (recipientSocket) {
           recipientSocket.emit("endConversation", message)
           const sender = players.get(playerId)!
-          emitOverhear(players, sender, message)
+          emitOverhear(players, sender, player, message)
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
         }
@@ -185,7 +172,7 @@ io.on("connection", (socket) => {
 
             // Overhear logic
             const sender = players.get(playerId)!
-            emitOverhear(players, sender, message)
+            emitOverhear(players, sender, player, message)
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
@@ -196,14 +183,21 @@ io.on("connection", (socket) => {
     }
   })
 
-  function emitOverhear(players: Map<string, PlayerData>, sender: PlayerData, message: ChatMessage) {
+  function emitOverhear(
+    players: Map<string, PlayerData>,
+    sender: PlayerData,
+    receiver: PlayerData,
+    message: ChatMessage,
+  ) {
     players.forEach((potentialOverhearPlayer) => {
       if (
         !potentialOverhearPlayer.isNPC &&
         potentialOverhearPlayer.username !== message.from &&
         potentialOverhearPlayer.username !== message.to &&
-        calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
-          CONFIG.INTERACTION_PROXIMITY_THRESHOLD
+        (calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+          CONFIG.INTERACTION_PROXIMITY_THRESHOLD ||
+          calculateDistance(receiver.x, receiver.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+            CONFIG.INTERACTION_PROXIMITY_THRESHOLD)
       ) {
         const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
         if (potentialOverhearSocket) {

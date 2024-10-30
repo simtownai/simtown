@@ -1,16 +1,32 @@
 # ToDo
 
-- (Szymon) give NPC's sense of time to prompt and add start time to the plan (maybe not need?)
+- (Szymon) hunt down TalkAction bugs
+- (Szymon) Split broadcast speech also by sensences, not by characters
+- (Szymon) give NPC's sense of time to prompt
+- (Szymon) Optimize prompts
+
+  - messages shorter
+  - `Donald 30/10/2024 03:14 PM **Donald Trump Speech Near the Church** Ladies and gentlemen, friends and supporters, Thank you`
+
+- (Alex) NPC logging (add time, loglevel, npcname, line of code)
+- (Alex) add the voting action
+  - once a day server emits voting news
+  - npcs have a voting action (go and emit msg)
+  - once evey NPC placed their vote server sends the result as news to everybody
+  - server resets votes
 - (Alex) manage map completion
   - walk behind the bushes
-- (Alex) Separate area for broadcaster and listeners:
-  - rotate broadcaster to center of listening area (socketmanager)
-- (Alex) end NPC movement only on grid
+- (Alex) player rotations
+  - rotate to whom you are sending messages
+  - rotate to incoming messages if idle
+- (Alex) `generatePlanAndSetActions` create new action queue and algorithmically merge the two plans, then insert actions
+  - this should fix multiple broadcasting emits after resume, because we regenerated the same broadcast task after dialogue and reflection and technically it's a new task
 - (Alex) player can only write to NPC if within range
 
+- add start time to the plan (maybe not need?)
+- move action sometimes fails without emitting that it was over
+- end NPC movement only on grid
 - `emitUpdatePlayerData` sends new state to everybody but doesn't update player itself
-- When NPC initiate broadcast action they can do it multiple times
-- Optimize prompts
 - log everything to database
   - NPC's state
   - messages

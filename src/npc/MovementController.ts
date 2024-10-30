@@ -1,5 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { getDirection, gridToWorld, worldToGrid } from "../shared/functions"
+import logger from "../shared/logger"
 import { GridPosition, MoveTarget, PlayerData, UpdatePlayerData } from "../shared/types"
 import EasyStar from "easystarjs"
 
@@ -58,7 +59,7 @@ export class MovementController {
     } else if (moveTarget.targetType === "person") {
       const player = this.getOtherPlayers().get(moveTarget.name)
       if (!player) {
-        console.error("Couldn't find that player")
+        console.error(`${this.getPlayerData().username} couldn't find ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
@@ -68,44 +69,45 @@ export class MovementController {
 
       const bestAdjacentPosition = this.findBestAdjacentPosition(playerGridPos, playerData)
       if (!bestAdjacentPosition) {
-        console.error("Couldn't find a valid adjacent position")
+        console.error(`${this.getPlayerData().username} couldn't find a path to ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
       targetPosition = bestAdjacentPosition
     } else if (moveTarget.targetType === "place") {
-      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      const place = this.getPlace(moveTarget.name)
       if (!place) {
-        console.error("Couldn't find that place")
+        console.error(`${this.getPlayerData().username} couldn't find ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
 
       const availablePositions = this.findAvailablePositionsInPlace(place)
       if (availablePositions.length === 0) {
-        console.error("No available positions in place")
+        console.error(`${this.getPlayerData().username} couldn't find a path to ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
 
-      // Choose random position from available positions
       targetPosition = availablePositions[Math.floor(Math.random() * availablePositions.length)]
     }
 
     try {
       const startPostion = worldToGrid(playerData.x, playerData.y)
       if (JSON.stringify(startPostion) === JSON.stringify(targetPosition)) {
-        console.log("Already at target position")
+        console.log(`${this.getPlayerData().username} is already at the target position ${targetPosition}`)
         this.handleMovementCompleted()
         return
       }
       const foundPath = await this.calculatePath(startPostion, targetPosition, false)
       if (!foundPath || foundPath.length === 0) {
-        throw new Error("Couldn't find path")
+        throw new Error(
+          `${this.getPlayerData().username} couldn't find a path to the target position ${targetPosition}`,
+        )
       }
 
       this.setPath(foundPath, targetPosition)
-      return "Moving to target position"
+      return `${this.getPlayerData().username} is moving to ${moveTarget}`
     } catch (error) {
       console.error("Error in move_to:", error)
       return "Couldn't move there, those numbers are not valid coordinates"
@@ -146,7 +148,9 @@ export class MovementController {
           )
 
           if (distanceMoved > this.pathRecalculationThreshold) {
-            console.log("Target moved significantly, recalculating path.")
+            // logger.warn(
+            //   `(${this.getPlayerData().username}) target person '${this.currentMoveTarget.name}' moved significantly, recalculating path.`,
+            // )
             this.lastKnownTargetPosition = { x: player.x, y: player.y }
             this.lastPathRecalculationTime = currentTime
             this.initiateMovement(this.currentMoveTarget)
@@ -241,7 +245,7 @@ export class MovementController {
     }
 
     if (moveTarget.targetType === "place") {
-      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      const place = this.getPlace(moveTarget.name)
       if (!place) return true // Consider reached if place no longer exists
 
       const minGridPos = worldToGrid(place.x + 1, place.y + 1)
@@ -256,6 +260,14 @@ export class MovementController {
     }
 
     return false
+  }
+
+  private getPlace(name: string): NonNullable<(typeof mapData.layers)[0]["objects"]>[number] | undefined {
+    let place = this.objectLayer!.find((obj) => obj.name === name)
+    if (!place) {
+      place = this.objectLayer!.find((obj) => obj.name === name.replace(" (podium)", ""))
+    }
+    return place
   }
 
   private findAvailablePositionsInPlace(

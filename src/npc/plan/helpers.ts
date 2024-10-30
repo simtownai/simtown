@@ -1,4 +1,5 @@
 import { getTime } from "../../shared/functions"
+import logger from "../../shared/logger"
 import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
@@ -120,8 +121,8 @@ export const convertGeneratedPlanToActions = (
           name: actionData.name,
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          console.log(
-            "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
+          logger.info(
+            `(${getBrainDump().playerData.username}) far from player '${actionData.name}', moving there before '${actionData.type}'`,
           )
           return [
             new MoveAction(
@@ -145,11 +146,11 @@ export const convertGeneratedPlanToActions = (
         })
         supportingMoveTarget = {
           targetType: "place",
-          name: actionData.targetPlace,
+          name: actionData.targetPlace + " (podium)",
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          console.log(
-            "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
+          logger.info(
+            `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
           )
           return [
             new MoveAction(
@@ -174,8 +175,8 @@ export const convertGeneratedPlanToActions = (
           name: actionData.targetPlace,
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          console.log(
-            "We are not close to the target place, so before we initialize the listen action, we need to move towards it.",
+          logger.info(
+            `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
           )
           return [
             new MoveAction(

@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
@@ -80,14 +81,15 @@ export class AIBrain {
 
   async generatePlanAndSetActions() {
     try {
-      const initialPlanData = await generatePlanForTheday(this.getStringifiedBrainDump())
-      const movementController = this.getMovementController()
-
+      const currentPlanData = convertActionsToGeneratedPlan(this.actionQueue)
+      const newPlanData = await generatePlanForTheday(this.getStringifiedBrainDump())
+      // ToDo: calculate diffs of plans, generate new actions for what is not there already,
+      // and insert actions from actions queue
       this.actionQueue = convertGeneratedPlanToActions(
-        initialPlanData,
+        newPlanData,
         this.getBrainDump,
         this.getEmitMethods,
-        movementController,
+        this.getMovementController(),
         this.adjustDirection,
       )
     } catch (error) {
@@ -198,6 +200,7 @@ export class AIBrain {
     }
 
     this.currentAction = nextAction
+    logger.warn(`(${this.getPlayerData().username}) starting next action:`, nextAction.constructor.name)
 
     this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),

@@ -29,6 +29,7 @@ export type SocketManagerConfig = {
   onNewMessage: (message: ChatMessage) => void
   onNews: (news: NewsItem | NewsItem[]) => void
   adjustDirection: (username: string) => void
+  adjustDirectionPlace: (place: string) => void
 }
 
 export class SocketManager {
@@ -41,6 +42,7 @@ export class SocketManager {
   private onNewMessage: (message: ChatMessage) => void
   private onNews: (news: NewsItem | NewsItem[]) => void
   private adjustDirection: (username: string) => void
+  private adjustDirectionPlace: (place: string) => void
   constructor(args: SocketManagerConfig) {
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.setupPlayers = args.setupPlayers
@@ -51,6 +53,7 @@ export class SocketManager {
     this.onNewMessage = args.onNewMessage
     this.onNews = args.onNews
     this.adjustDirection = args.adjustDirection
+    this.adjustDirectionPlace = args.adjustDirectionPlace
     setTimeout(() => {
       this.setupSocketEvents()
       this.socket.connect()
@@ -104,7 +107,7 @@ export class SocketManager {
     this.socket.emit("sendMessage", message)
   }
   emitBroadcast(message: BroadcastMessage) {
-    // TODO: adjust direction to broadcast center
+    this.adjustDirectionPlace(message.place)
     this.socket.emit("broadcast", message)
   }
   emitNewsItem(newsItem: NewsItem) {
