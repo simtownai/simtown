@@ -122,7 +122,7 @@ export const convertGeneratedPlanToActions = (
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
           console.log(
-            "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
+            `${getBrainDump().playerData.username} is not close to the ${supportingMoveTarget.name}, so before we initialize the broadcast action, we need to move towards it.`,
           )
           return [
             new MoveAction(
