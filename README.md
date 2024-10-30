@@ -1,7 +1,6 @@
 # ToDo
 
 - (Szymon) hunt down TalkAction bugs
-- (Szymon) Split broadcast speech also by sensences, not by characters
 - (Szymon) give NPC's sense of time to prompt
 - (Szymon) Optimize prompts
 

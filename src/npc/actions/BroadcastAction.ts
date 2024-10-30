@@ -9,8 +9,8 @@ import { Action } from "./Action"
 export class BroadcastAction extends Action {
   broadcastContent: string = ""
   private broadcastInterval: NodeJS.Timeout | null = null
-  private broadcastIndex: number = 0
-  private chunkSize: number = 100 // Characters per chunk
+  private sentences: string[] = []
+  private sentenceIndex: number = 0
   targetPlace: string
 
   constructor(
@@ -38,25 +38,36 @@ export class BroadcastAction extends Action {
       })
 
       this.broadcastContent = completion.choices[0].message.content || ""
+      this.sentences = this.splitIntoSentences(this.broadcastContent)
     } catch (error) {
       logger.error("Error generating broadcast content:", error)
       this.broadcastContent = "Error generating broadcast content."
+      this.sentences = [this.broadcastContent]
+    }
+  }
+
+  private splitIntoSentences(text: string): string[] {
+    const sentences = text.match(/[^\.!\?]+[\.!\?]+/g)
+    if (sentences) {
+      return sentences.map((sentence) => sentence.trim())
+    } else {
+      return [text]
     }
   }
 
   private startBroadcasting(): void {
     this.broadcastInterval = setInterval(() => {
-      if (this.broadcastIndex >= this.broadcastContent.length) {
+      if (this.sentenceIndex >= this.sentences.length) {
         this.endBroadcast()
         return
       }
 
-      const chunk = this.broadcastContent.slice(this.broadcastIndex, this.broadcastIndex + this.chunkSize)
-      this.broadcastIndex += this.chunkSize
+      const sentence = this.sentences[this.sentenceIndex]
+      this.sentenceIndex += 1
 
       const broadcastMessage: BroadcastMessage = {
         from: this.getBrainDump().playerData.username,
-        message: chunk,
+        message: sentence,
         place: this.targetPlace,
         date: new Date().toISOString(),
       }
