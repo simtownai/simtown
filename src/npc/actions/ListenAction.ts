@@ -15,6 +15,7 @@ export class ListenAction extends Action {
     getEmitMethods: () => EmitInterface,
     targetPlace: string,
     reason: string = "",
+    private adjustDirection: (username: string) => void,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.targetPlace = targetPlace
@@ -41,6 +42,7 @@ export class ListenAction extends Action {
   private handleBroadcast(message: ChatMessage): void {
     if (this.getBrainDump().currentAction instanceof ListenAction) {
       this.resetListenTimeout()
+      this.adjustDirection(message.from)
       this.accumulatedBroadcast += message.message
       console.log(`${this.getBrainDump().playerData.username} received broadcast: ${message.message}`)
     }

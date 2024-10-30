@@ -52,6 +52,16 @@ export function formatDate(date: Date) {
   }
 }
 
+export function getDirection(deltaX: number, deltaY: number): "left" | "right" | "up" | "down" {
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    // Horizontal movement
+    return deltaX > 0 ? "right" : "left"
+  } else {
+    // Vertical movement
+    return deltaY > 0 ? "down" : "up"
+  }
+}
+
 export function formatTimeAMPM(date: Date) {
   let hours = date.getHours()
   const minutes = date.getMinutes()

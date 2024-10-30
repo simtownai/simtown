@@ -46,7 +46,6 @@ export class TalkAction extends Action {
     reason: string = "",
     private targetPlayerUsername: string,
     private conversationType: ConversationType,
-    private adjustDirection: (username: string) => void,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.tools = [this.endConversationTool]

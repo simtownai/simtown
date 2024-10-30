@@ -75,6 +75,7 @@ export const convertGeneratedPlanToActions = (
   getEmitMethods: () => EmitInterface,
   movementController: MovementController,
   setAndEmitPlayerData: (playerData: PlayerData) => void,
+  adjustDirection: (username: string) => void,
 ): Action[] => {
   return planData.flatMap((actionData: GeneratedAction) => {
     let supportingMoveTarget: MoveTarget
@@ -86,16 +87,7 @@ export const convertGeneratedPlanToActions = (
           ? new MoveAction(getBrainDump, getEmitMethods, movementController, setAndEmitPlayerData, actionData.target)
           : []
       case "talk":
-        const talkAction = new TalkAction(
-          getBrainDump,
-          getEmitMethods,
-          "",
-          actionData.name,
-          { type: "new" },
-          (username) => {
-            movementController.adjustDirection(username)
-          },
-        )
+        const talkAction = new TalkAction(getBrainDump, getEmitMethods, "", actionData.name, { type: "new" })
 
         supportingMoveTarget = {
           targetType: "person",
@@ -150,7 +142,9 @@ export const convertGeneratedPlanToActions = (
 
         return broadcastAction
       case "listen":
-        const listenAction = new ListenAction(getBrainDump, getEmitMethods, actionData.targetPlace)
+        const listenAction = new ListenAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", (username) => {
+          adjustDirection(username)
+        })
         supportingMoveTarget = {
           targetType: "place",
           name: actionData.targetPlace,

@@ -1,5 +1,5 @@
 import mapData from "../../public/assets/maps/simple-map.json"
-import { gridToWorld, worldToGrid } from "../shared/functions"
+import { getDirection, gridToWorld, worldToGrid } from "../shared/functions"
 import { GridPosition, MoveTarget, PlayerData, UpdatePlayerData } from "../shared/types"
 import EasyStar from "easystarjs"
 
@@ -45,20 +45,6 @@ export class MovementController {
 
   setMovementFailedCallback(callback: () => void) {
     this.onMovementFailed = callback
-  }
-
-  adjustDirection(username: string) {
-    const playerData = this.getPlayerData()
-    const otherPlayerData = this.getOtherPlayers().get(username)
-    if (!otherPlayerData) return
-
-    const dx = otherPlayerData.x - playerData.x
-    const dy = otherPlayerData.y - playerData.y
-
-    const direction = this.getDirection(dx, dy)
-
-    const animation = `${playerData.username}-idle-${direction}`
-    this.updateAndEmitPlayerData({ animation })
   }
 
   async initiateMovement(moveTarget: MoveTarget) {
@@ -359,22 +345,12 @@ export class MovementController {
     const isMoving = Math.abs(deltaX) > tinyMovementThreshold || Math.abs(deltaY) > tinyMovementThreshold
 
     if (isMoving) {
-      const direction = this.getDirection(deltaX, deltaY)
+      const direction = getDirection(deltaX, deltaY)
       this.lastDirection = direction
       return `${username}-walk-${direction}`
     } else {
       // Use the lastDirection for idle animation
       return `${username}-idle-${this.lastDirection}`
-    }
-  }
-
-  private getDirection(deltaX: number, deltaY: number): "left" | "right" | "up" | "down" {
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      // Horizontal movement
-      return deltaX > 0 ? "right" : "left"
-    } else {
-      // Vertical movement
-      return deltaY > 0 ? "down" : "up"
     }
   }
 

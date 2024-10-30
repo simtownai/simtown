@@ -1,4 +1,5 @@
 import mapData from "../../public/assets/maps/simple-map.json"
+import { getDirection } from "../shared/functions"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
@@ -32,6 +33,7 @@ export class NPC {
       onPlayerLeft: this.onPlayerLeft.bind(this),
       onNewMessage: this.onNewMessage.bind(this),
       onNews: this.onNews.bind(this),
+      adjustDirection: this.adjustDirection.bind(this),
     })
   }
 
@@ -57,6 +59,7 @@ export class NPC {
               places: this.placesNames,
               setAndEmitPlayerData: (playerData: PlayerData) => this.updateAndEmitPlayerData(playerData),
               getEmitMethods: () => this.socketManager.getEmitMethods(),
+              adjustDirection: (username: string) => this.adjustDirection(username),
             })
 
             this.aiBrain.generatePlanAndSetActions()
@@ -70,14 +73,17 @@ export class NPC {
       }
     })
   }
+
   onPlayerDataChanged(player: PlayerData) {
     if (player.username !== this.npcConfig.username) {
       this.otherPlayers.set(player.username, player)
     }
   }
+
   onEndConversation(message: ChatMessage) {
     console.log("onEndConversation", message)
     if (message.to === this.npcConfig.username) {
+      this.adjustDirection(message.from)
       this.aiBrain.addChatMessage(message.from, message)
       this.aiBrain.addAIMessage(message.from, {
         role: "user",
@@ -107,6 +113,19 @@ export class NPC {
     }
   }
 
+  adjustDirection(username: string) {
+    const otherPlayerData = this.otherPlayers.get(username)
+    if (!otherPlayerData) return
+
+    const dx = otherPlayerData.x - this.playerData.x
+    const dy = otherPlayerData.y - this.playerData.y
+
+    const direction = getDirection(dx, dy)
+
+    const animation = `${this.playerData.username}-idle-${direction}`
+    this.updateAndEmitPlayerData({ animation })
+  }
+
   updateAndEmitPlayerData(updatePlayerData: UpdatePlayerData) {
     this.playerData = { ...this.playerData, ...updatePlayerData }
     this.socketManager.emitUpdatePlayerData(updatePlayerData)
@@ -115,6 +134,7 @@ export class NPC {
   onNewMessage(message: ChatMessage) {
     if (message.to === this.npcConfig.username) {
       // Check if we're already in a TalkAction with this person
+      this.adjustDirection(message.from)
       const currentAction = this.aiBrain.getCurrentAction()
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
@@ -140,9 +160,6 @@ export class NPC {
             type: "existing",
             message: message,
           },
-          (username) => {
-            this.movementController.adjustDirection(username)
-          },
         )
         const refusalMessage: ChatMessage = {
           to: message.from,
@@ -162,9 +179,6 @@ export class NPC {
             type: "existing",
             message: message,
           },
-          (username) => {
-            this.movementController.adjustDirection(username)
-          },
         )
         this.aiBrain.interruptCurrentActionAndExecuteNew(action)
       }
@@ -177,17 +191,17 @@ export class NPC {
   }
 
   sendMoveMessage(blockingPlayer: PlayerData) {
+    const message = `Hey ${blockingPlayer.username}, you're blocking my path.`
     const replyMessage: ChatMessage = {
       from: this.playerData.username,
       to: blockingPlayer.username,
-      message: "Please move, you're blocking my path.",
+      message: message,
       date: new Date().toISOString(),
     }
-
     this.aiBrain.addChatMessage(blockingPlayer.username, replyMessage)
     this.aiBrain.addAIMessage(blockingPlayer.username, {
       role: "assistant",
-      content: "Please move, you're blocking my path.",
+      content: message,
     })
     this.socketManager.emitSendMessage(replyMessage)
   }

@@ -48,6 +48,7 @@ type AIBrainInterface = {
   setAndEmitPlayerData: (playerData: PlayerData) => void
   places: string[]
   getEmitMethods: () => EmitInterface
+  adjustDirection: (username: string) => void
 }
 
 export class AIBrain {
@@ -63,6 +64,7 @@ export class AIBrain {
   private getMovementController: () => MovementController
   private setAndEmitPlayerData: (playerData: PlayerData) => void
   private getEmitMethods: () => EmitInterface
+  private adjustDirection: (username: string) => void
 
   constructor(args: AIBrainInterface) {
     this.getEmitMethods = args.getEmitMethods
@@ -74,6 +76,7 @@ export class AIBrain {
     this.getNewsPaper = args.getNewsPaper
     this.setAndEmitPlayerData = args.setAndEmitPlayerData
     this.getMovementController = args.getMovementController
+    this.adjustDirection = args.adjustDirection
   }
 
   async generatePlanAndSetActions() {
@@ -90,6 +93,7 @@ export class AIBrain {
         this.getEmitMethods,
         movementController,
         this.setAndEmitPlayerData,
+        this.adjustDirection,
       )
     } catch (error) {
       console.error("Error generating new plan:", error)
