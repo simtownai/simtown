@@ -65,15 +65,22 @@ const MoveToPlaceTargetSchema = z.object({
   name: z.string(),
 })
 export type MoveTargetPlace = z.infer<typeof MoveToPlaceTargetSchema>
+
+const GeneratedMoveTargetSchema = z.discriminatedUnion("targetType", [
+  MoveToCoordinatesTargetSchema,
+  MoveToPlaceTargetSchema,
+])
+
 const MoveTargetSchema = z.discriminatedUnion("targetType", [
   MoveToCoordinatesTargetSchema,
   MoveToPersonTargetSchema,
   MoveToPlaceTargetSchema,
 ])
 export type MoveTarget = z.infer<typeof MoveTargetSchema>
+
 const MoveSchema = z.object({
   type: z.literal("move"),
-  target: MoveTargetSchema,
+  target: GeneratedMoveTargetSchema,
 })
 
 const TalkSchema = z.object({

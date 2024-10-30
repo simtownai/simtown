@@ -42,14 +42,6 @@ const validateActions = (
           )} are available`,
         }
       }
-      if (action.target.targetType === "person" && !playerNames.includes(action.target.name)) {
-        return {
-          isValid: false,
-          error: `Invalid person ${JSON.stringify(action.target.name)} for the move action. Only ${JSON.stringify(
-            playerNames,
-          )} are available`,
-        }
-      }
     }
     if (action.type === "talk" && !playerNames.includes(action.name)) {
       return {

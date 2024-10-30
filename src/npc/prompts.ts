@@ -19,7 +19,7 @@ ${reflections.currentPlan}
 
 **Constraints**:
 - You can choose to **keep**, **modify**, or **discard** the existing planned actions.
-- You can only talk or move to existing players or locations.
+- You can only talk to existing players and  move to existing places or coordinates.
 - You should not repeat the same action twice in a row (so if your reflections contain talking to a given person, you should not talk to them again in the next action, same for moving to a place)
 
 **Instructions**:

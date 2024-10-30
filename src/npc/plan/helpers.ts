@@ -26,7 +26,7 @@ export const convertActionToGeneratedAction = (action: Action): GeneratedAction 
           y: target.y,
         },
       }
-    } else if (target.targetType === "person" || target.targetType === "place") {
+    } else if (target.targetType === "place") {
       return {
         type: "move",
         target: {
