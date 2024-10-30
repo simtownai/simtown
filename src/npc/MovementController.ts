@@ -1,5 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { getDirection, gridToWorld, worldToGrid } from "../shared/functions"
+import logger from "../shared/logger"
 import { GridPosition, MoveTarget, PlayerData, UpdatePlayerData } from "../shared/types"
 import EasyStar from "easystarjs"
 
@@ -147,7 +148,9 @@ export class MovementController {
           )
 
           if (distanceMoved > this.pathRecalculationThreshold) {
-            console.log("Target moved significantly, recalculating path.")
+            // logger.warn(
+            //   `(${this.getPlayerData().username}) target person '${this.currentMoveTarget.name}' moved significantly, recalculating path.`,
+            // )
             this.lastKnownTargetPosition = { x: player.x, y: player.y }
             this.lastPathRecalculationTime = currentTime
             this.initiateMovement(this.currentMoveTarget)

@@ -1,5 +1,6 @@
 import mapData from "../../public/assets/maps/simple-map.json"
 import { getDirection } from "../shared/functions"
+import logger from "../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
@@ -48,6 +49,8 @@ export class NPC {
           this.sendMoveMessage.bind(this),
           (playerData: UpdatePlayerData) => this.updateAndEmitPlayerData(playerData),
         )
+
+        logger.info(`(${this.npcConfig.username}) NPC initialized`)
 
         setTimeout(async () => {
           try {

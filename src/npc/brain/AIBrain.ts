@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
@@ -192,7 +193,7 @@ export class AIBrain {
     }
 
     this.currentAction = nextAction
-    console.error("Starting next action:", nextAction.constructor.name)
+    logger.warn(`(${this.getPlayerData().username}) starting next action:`, nextAction.constructor.name)
 
     this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
