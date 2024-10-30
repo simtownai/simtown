@@ -74,7 +74,7 @@ export class MovementController {
       }
       targetPosition = bestAdjacentPosition
     } else if (moveTarget.targetType === "place") {
-      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      const place = this.getPlace(moveTarget.name)
       if (!place) {
         console.error(`${this.getPlayerData().username} couldn't find ${moveTarget.name}`)
         this.handleMovementCompleted()
@@ -242,7 +242,7 @@ export class MovementController {
     }
 
     if (moveTarget.targetType === "place") {
-      const place = this.objectLayer!.find((obj) => obj.name === moveTarget.name)
+      const place = this.getPlace(moveTarget.name)
       if (!place) return true // Consider reached if place no longer exists
 
       const minGridPos = worldToGrid(place.x + 1, place.y + 1)
@@ -257,6 +257,14 @@ export class MovementController {
     }
 
     return false
+  }
+
+  private getPlace(name: string): NonNullable<(typeof mapData.layers)[0]["objects"]>[number] | undefined {
+    let place = this.objectLayer!.find((obj) => obj.name === name)
+    if (!place) {
+      place = this.objectLayer!.find((obj) => obj.name === name.replace(" (podium)", ""))
+    }
+    return place
   }
 
   private findAvailablePositionsInPlace(

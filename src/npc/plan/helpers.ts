@@ -118,7 +118,7 @@ export const convertGeneratedPlanToActions = (
         })
         supportingMoveTarget = {
           targetType: "place",
-          name: actionData.targetPlace,
+          name: actionData.targetPlace + " (podium)",
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
           console.log(
