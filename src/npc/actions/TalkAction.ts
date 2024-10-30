@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { ChatMessage } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
@@ -131,18 +132,16 @@ export class TalkAction extends Action {
     const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
     this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
     this.getBrainDump().closeThread(this.targetPlayerUsername)
-    console.error("Sending END CONVERSATION", reason)
-    console.log("Got threads")
     const threads = this.getBrainDump().conversations.threads
-    console.log("Current player is", this.getBrainDump().playerData.username)
+    logger.debug("Current player is", this.getBrainDump().playerData.username)
     for (const thread of threads) {
       const playerId = thread[0]
       const messages = thread[1]
-      console.log("Player id", playerId)
+      logger.debug("Player id", playerId)
       for (const message of messages) {
-        console.log("Finsihed is", message.finished)
-        console.log(message.aiMessages)
-        console.log(message.messages)
+        logger.debug("Finsihed is", message.finished)
+        logger.debug(message.aiMessages)
+        logger.debug(message.messages)
       }
     }
 
@@ -219,7 +218,7 @@ export class TalkAction extends Action {
     }
     this.incomingMessageState.responseTimer = setTimeout(() => {
       this.processBufferedMessages().catch((error) => {
-        console.error("Error processing buffered messages:", error)
+        logger.error("Error processing buffered messages:", error)
       })
     }, this.MESSAGE_BUFFER_DELAY)
   }

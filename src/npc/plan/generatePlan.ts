@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { ActionPlanSchema, GeneratedActionPlan } from "../../shared/types"
 import { StringifiedBrainDump } from "../brain/AIBrain"
 import client from "../openai/openai"
@@ -89,7 +90,7 @@ export const generatePlanForTheday = async (
     errorMessage = validation.error || ""
     if (!isValid) {
       messages.push({ role: "system", content: errorMessage })
-      console.error("Invalid plan, retrying...", errorMessage)
+      logger.error("Invalid plan, retrying...", errorMessage)
     }
     if (isValid) {
       return plan

@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { BroadcastMessage } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
@@ -38,7 +39,7 @@ export class BroadcastAction extends Action {
 
       this.broadcastContent = completion.choices[0].message.content || ""
     } catch (error) {
-      console.error("Error generating broadcast content:", error)
+      logger.error("Error generating broadcast content:", error)
       this.broadcastContent = "Error generating broadcast content."
     }
   }

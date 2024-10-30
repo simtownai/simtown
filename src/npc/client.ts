@@ -68,7 +68,7 @@ export class NPC {
             this.aiBrain.generatePlanAndSetActions()
             this.startUpdateLoop()
           } catch (error) {
-            console.error("Error generating plan for the day:", error)
+            logger.error("Error generating plan for the day:", error)
           }
         }, 5000)
       } else {
@@ -98,18 +98,16 @@ export class NPC {
       this.aiBrain.closeThread(message.from)
     }
 
-    console.error("RECEIVED END CONVERSATION")
-    console.log("Got threads")
     const threads = this.aiBrain.getBrainDump().conversations.threads
-    console.log("Current player is", this.playerData.username)
+    logger.debug("Current player is", this.playerData.username)
     for (const thread of threads) {
       const playerId = thread[0]
       const messages = thread[1]
       console.log("Player id", playerId)
       for (const message of messages) {
-        console.log("Finsihed is", message.finished)
-        console.log(message.aiMessages)
-        console.log(message.messages)
+        logger.debug("Finsihed is", message.finished)
+        logger.debug(message.aiMessages)
+        logger.debug(message.messages)
       }
     }
   }

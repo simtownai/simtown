@@ -93,7 +93,7 @@ export class AIBrain {
         this.adjustDirection,
       )
     } catch (error) {
-      console.error("Error generating new plan:", error)
+      logger.error("Error generating new plan:", error)
     }
   }
 
@@ -245,7 +245,7 @@ export class AIBrain {
       // Start the next action
       await this.startNextAction()
     } catch (error) {
-      console.error("Error during action completion:", error)
+      logger.error("Error during action completion:", error)
       this.currentAction = null
     }
   }
