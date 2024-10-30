@@ -135,7 +135,7 @@ io.on("connection", (socket) => {
         if (recipientSocket) {
           recipientSocket.emit("endConversation", message)
           const sender = players.get(playerId)!
-          emitOverhear(players, sender, message)
+          emitOverhear(players, sender, player, message)
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
         }
@@ -185,7 +185,7 @@ io.on("connection", (socket) => {
 
             // Overhear logic
             const sender = players.get(playerId)!
-            emitOverhear(players, sender, message)
+            emitOverhear(players, sender, player, message)
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
@@ -196,14 +196,21 @@ io.on("connection", (socket) => {
     }
   })
 
-  function emitOverhear(players: Map<string, PlayerData>, sender: PlayerData, message: ChatMessage) {
+  function emitOverhear(
+    players: Map<string, PlayerData>,
+    sender: PlayerData,
+    receiver: PlayerData,
+    message: ChatMessage,
+  ) {
     players.forEach((potentialOverhearPlayer) => {
       if (
         !potentialOverhearPlayer.isNPC &&
         potentialOverhearPlayer.username !== message.from &&
         potentialOverhearPlayer.username !== message.to &&
-        calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
-          CONFIG.INTERACTION_PROXIMITY_THRESHOLD
+        (calculateDistance(sender.x, sender.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+          CONFIG.INTERACTION_PROXIMITY_THRESHOLD ||
+          calculateDistance(receiver.x, receiver.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
+            CONFIG.INTERACTION_PROXIMITY_THRESHOLD)
       ) {
         const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
         if (potentialOverhearSocket) {
