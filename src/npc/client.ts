@@ -57,7 +57,6 @@ export class NPC {
               getNewsPaper: () => this.newsPaper,
               getMovementController: () => this.movementController,
               places: this.placesNames,
-              setAndEmitPlayerData: (playerData: PlayerData) => this.updateAndEmitPlayerData(playerData),
               getEmitMethods: () => this.socketManager.getEmitMethods(),
               adjustDirection: (username: string) => this.adjustDirection(username),
             })

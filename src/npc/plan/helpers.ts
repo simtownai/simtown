@@ -74,7 +74,6 @@ export const convertGeneratedPlanToActions = (
   getBrainDump: () => BrainDump,
   getEmitMethods: () => EmitInterface,
   movementController: MovementController,
-  setAndEmitPlayerData: (playerData: PlayerData) => void,
   adjustDirection: (username: string) => void,
 ): Action[] => {
   return planData.flatMap((actionData: GeneratedAction) => {
@@ -84,7 +83,7 @@ export const convertGeneratedPlanToActions = (
         return new IdleAction(getBrainDump, getEmitMethods, actionData.activityType)
       case "move":
         return !movementController.ifMoveTargetReached(actionData.target)
-          ? new MoveAction(getBrainDump, getEmitMethods, movementController, setAndEmitPlayerData, actionData.target)
+          ? new MoveAction(getBrainDump, getEmitMethods, movementController, actionData.target)
           : []
       case "talk":
         const talkAction = new TalkAction(getBrainDump, getEmitMethods, "", actionData.name, { type: "new" })
@@ -102,7 +101,6 @@ export const convertGeneratedPlanToActions = (
               getBrainDump,
               getEmitMethods,
               movementController,
-              setAndEmitPlayerData,
               supportingMoveTarget,
               "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
               false,
@@ -131,7 +129,6 @@ export const convertGeneratedPlanToActions = (
               getBrainDump,
               getEmitMethods,
               movementController,
-              setAndEmitPlayerData,
               supportingMoveTarget,
               "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
               false,
@@ -158,7 +155,6 @@ export const convertGeneratedPlanToActions = (
               getBrainDump,
               getEmitMethods,
               movementController,
-              setAndEmitPlayerData,
               supportingMoveTarget,
               "We are not close to the target place, so before we initialize the listen action, we need to move towards it.",
               false,

@@ -45,7 +45,6 @@ type AIBrainInterface = {
   getOtherPlayers: () => Map<string, PlayerData>
   getNewsPaper: () => NewsItem[]
   getMovementController: () => MovementController
-  setAndEmitPlayerData: (playerData: PlayerData) => void
   places: string[]
   getEmitMethods: () => EmitInterface
   adjustDirection: (username: string) => void
@@ -62,7 +61,6 @@ export class AIBrain {
   private getPlayerData: () => PlayerData
   private getNewsPaper: () => NewsItem[]
   private getMovementController: () => MovementController
-  private setAndEmitPlayerData: (playerData: PlayerData) => void
   private getEmitMethods: () => EmitInterface
   private adjustDirection: (username: string) => void
 
@@ -74,7 +72,6 @@ export class AIBrain {
     this.getOtherPlayers = args.getOtherPlayers
     this.getPlayerData = args.getPlayerData
     this.getNewsPaper = args.getNewsPaper
-    this.setAndEmitPlayerData = args.setAndEmitPlayerData
     this.getMovementController = args.getMovementController
     this.adjustDirection = args.adjustDirection
   }
@@ -92,7 +89,6 @@ export class AIBrain {
         this.getBrainDump,
         this.getEmitMethods,
         movementController,
-        this.setAndEmitPlayerData,
         this.adjustDirection,
       )
     } catch (error) {

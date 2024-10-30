@@ -1,5 +1,5 @@
 import { CONFIG } from "../../shared/config"
-import { MoveTarget, PlayerData } from "../../shared/types"
+import { MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
@@ -13,13 +13,11 @@ export class MoveAction extends Action {
   pathRecalculationInterval: number = 500 // Minimum time between path recalculations in ms
   lastPathRecalculationTime: number = 0
   movementController: MovementController
-  setAndEmitPlayerData: (playerData: PlayerData) => void
 
   constructor(
     getBrainDump: () => BrainDump,
     getEmitMethods: () => EmitInterface,
     movementController: MovementController,
-    setAndEmitPlayerData: (playerData: PlayerData) => void,
     moveTarget: MoveTarget,
     reason: string = "",
     shouldReflect: boolean = true,
@@ -27,7 +25,6 @@ export class MoveAction extends Action {
     super(getBrainDump, getEmitMethods, reason, shouldReflect)
     this.moveTarget = moveTarget
     this.movementController = movementController
-    this.setAndEmitPlayerData = setAndEmitPlayerData
   }
 
   async start() {
