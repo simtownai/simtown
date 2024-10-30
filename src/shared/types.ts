@@ -5,7 +5,7 @@ export type PlayerSpriteDefinition = {
   eyes: "Eyes_01" | "Eyes_02" | "Eyes_03" | "Eyes_04" | "Eyes_05" | "Eyes_06" | "Eyes_07"
   outfit: `Outfit_${number}_${number}`
   hairstyle: `Hairstyle_${number}_${number}`
-  accessory?: `Accessory_${number}_${string}_${number}`
+  accessory?: `Accessory_${number}_${string}_${number}` | `Accessory_${number}_${string}_${string}_${number}`
   book?: "Book_01" | "Book_02" | "Book_03" | "Book_04" | "Book_05" | "Book_06"
 }
 
