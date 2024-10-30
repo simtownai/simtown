@@ -1,46 +1,30 @@
 # ToDo
 
+- (Szymon) NPC's approaching player and each other to talk but not actually talk
 - (Szymon) hunt down TalkAction bugs
-
-- (Szymon) give NPC's sense of time to prompt and add start time to the plan
-
+- (Szymon) Split broadcast speech also by sensences, not by characters
+- (Szymon) give NPC's sense of time to prompt and add start time to the plan (maybe not need?)
 - (Szymon) add the voting action
-
 - (Szymon) summarize long reflections
 
-- (Alex) newspaper on server
-
-  - players emit there (when plan to broadcast for example)
-  - it sends it to everyone
-  - on join send whole newsletter to client
-  - time/description/place?
-  - embed newspaper to NPC prompt
-  - embed newspaper to the UI of player
-
-- (Alex) rotate to somebody when talking to them (embed in broadcast & listen as well)
-
-- (Alex) Separate area for broadcaster and listeners
-
-- (Alex) add `username-read` animation propagation to idle task (set animation at start and go back to default idle animation on interupt/end)
-
 - (Alex) manage map completion
+  - walk behind the bushes
+- (Alex) Separate area for broadcaster and listeners:
+  - rotate broadcaster to center of listening area (socketmanager)
+- (Alex) end NPC movement only on grid
+- (Alex) player can only write to NPC if within range
 
+- `emitUpdatePlayerData` sends new state to everybody but doesn't update player itself
+- When NPC initiate broadcast action they can do it multiple times
 - Optimize prompts
-
-- NPC's initialization desync (minor) (when we haven't received info about ourselves but already receiving other players updates)
-
 - log everything to database
-
   - NPC's state
   - messages
-
 - movement bugs
-
   - writes without finishing movement
   - smooth path recalculation when approaching smbd
     - rm this.pathIndex = closestIndex + 1 // Smoothing the direction after recalculation
   - if user went away, let npc know that we left conversation
-
 - chat interface with other players
   - online status (green/red dot, show both on preview and in chat itself) -- Set of existing player + check in set
   - Somebody is typing status
@@ -49,7 +33,7 @@
   - header is not attached to top of the screen when typing on iphone -> other user's messages are not visible
   - (?)when clicking outside of chat return control to the game
   - group chat for humans
-- anonymous loggin with just name
+- anonymous login with just name
 
 ## nice to have
 
