@@ -80,25 +80,33 @@ export class NPC {
   }
 
   onEndConversation(message: ChatMessage) {
-    console.log("onEndConversation", message)
     if (message.to === this.npcConfig.username) {
+      const currentAction = this.aiBrain.getCurrentAction()
+      if (currentAction instanceof TalkAction) {
+        currentAction.clearAllListenersAndMarkAsCompleted()
+      }
       this.adjustDirection(message.from)
       this.aiBrain.addChatMessage(message.from, message)
       this.aiBrain.addAIMessage(message.from, {
         role: "user",
         content: message.message,
       })
-      const currentAction = this.aiBrain.getCurrentAction()
-      if (currentAction instanceof TalkAction) {
-        currentAction.clearAllListenersAndMarkAsCompleted()
-      }
-      console.error(
-        "Received end conversation message from",
-        message.from,
-        "action is",
-        this.aiBrain.getCurrentAction()?.isCompleted(),
-      )
       this.aiBrain.closeThread(message.from)
+    }
+
+    console.error("RECEIVED END CONVERSATION")
+    console.log("Got threads")
+    const threads = this.aiBrain.getBrainDump().conversations.threads
+    console.log("Current player is", this.playerData.username)
+    for (const thread of threads) {
+      const playerId = thread[0]
+      const messages = thread[1]
+      console.log("Player id", playerId)
+      for (const message of messages) {
+        console.log("Finsihed is", message.finished)
+        console.log(message.aiMessages)
+        console.log(message.messages)
+      }
     }
   }
 

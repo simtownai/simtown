@@ -2,6 +2,7 @@ import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../../share
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
+import { MoveAction } from "../actions/MoveAction"
 import { NpcConfig } from "../npcConfig"
 import { generatePlanForTheday } from "../plan/generatePlan"
 import {
@@ -9,7 +10,7 @@ import {
   convertActionsToGeneratedPlan,
   convertGeneratedPlanToActions,
 } from "../plan/helpers"
-import { Thread } from "./memory/ConversationMemory"
+import { ConversationMemory, Thread } from "./memory/ConversationMemory"
 import { Memory } from "./memory/Memory"
 import { reflect, summarizeReflections } from "./reflect"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
@@ -26,6 +27,7 @@ export type StringifiedBrainDump = {
 }
 
 export type BrainDump = {
+  conversations: ConversationMemory
   currentAction: Action | null
   playerData: PlayerData
   otherPlayers: Map<string, PlayerData>
@@ -80,6 +82,7 @@ export class AIBrain {
     try {
       const initialPlanData = await generatePlanForTheday(this.getStringifiedBrainDump())
       const movementController = this.getMovementController()
+
       this.actionQueue = convertGeneratedPlanToActions(
         initialPlanData,
         this.getBrainDump,
@@ -94,6 +97,7 @@ export class AIBrain {
 
   getBrainDump = (): BrainDump => {
     return {
+      conversations: this.memory.conversations,
       closeThread: (targetPlayerName: string) => this.closeThread(targetPlayerName),
       currentAction: this.currentAction,
       playerData: this.getPlayerData(),
@@ -133,7 +137,11 @@ export class AIBrain {
         ? `Current plan is: ${JSON.stringify(convertActionsToGeneratedPlan(currentActionQueue))}`
         : "We don't have a plan yet"
     const currentActionString = this.currentAction
-      ? JSON.stringify(convertActionToGeneratedAction(this.currentAction))
+      ? JSON.stringify(
+          this.currentAction instanceof MoveAction && this.currentAction.moveTarget.targetType === "person"
+            ? "We are now moving to the person so that we can talk with them"
+            : convertActionToGeneratedAction(this.currentAction),
+        )
       : "No current action"
 
     const result: StringifiedBrainDump = {
@@ -190,7 +198,6 @@ export class AIBrain {
     }
 
     this.currentAction = nextAction
-    console.error("Starting next action:", nextAction.constructor.name)
 
     this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
@@ -259,7 +266,7 @@ export class AIBrain {
     this.currentAction = newAction
     this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
-    })
+    } as UpdatePlayerData)
 
     this.currentAction.start()
   }

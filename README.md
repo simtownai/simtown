@@ -1,12 +1,6 @@
 # ToDo
 
-- (Szymon) NPC's approaching player and each other to talk but not actually talk
-- (Szymon) hunt down TalkAction bugs
-- (Szymon) Split broadcast speech also by sensences, not by characters
 - (Szymon) give NPC's sense of time to prompt and add start time to the plan (maybe not need?)
-- (Szymon) add the voting action
-- (Szymon) summarize long reflections
-
 - (Alex) manage map completion
   - walk behind the bushes
 - (Alex) Separate area for broadcaster and listeners:

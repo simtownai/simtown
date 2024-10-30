@@ -1,5 +1,5 @@
 import { getTime } from "../../shared/functions"
-import { GeneratedAction, GeneratedActionPlan, MoveTarget } from "../../shared/types"
+import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -10,7 +10,7 @@ import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { BrainDump } from "../brain/AIBrain"
 
-export const convertActionToGeneratedAction = (action: Action): GeneratedAction => {
+export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
   if (action instanceof IdleAction) {
     return { type: "idle", activityType: action.activityType }
   } else if (action instanceof MoveAction) {
@@ -31,6 +31,14 @@ export const convertActionToGeneratedAction = (action: Action): GeneratedAction 
         type: "move",
         target: {
           targetType: target.targetType,
+          name: target.name,
+        },
+      }
+    } else if (target.targetType === "person") {
+      return {
+        type: "move",
+        target: {
+          targetType: "person",
           name: target.name,
         },
       }
@@ -56,14 +64,33 @@ export const convertActionToGeneratedAction = (action: Action): GeneratedAction 
       targetPlace: listenAction.targetPlace,
     }
   } else {
-    // Fallback to idle or handle as needed
     throw new Error("Unknown action type")
   }
 }
 
 // Function to serialize Actions into ActionPlan data
 export const convertActionsToGeneratedPlan = (actions: Action[]): GeneratedActionPlan => {
-  return actions.map(convertActionToGeneratedAction)
+  function isGeneratedAction(action: unknown): action is GeneratedAction {
+    return (
+      action !== null && typeof action === "object" && "type" in action
+      // Add more specific checks based on your GeneratedAction type
+    )
+  }
+
+  const filtered = actions.filter((action): action is MoveAction => {
+    if (action instanceof MoveAction) {
+      return action.moveTarget.targetType !== "person"
+    }
+    return true
+  })
+
+  const converted = filtered.map(convertActionToGeneratedAction)
+  if (!converted.every(isGeneratedAction)) {
+    throw new Error("Conversion failed: Not all actions were converted to GeneratedActions")
+  }
+
+  // TypeScript now knows converted is GeneratedAction[]
+  return converted
 }
 
 /**

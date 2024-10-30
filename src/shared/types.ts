@@ -66,21 +66,26 @@ const MoveToPlaceTargetSchema = z.object({
 })
 export type MoveTargetPlace = z.infer<typeof MoveToPlaceTargetSchema>
 
-const GeneratedMoveTargetSchema = z.discriminatedUnion("targetType", [
-  MoveToCoordinatesTargetSchema,
-  MoveToPlaceTargetSchema,
-])
-
-const MoveTargetSchema = z.discriminatedUnion("targetType", [
+const MoveTargetWithPerson = z.discriminatedUnion("targetType", [
   MoveToCoordinatesTargetSchema,
   MoveToPersonTargetSchema,
   MoveToPlaceTargetSchema,
 ])
-export type MoveTarget = z.infer<typeof MoveTargetSchema>
+export type MoveTarget = z.infer<typeof MoveTargetWithPerson>
+
+const MoveTargetSchemaNoPerson = z.discriminatedUnion("targetType", [
+  MoveToCoordinatesTargetSchema,
+  MoveToPlaceTargetSchema,
+])
 
 const MoveSchema = z.object({
   type: z.literal("move"),
-  target: GeneratedMoveTargetSchema,
+  target: MoveTargetSchemaNoPerson,
+})
+
+const MoveSchemaWithPerson = z.object({
+  type: z.literal("move"),
+  target: MoveTargetWithPerson,
 })
 
 const TalkSchema = z.object({
@@ -107,7 +112,20 @@ const ListenSchema = z.object({
 })
 
 const ActionSchema = z.discriminatedUnion("type", [MoveSchema, TalkSchema, IdleSchema, BroadcastSchema, ListenSchema])
+
+const ActionSchemaWithPerson = z.discriminatedUnion("type", [
+  MoveSchemaWithPerson,
+  TalkSchema,
+  IdleSchema,
+  BroadcastSchema,
+  ListenSchema,
+])
+
 export type GeneratedAction = z.infer<typeof ActionSchema>
 
+export type GeneratedActionWithPerson = z.infer<typeof ActionSchemaWithPerson>
+
 export const ActionPlanSchema = z.array(ActionSchema)
+export const ActionPlanSchemaWithPerson = z.array(ActionSchemaWithPerson)
 export type GeneratedActionPlan = z.infer<typeof ActionPlanSchema>
+export type GeneratedActionPlanWithPerson = z.infer<typeof ActionPlanSchemaWithPerson>
