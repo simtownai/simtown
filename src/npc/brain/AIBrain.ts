@@ -78,11 +78,7 @@ export class AIBrain {
 
   async generatePlanAndSetActions() {
     try {
-      const initialPlanData = await generatePlanForTheday(
-        this.getStringifiedBrainDump(),
-        Array.from(this.getOtherPlayers().keys()),
-        this.places,
-      )
+      const initialPlanData = await generatePlanForTheday(this.getStringifiedBrainDump())
       const movementController = this.getMovementController()
       this.actionQueue = convertGeneratedPlanToActions(
         initialPlanData,

@@ -12,15 +12,15 @@ const ResponseSchema = z.object({
 
 const validateActions = (
   plan: GeneratedActionPlan,
-  places: string[],
-  playerNames: string[],
+  places: string,
+  playerNames: string,
 ): { isValid: boolean; error?: string } => {
   for (const action of plan) {
     if (action.type === "broadcast" && !places.includes(action.targetPlace)) {
       return {
         isValid: false,
         error: `Invalid place: ${JSON.stringify(action.targetPlace)} for the broadcast action. Only ${JSON.stringify(
-          places.join(", "),
+          places,
         )} are available`,
       }
     }
@@ -28,7 +28,7 @@ const validateActions = (
       return {
         isValid: false,
         error: `Invalid place: ${JSON.stringify(action.targetPlace)} for the listen action. Only ${JSON.stringify(
-          places.join(", "),
+          places,
         )} are available`,
       }
     }
@@ -38,7 +38,7 @@ const validateActions = (
         return {
           isValid: false,
           error: `Invalid place: ${JSON.stringify(action.target.name)} for the move action. Only ${JSON.stringify(
-            places.join(", "),
+            places,
           )} are available`,
         }
       }
@@ -46,7 +46,7 @@ const validateActions = (
         return {
           isValid: false,
           error: `Invalid person ${JSON.stringify(action.target.name)} for the move action. Only ${JSON.stringify(
-            playerNames.join(", "),
+            playerNames,
           )} are available`,
         }
       }
@@ -65,9 +65,8 @@ const validateActions = (
 
 export const generatePlanForTheday = async (
   stringifiedBrainDump: StringifiedBrainDump,
-  playerNames: string[],
-  places: string[],
 ): Promise<GeneratedActionPlan> => {
+  const { placesNames: places, playerNames } = stringifiedBrainDump
   let attemps = 0
   let maxAttemps = 5
 
@@ -101,7 +100,7 @@ export const generatePlanForTheday = async (
       console.error("Invalid plan, retrying...", errorMessage)
     }
     if (isValid) {
-      console.log("Plan created:", plan)
+      // console.log("Plan created:", plan)
       return plan
     }
   }

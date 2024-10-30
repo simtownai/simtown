@@ -73,16 +73,10 @@ export const generateAssistantResponse = async (
             })
 
             if (functionName === "endConversation") {
-              //   this.clearConversationTimeout()
-
               return {
                 type: "endedConversation",
                 finalChatMessage: functionResult,
               }
-
-              //   this.getEmitMethods().emitEndConversation(response)
-              //   this.adjustDirection(targetPlayerUsername)
-              //   this.getBrainDump().closeThread(targetPlayerUsername)
             }
           } catch (error: any) {
             newAIMessages.push({
@@ -90,7 +84,6 @@ export const generateAssistantResponse = async (
               tool_call_id: toolCall.id,
               content: error.message,
             })
-            console.error("Error in generateAssistantResponse", error)
           }
         }
         continue

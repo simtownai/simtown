@@ -99,6 +99,13 @@ export class TalkAction extends Action {
   }
 
   clearAllListenersAndMarkAsCompleted() {
+    // in case we are ending the conversation before the last chunk is emitted, we should manually add the emitted content to AI messages
+    if (this.emissionState.emittedContent) {
+      this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
+        role: "assistant",
+        content: this.emissionState.emittedContent,
+      })
+    }
     this.resetEmissionState()
     this.incomingMessageState.messageBuffer = []
     if (this.conversationTimeout) {
@@ -160,6 +167,8 @@ export class TalkAction extends Action {
     console.log("Handling message")
     this.resetConversationTimeout()
 
+    this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
+
     if (this.emissionState.chunksToBeEmitted.length > 0) {
       console.log("Interrupting current emission due to new message")
       this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
@@ -170,7 +179,6 @@ export class TalkAction extends Action {
     }
 
     this.resetResponseTimer()
-    this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
     this.incomingMessageState.messageBuffer.push(chatMessage)
   }
 
@@ -226,6 +234,8 @@ export class TalkAction extends Action {
     // Generate assistant response
     const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
     const system_message = continue_conversation(aiBrainSummary, this.targetPlayerUsername)
+
+    this.resetConversationTimeout()
 
     const response = await generateAssistantResponse(
       system_message,

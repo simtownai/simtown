@@ -1,4 +1,4 @@
-const isDevelopment = process.env.NODE_ENV !== "production"
+export const isDevelopment = process.env.NODE_ENV !== "production"
 
 export const CONFIG = {
   SERVER_PORT: 3000,

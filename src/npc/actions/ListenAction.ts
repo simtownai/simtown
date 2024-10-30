@@ -25,6 +25,7 @@ export class ListenAction extends Action {
   private resetListenTimeout() {
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
+      this.conversationTimeout = null
     }
 
     this.conversationTimeout = setTimeout(() => {
@@ -57,6 +58,7 @@ export class ListenAction extends Action {
     super.interrupt()
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
+      this.conversationTimeout = null
     }
     this.getEmitMethods().removeListener("listenBroadcast", this.broadcastListener)
   }

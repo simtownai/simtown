@@ -1,5 +1,5 @@
 import { getTime } from "../../shared/functions"
-import { GeneratedAction, GeneratedActionPlan, MoveTarget, PlayerData } from "../../shared/types"
+import { GeneratedAction, GeneratedActionPlan, MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
