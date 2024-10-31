@@ -1,11 +1,6 @@
 # ToDo
 
-- (Szymon) hunt down TalkAction bugs
-  - NPC's don't stop waiting for message when they are ignored
-  - First message is heavily delayed causing NPC's to stay very far from each other
 - (Szymon) Optimize prompts
-  - messages shorter
-  - `Donald 30/10/2024 03:14 PM **Donald Trump Speech Near the Church** Ladies and gentlemen, friends and supporters, Thank you`
 - (Szymon) give NPC's sense of time to prompt
 
 - (Alex) add the voting action

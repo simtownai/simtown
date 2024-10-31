@@ -75,10 +75,10 @@ export const reflect = async (action: Action) => {
   throw new Error(`Could not reflect for action: ${actionType}`)
 }
 
-export const summarizeReflections = async (reflections: string[], braindump: StringifiedBrainDump[]) => {
+export const summarizeReflections = async (braindump: StringifiedBrainDump) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "system", content: summarize_reflections_prompt(reflections, braindump) }],
+    messages: [{ role: "system", content: summarize_reflections_prompt(braindump) }],
   })
   return completion.choices[0].message.content
 }

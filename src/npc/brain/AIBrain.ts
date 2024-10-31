@@ -228,7 +228,7 @@ export class AIBrain {
         this.memory.reflections.push(reflections)
 
         if (this.memory.reflections.length > 10) {
-          const new_reflections = await summarizeReflections(this.memory.reflections, [this.getStringifiedBrainDump()])
+          const new_reflections = await summarizeReflections(this.getStringifiedBrainDump())
           if (!new_reflections) {
             throw new Error("Could not summarize reflections")
           }
