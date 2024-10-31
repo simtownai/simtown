@@ -1,20 +1,18 @@
 # ToDo
 
 - (Szymon) hunt down TalkAction bugs
-- (Szymon) give NPC's sense of time to prompt
+  - NPC's don't stop waiting for message when they are ignored
+  - First message is heavily delayed causing NPC's to stay very far from each other
 - (Szymon) Optimize prompts
-
   - messages shorter
   - `Donald 30/10/2024 03:14 PM **Donald Trump Speech Near the Church** Ladies and gentlemen, friends and supporters, Thank you`
+- (Szymon) give NPC's sense of time to prompt
 
-- (Alex) NPC logging (add time, loglevel, npcname, line of code)
 - (Alex) add the voting action
   - once a day server emits voting news
   - npcs have a voting action (go and emit msg)
   - once evey NPC placed their vote server sends the result as news to everybody
   - server resets votes
-- (Alex) manage map completion
-  - walk behind the bushes
 - (Alex) player rotations
   - rotate to whom you are sending messages
   - rotate to incoming messages if idle
