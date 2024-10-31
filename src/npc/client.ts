@@ -86,7 +86,7 @@ export class NPC {
   onEndConversation(message: ChatMessage) {
     if (message.to === this.npcConfig.username) {
       const currentAction = this.aiBrain.getCurrentAction()
-      if (currentAction instanceof TalkAction) {
+      if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         currentAction.clearAllListenersAndMarkAsCompleted()
       }
       this.adjustDirection(message.from)
@@ -99,15 +99,15 @@ export class NPC {
     }
 
     const threads = this.aiBrain.getBrainDump().conversations.threads
-    logger.debug("Current player is", this.playerData.username)
+    console.log("Current player is", this.playerData.username)
     for (const thread of threads) {
       const playerId = thread[0]
       const messages = thread[1]
       console.log("Player id", playerId)
       for (const message of messages) {
-        logger.debug("Finsihed is", message.finished)
-        logger.debug(message.aiMessages)
-        logger.debug(message.messages)
+        console.log("Finsihed is", message.finished)
+        console.log(message.aiMessages)
+        console.log(message.messages)
       }
     }
   }

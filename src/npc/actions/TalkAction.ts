@@ -2,7 +2,6 @@ import logger from "../../shared/logger"
 import { ChatMessage } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
-import { ConversationTimeoutThreshold } from "../npcConfig"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
 import { continue_conversation, start_conversation } from "../prompts"
 import { Action } from "./Action"
@@ -26,6 +25,16 @@ export class TalkAction extends Action {
   private tools: FunctionSchema[]
   private functionMap: { [functionName: string]: Function }
   private conversationTimeout: NodeJS.Timeout | null = null // for automatically timing out if no response after sending a message
+  private ConversationTimeoutThreshold = 15000
+
+  private addEmittedContentToAIMessages() {
+    if (this.emissionState.emittedContent) {
+      this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
+        role: "assistant",
+        content: this.emissionState.emittedContent,
+      })
+    }
+  }
 
   private readonly MESSAGE_BUFFER_DELAY = 3000 // 3 seconds
   private readonly CHUNK_DELAY = 1000 // 1 second
@@ -84,28 +93,16 @@ export class TalkAction extends Action {
 
     // If this was the last chunk, save the complete message to AI messages
     if (this.emissionState.chunksToBeEmitted.length === 0) {
-      if (this.emissionState.emittedContent) {
-        this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
-          role: "assistant",
-          content: this.emissionState.emittedContent,
-        })
-      }
+      this.addEmittedContentToAIMessages()
       // Reset emitted content after saving
-      this.emissionState.emittedContent = ""
-
+      this.resetEmissionState()
       // Reset timers and prepare for next message
       this.resetResponseTimer()
     }
   }
 
   clearAllListeners() {
-    // in case we are ending the conversation before the last chunk is emitted, we should manually add the emitted content to AI messages
-    if (this.emissionState.emittedContent) {
-      this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
-        role: "assistant",
-        content: this.emissionState.emittedContent,
-      })
-    }
+    this.addEmittedContentToAIMessages()
     this.resetEmissionState()
     this.incomingMessageState.messageBuffer = []
     if (this.conversationTimeout) {
@@ -133,15 +130,15 @@ export class TalkAction extends Action {
     this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
     this.getBrainDump().closeThread(this.targetPlayerUsername)
     const threads = this.getBrainDump().conversations.threads
-    logger.debug("Current player is", this.getBrainDump().playerData.username)
+    console.log("Current player is", this.getBrainDump().playerData.username)
     for (const thread of threads) {
       const playerId = thread[0]
       const messages = thread[1]
-      logger.debug("Player id", playerId)
+      console.log("Player id", playerId)
       for (const message of messages) {
-        logger.debug("Finsihed is", message.finished)
-        logger.debug(message.aiMessages)
-        logger.debug(message.messages)
+        console.log("Finsihed is", message.finished)
+        console.log(message.aiMessages)
+        console.log(message.messages)
       }
     }
 
@@ -168,8 +165,11 @@ export class TalkAction extends Action {
       this.tools,
       this.functionMap,
     )
-
     this.handleGeneratedResponse(response)
+
+    const first_chunk = this.emissionState.chunksToBeEmitted.shift()!
+    this.handleEmittedChunk(first_chunk)
+    this.resetConversationTimeout()
   }
 
   private endConversationTool = functionToSchema(
@@ -180,18 +180,11 @@ export class TalkAction extends Action {
 
   async handleMessage(chatMessage: ChatMessage) {
     this.resetConversationTimeout()
-
     this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
-
-    if (this.emissionState.chunksToBeEmitted.length > 0) {
-      this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
-        role: "assistant",
-        content: this.emissionState.emittedContent,
-      })
-      this.resetEmissionState()
-    }
-
+    this.addEmittedContentToAIMessages()
+    this.resetEmissionState()
     this.resetResponseTimer()
+
     this.incomingMessageState.messageBuffer.push(chatMessage)
   }
 
@@ -209,7 +202,7 @@ export class TalkAction extends Action {
 
     this.conversationTimeout = setTimeout(() => {
       this.endConversationDueToTimeout()
-    }, ConversationTimeoutThreshold)
+    }, this.ConversationTimeoutThreshold)
   }
 
   private resetResponseTimer() {
