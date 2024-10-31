@@ -158,8 +158,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on("sendMessage", (message: ChatMessage) => {
-    logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
-
+    // logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
     if (message.to === "all") {
       io.emit("newMessage", message)
     } else {
