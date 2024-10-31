@@ -1,4 +1,4 @@
-import mapData from "../../public/assets/maps/simple-map.json"
+import { CONFIG } from "../shared/config"
 import { getDirection, gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
 import { GridPosition, MoveTarget, PlayerData, UpdatePlayerData } from "../shared/types"
@@ -7,9 +7,9 @@ import EasyStar from "easystarjs"
 const tinyMovementThreshold = 0.01
 
 export class MovementController {
-  private objectLayer: (typeof mapData.layers)[0]["objects"]
-  private collisionLayer: (typeof mapData.layers)[0]
-  private roadLayer: (typeof mapData.layers)[0] | undefined
+  private objectLayer: (typeof CONFIG.MAP_DATA.layers)[0]["objects"]
+  private collisionLayer: (typeof CONFIG.MAP_DATA.layers)[0]
+  private roadLayer: (typeof CONFIG.MAP_DATA.layers)[0] | undefined
   private collisionGrid: number[][]
   private path: GridPosition[] = []
   private pathIndex = 0
@@ -34,9 +34,9 @@ export class MovementController {
     private sendMoveMessage: (blockingPlayer: PlayerData) => void,
     private updateAndEmitPlayerData: (updatePlayerData: UpdatePlayerData) => void,
   ) {
-    this.collisionLayer = mapData.layers.find((layer) => layer.name === "Collisions")!
-    this.roadLayer = mapData.layers.find((layer) => layer.name === "Roads")
-    this.objectLayer = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
+    this.collisionLayer = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.COLLISION_LAYER_NAME)!
+    this.roadLayer = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.ROADS_LAYER_NAME)!
+    this.objectLayer = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
     this.initializeCollisionGrid()
   }
 
@@ -262,7 +262,7 @@ export class MovementController {
     return false
   }
 
-  private getPlace(name: string): NonNullable<(typeof mapData.layers)[0]["objects"]>[number] | undefined {
+  private getPlace(name: string): NonNullable<(typeof CONFIG.MAP_DATA.layers)[0]["objects"]>[number] | undefined {
     let place = this.objectLayer!.find((obj) => obj.name === name)
     if (!place) {
       place = this.objectLayer!.find((obj) => obj.name === name.replace(" (podium)", ""))
@@ -271,7 +271,7 @@ export class MovementController {
   }
 
   private findAvailablePositionsInPlace(
-    place: NonNullable<(typeof mapData.layers)[0]["objects"]>[number],
+    place: NonNullable<(typeof CONFIG.MAP_DATA.layers)[0]["objects"]>[number],
   ): GridPosition[] {
     const availablePositions: GridPosition[] = []
 

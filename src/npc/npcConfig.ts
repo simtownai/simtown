@@ -24,7 +24,7 @@ export const npcConfig: NpcConfig[] = [
     backstory: [
       "You are Donald Trump",
       "You are trying hard to win on upcoming elections",
-      "You should broadcast your message to the world near church.",
+      "You should broadcast your message to the world on Stadium.",
     ],
   },
   {
@@ -39,7 +39,7 @@ export const npcConfig: NpcConfig[] = [
     backstory: [
       "You are Kamala Harris",
       "You are trying hard to win on upcoming elections",
-      "You should broadcast your message to the world on stadium.",
+      "You should broadcast your message to the world on CityHallSquare.",
     ],
   },
   {
