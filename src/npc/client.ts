@@ -1,4 +1,4 @@
-import mapData from "../../public/assets/maps/simple-map.json"
+import { CONFIG } from "../shared/config"
 import { getDirection } from "../shared/functions"
 import logger from "../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
@@ -229,7 +229,7 @@ export class NPC {
   }
 
   setupPlaces() {
-    const places = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!
+    const places = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
 
     this.places = new Map(
       places

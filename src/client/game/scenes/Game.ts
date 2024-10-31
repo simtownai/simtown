@@ -1,10 +1,40 @@
 import { CONFIG } from "../../../shared/config"
-import { GeneratedAction, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { GeneratedActionWithPerson, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
 import VirtualJoystick from "phaser3-rex-plugins/plugins/virtualjoystick.js"
 import { Socket } from "socket.io-client"
+
+export const LAYER_DEPTHS = {
+  TERRAIN: 0,
+  WATER_PATH: 1,
+  PATHS: 2,
+
+  OBJECTS_BEHIND: 3,
+  BUILDINGS_BEHIND: 4,
+
+  PLAYER: {
+    BASE: 1000,
+    ADDONS: 5000,
+  },
+
+  BUILDINGS_OVER: 2000,
+  TREES_OVER: 2001,
+
+  COLLISIONS: -1,
+} as const
+
+export const LAYER_CONFIG = [
+  { name: "TERRAIN", depth: LAYER_DEPTHS.TERRAIN },
+  { name: "WATER PATH", depth: LAYER_DEPTHS.WATER_PATH },
+  { name: "PATHS", depth: LAYER_DEPTHS.PATHS },
+  { name: "OBJECTS (BEHIND PLAYER)", depth: LAYER_DEPTHS.OBJECTS_BEHIND },
+  { name: "BUILDINGS (BEHIND PLAYER)", depth: LAYER_DEPTHS.BUILDINGS_BEHIND },
+  { name: "BUILDINGS (OVER PLAYER)", depth: LAYER_DEPTHS.BUILDINGS_OVER },
+  { name: "TREES (OVER PLAYER)", depth: LAYER_DEPTHS.TREES_OVER },
+  { name: "COLLISIONS", depth: LAYER_DEPTHS.COLLISIONS },
+] as const
 
 interface OtherPlayerData {
   sprite: Phaser.Physics.Arcade.Sprite
@@ -40,7 +70,7 @@ export class Game extends Phaser.Scene {
   private isAttacking: boolean = false
   private joystick: VirtualJoystick
   private uiCamera!: Phaser.Cameras.Scene2D.Camera
-  private gameContainer!: Phaser.GameObjects.Container
+  private gameLayers: Phaser.Tilemaps.TilemapLayer[] = []
   private uiContainer!: Phaser.GameObjects.Container
 
   private touchStartX: number = 0
@@ -74,23 +104,24 @@ export class Game extends Phaser.Scene {
   }
 
   private setupMap() {
-    this.gameContainer = this.add.container(0, 0)
     this.uiContainer = this.add.container(0, 0)
 
     this.map = this.make.tilemap({ key: "map" })
-    const tileset = this.map.addTilesetImage("cute-fantasy-rpg-free", "tiles")!
-    const grassLayer = this.map.createLayer("Grass", tileset)!
-    const waterLayer = this.map.createLayer("Water", tileset)!
-    const roadLayer = this.map.createLayer("Roads", tileset)!
-    const objects1Layer = this.map.createLayer("Objects1", tileset)!
-    const objects2Layer = this.map.createLayer("Objects2", tileset)!
-    this.collisionLayer = this.map.createLayer("Collisions", tileset)!
-    this.collisionLayer.setCollisionByExclusion([-1])
-    this.collisionLayer.setVisible(false)
+    const tileset = this.map.addTilesetImage("Modern_Exteriors_Complete_Tileset", "tiles")!
+
+    LAYER_CONFIG.map(({ name, depth }) => {
+      const layer = this.map.createLayer(name, tileset)!
+      layer.setDepth(depth)
+      if (name === CONFIG.COLLISION_LAYER_NAME) {
+        this.collisionLayer = layer
+        this.collisionLayer.setCollisionByExclusion([-1])
+        this.collisionLayer.setVisible(false)
+      }
+      this.gameLayers.push(layer)
+      return layer
+    })
 
     this.otherPlayersGroup = this.physics.add.group()
-
-    this.gameContainer.add([grassLayer, waterLayer, roadLayer, objects1Layer, objects2Layer, this.collisionLayer])
   }
 
   private setupCameras() {
@@ -105,7 +136,7 @@ export class Game extends Phaser.Scene {
     this.uiCamera.setZoom(1)
     this.uiCamera.setScroll(0, 0)
 
-    this.uiCamera.ignore(this.gameContainer)
+    this.uiCamera.ignore(this.gameLayers)
     this.cameras.main.ignore(this.uiContainer)
   }
 
@@ -289,7 +320,7 @@ export class Game extends Phaser.Scene {
   }
 
   private updateSpriteDepth(sprite: Phaser.Physics.Arcade.Sprite) {
-    sprite.setDepth(sprite.y + 64)
+    sprite.setDepth(LAYER_DEPTHS.PLAYER.BASE + sprite.y)
   }
 
   private getClosestPlayer(): PlayerData | null {
@@ -326,7 +357,7 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  private getTextFromAction(action: GeneratedAction | undefined): string {
+  private getTextFromAction(action: GeneratedActionWithPerson | undefined): string {
     if (!action) return ""
     switch (action.type) {
       case "move":
@@ -481,7 +512,6 @@ export class Game extends Phaser.Scene {
       const speed = 80
       this.playerSprite.setVelocity(dx * speed, dy * speed)
 
-      // Choose the appropriate animation based on movement and direction
       let animation
       if (dx !== 0 || dy !== 0) {
         animation = `${this.username}-walk-${this.lastDirection}`
@@ -535,17 +565,14 @@ export class Game extends Phaser.Scene {
 
       this.updateSpriteDepth(otherPlayerSprite)
 
-      otherPlayerSpeechBubble.setPosition(
-        otherPlayerSprite.x,
-        otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
-      )
-      otherPlayerSpeechBubble.setDepth(otherPlayerSprite.depth + 1)
+      otherPlayerSpeechBubble.setPosition(otherPlayerSprite.x, otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5)
+      otherPlayerSpeechBubble.setDepth(LAYER_DEPTHS.PLAYER.ADDONS + otherPlayerSprite.depth)
 
       actionEmoji.setPosition(
         otherPlayerSprite.x + CONFIG.SPRITE_COLLISION_BOX_HEIGHT / 2,
-        otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
+        otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5,
       )
-      actionEmoji.setDepth(otherPlayerSprite.depth + 1)
+      actionEmoji.setDepth(LAYER_DEPTHS.PLAYER.ADDONS + otherPlayerSprite.depth)
 
       const distance = Phaser.Math.Distance.Between(
         this.playerSprite.x,

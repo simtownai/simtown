@@ -1,3 +1,5 @@
+import mapData from "../../public/assets/maps/elections.json"
+
 export const isDevelopment = process.env.NODE_ENV !== "production"
 
 export const CONFIG = {
@@ -11,4 +13,9 @@ export const CONFIG = {
   SPRITE_COLLISION_BOX_HEIGHT: 16,
   INTERACTION_PROXIMITY_THRESHOLD: 30,
   TARGET_DATE: new Date("2024-11-05T00:00:00Z"),
+  MAP_DATA: mapData,
+  COLLISION_LAYER_NAME: "COLLISIONS",
+  ROADS_LAYER_NAME: "PATHS",
+  PLACES_LAYER_NAME: "PLACES",
+  SPAWN_PLACE_NAME: "CityCenter",
 }

@@ -1,4 +1,3 @@
-import mapData from "../../public/assets/maps/simple-map.json"
 import { CONFIG } from "../shared/config"
 import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
@@ -30,7 +29,9 @@ const io = new Server(server, {
 const players: Map<string, PlayerData> = new Map()
 const newsPaper: NewsItem[] = []
 
-const spawnArea = mapData.layers.find((layer) => layer.name === "Boxes")!.objects!.find((obj) => obj.name === "spawn")!
+const places = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
+
+const spawnArea = places.find((obj) => obj.name === CONFIG.SPAWN_PLACE_NAME)!
 
 function isCellBlocked(cell: GridPosition): boolean {
   for (const player of players.values()) {
@@ -133,9 +134,7 @@ io.on("connection", (socket) => {
   socket.on("broadcast", (message: BroadcastMessage) => {
     console.log("broadcast received", message)
     const broadcastPlace = message.place
-    const zoneObject = mapData.layers
-      .find((layer) => layer.name === "Boxes")!
-      .objects!.find((obj) => obj.name === broadcastPlace)!
+    const zoneObject = places.find((obj) => obj.name === broadcastPlace)!
 
     players.forEach((player) => {
       const isInBroadcastZone = isInZone(
@@ -159,8 +158,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on("sendMessage", (message: ChatMessage) => {
-    logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
-
+    // logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
     if (message.to === "all") {
       io.emit("newMessage", message)
     } else {
