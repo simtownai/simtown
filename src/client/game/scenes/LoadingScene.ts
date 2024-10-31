@@ -92,8 +92,11 @@ export class LoadingScene extends Scene {
   private loadGameAssets() {
     // Load manifest first
     this.load.json("componentManifest", "assets/sprites/Character_Generator/componentManifest.json")
-    this.load.tilemapTiledJSON("map", "assets/maps/simple-map.json")
-    this.load.image("tiles", "assets/tiles/cute-fantasy-rpg-free.png")
+    this.load.tilemapTiledJSON("map", "assets/maps/elections.json")
+    this.load.image(
+      "tiles",
+      "assets/tiles/modernexteriors/Modern_Exteriors_16x16/Modern_Exteriors_Complete_Tileset.png",
+    )
     this.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
       frameWidth: 11,
       frameHeight: 11,
