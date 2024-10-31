@@ -97,8 +97,8 @@ export class TalkAction extends Action {
       // Reset emitted content after saving
       this.resetEmissionState()
       // Reset timers and prepare for next message
+      this.resetResponseTimer()
     }
-    this.resetResponseTimer()
     this.resetConversationTimeout()
   }
 
@@ -131,6 +131,7 @@ export class TalkAction extends Action {
     this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
     this.getBrainDump().closeThread(this.targetPlayerUsername)
     const threads = this.getBrainDump().conversations.threads
+    console.log("We are inside endConversation with reason:", reason)
     console.log("Current player is", this.getBrainDump().playerData.username)
     for (const thread of threads) {
       const playerId = thread[0]
@@ -170,6 +171,7 @@ export class TalkAction extends Action {
 
     const first_chunk = this.emissionState.chunksToBeEmitted.shift()!
     this.handleEmittedChunk(first_chunk)
+    this.resetConversationTimeout()
   }
 
   private endConversationTool = functionToSchema(
@@ -179,11 +181,11 @@ export class TalkAction extends Action {
   )
 
   async handleMessage(chatMessage: ChatMessage) {
+    this.resetConversationTimeout()
     this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
     this.addEmittedContentToAIMessages()
     this.resetEmissionState()
     this.resetResponseTimer()
-    this.resetConversationTimeout()
 
     this.incomingMessageState.messageBuffer.push(chatMessage)
   }
@@ -239,6 +241,8 @@ export class TalkAction extends Action {
     const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
     const system_message = continue_conversation(aiBrainSummary, this.targetPlayerUsername)
 
+    this.resetConversationTimeout()
+
     const response = await generateAssistantResponse(
       system_message,
       this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername).aiMessages,
@@ -275,6 +279,7 @@ export class TalkAction extends Action {
       if (this.emissionState.timeSinceLastChunk >= this.CHUNK_DELAY) {
         const chunk = this.emissionState.chunksToBeEmitted.shift()!
         this.handleEmittedChunk(chunk)
+        this.resetConversationTimeout()
         this.emissionState.timeSinceLastChunk = 0
       }
     }
