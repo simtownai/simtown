@@ -45,7 +45,6 @@ export class ListenAction extends Action {
       this.resetListenTimeout()
       this.adjustDirection(message.from)
       this.accumulatedBroadcast += message.message
-      console.log(`${this.getBrainDump().playerData.username} received broadcast: ${message.message}`)
     }
   }
 

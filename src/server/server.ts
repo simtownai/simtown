@@ -132,7 +132,6 @@ io.on("connection", (socket) => {
   })
 
   socket.on("broadcast", (message: BroadcastMessage) => {
-    console.log("broadcast received", message)
     const broadcastPlace = message.place
     const zoneObject = places.find((obj) => obj.name === broadcastPlace)!
 

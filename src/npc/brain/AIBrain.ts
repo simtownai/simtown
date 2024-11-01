@@ -200,7 +200,7 @@ export class AIBrain {
     }
 
     this.currentAction = nextAction
-    logger.warn(`(${this.getPlayerData().username}) starting next action:`, nextAction.constructor.name)
+    logger.warn(`(${this.getPlayerData().username}) starting next action: ${nextAction.constructor.name}`)
 
     this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
@@ -237,7 +237,7 @@ export class AIBrain {
 
         await this.generatePlanAndSetActions()
       } else {
-        console.log("Not reflecting on the action")
+        logger.warn(`(${this.getPlayerData().username}) not reflecting on the action`)
       }
       // Clear the current action
       this.currentAction = null
