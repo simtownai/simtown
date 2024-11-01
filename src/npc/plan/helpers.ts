@@ -140,8 +140,8 @@ export const convertGeneratedPlanToActions = (
       case "broadcast":
         const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace)
         getEmitMethods().emitNewsItem({
-          date: getTime().toISOString(),
-          message: `${getBrainDump().playerData.username} will be broadcasting soon`,
+          date: getGameTime().toISOString(),
+          message: `📢 ${getBrainDump().playerData.username} will be broadcasting soon`,
           place: actionData.targetPlace,
         })
         supportingMoveTarget = {
