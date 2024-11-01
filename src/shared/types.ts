@@ -51,6 +51,8 @@ export type NewsItem = {
   isRead?: boolean
 }
 
+export type VoteCandidate = "Donald" | "Kamala"
+
 const MoveToCoordinatesTargetSchema = z.object({
   targetType: z.literal("coordinates"),
   x: z.number(),
