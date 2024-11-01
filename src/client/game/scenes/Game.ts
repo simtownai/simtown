@@ -385,6 +385,8 @@ export class Game extends Phaser.Scene {
         return `📢${action.targetPlace}`
       case "listen":
         return `👂${action.targetPlace}`
+      case "vote":
+        return `🗳️`
       default:
         return ""
     }

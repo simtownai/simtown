@@ -62,3 +62,10 @@ export const summarize_reflections_prompt = (braindump: StringifiedBrainDump) =>
   `${construct_base_prompt(braindump)}.
 Your reflections are getting too long, so you need to summarize them.
 Focus on the most important events and information that you think are relevant for your plan and goals in the future. Current reflections are: ${braindump.reflections}`
+
+export const vote_prompt = (reflections: StringifiedBrainDump, candidates: string[]) =>
+  `${construct_base_prompt(reflections)}
+You should choose a candidate to vote for. The candidates are: ${candidates.join(", ")}. Choose wisely, your vote can influence the outcome of the election. Choose based on your character's background and reflections, as well as the information you have gathered during talking and listening to people. Return only the name of the candidate you want to vote for and nothing else.
+
+Answer (${candidates.join(", ")}): 
+`

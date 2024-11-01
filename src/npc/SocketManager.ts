@@ -5,6 +5,7 @@ import {
   PlayerData,
   PlayerSpriteDefinition,
   UpdatePlayerData,
+  VoteCandidate,
 } from "../shared/types"
 import { Socket, io } from "socket.io-client"
 
@@ -13,6 +14,7 @@ export type EmitInterface = {
   emitEndConversation: (message: ChatMessage) => void
   emitBroadcast: (message: BroadcastMessage) => void
   emitNewsItem: (newsItem: NewsItem) => void
+  emitVoteResult: (candidate: VoteCandidate) => void
   updatePlayerData: (data: UpdatePlayerData) => void
   setListener: (event: string, listener: (...args: any[]) => void) => void
   removeListener: (event: string, listener: (...args: any[]) => void) => void
@@ -113,6 +115,9 @@ export class SocketManager {
   emitNewsItem(newsItem: NewsItem) {
     this.socket.emit("sendNews", newsItem)
   }
+  emitVoteResult(candidate: VoteCandidate) {
+    this.socket.emit("vote", candidate)
+  }
   setListener(event: string, listener: (...args: any[]) => void) {
     this.socket.on(event, listener)
   }
@@ -126,6 +131,7 @@ export class SocketManager {
       emitBroadcast: (message: BroadcastMessage) => this.emitBroadcast(message),
       emitEndConversation: (message: ChatMessage) => this.emitEndConversation(message),
       emitNewsItem: (newsItem: NewsItem) => this.emitNewsItem(newsItem),
+      emitVoteResult: (candidate: VoteCandidate) => this.emitVoteResult(candidate),
       updatePlayerData: (data: UpdatePlayerData) => this.emitUpdatePlayerData(data),
       setListener: (event: string, listener: (...args: any[]) => void) => this.setListener(event, listener),
       removeListener: (event: string, listener: (...args: any[]) => void) => this.removeListener(event, listener),

@@ -1,3 +1,4 @@
+import { CONFIG } from "../../shared/config"
 import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
 import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, MoveTarget } from "../../shared/types"
@@ -9,6 +10,7 @@ import { IdleAction } from "../actions/IdleAction"
 import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
+import { VoteAction } from "../actions/VoteAction"
 import { BrainDump } from "../brain/AIBrain"
 
 export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
@@ -64,8 +66,12 @@ export const convertActionToGeneratedAction = (action: Action): GeneratedActionW
       type: "listen",
       targetPlace: listenAction.targetPlace,
     }
+  } else if (action instanceof VoteAction) {
+    return {
+      type: "vote",
+    }
   } else {
-    throw new Error("Unknown action type")
+    throw new Error(`Unknown action type: ${action}`)
   }
 }
 
@@ -191,6 +197,29 @@ export const convertGeneratedPlanToActions = (
           ]
         }
         return listenAction
+      case "vote":
+        const voteAction = new VoteAction(getBrainDump, getEmitMethods, "")
+        supportingMoveTarget = {
+          targetType: "place",
+          name: CONFIG.VOTING_PLACE_NAME,
+        }
+        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
+          logger.info(
+            `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
+          )
+          return [
+            new MoveAction(
+              getBrainDump,
+              getEmitMethods,
+              movementController,
+              supportingMoveTarget,
+              "We are not close to the target place, so before we initialize the vote action, we need to move towards it.",
+              false,
+            ),
+            voteAction,
+          ]
+        }
+        return voteAction
       default:
         throw new Error("Unknown action type:")
     }
