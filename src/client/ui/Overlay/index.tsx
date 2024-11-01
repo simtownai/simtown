@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { formatTimeAMPM, getTime } from "../../../shared/functions"
+import { formatTimeAMPM, getGameTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import newsIcon from "../_images/overlay/news-icon.png"
@@ -25,11 +25,11 @@ export default function Overlay({
   totalNewsUnreadCount,
 }: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
-  const [currentTime, setCurrentTime] = useState(getTime())
+  const [currentTime, setCurrentTime] = useState(getGameTime())
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(getTime())
+      setCurrentTime(getGameTime())
     }, 1000)
 
     return () => {

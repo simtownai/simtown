@@ -1,4 +1,4 @@
-import { getTime } from "../../shared/functions"
+import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
 import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"

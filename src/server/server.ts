@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import { calculateDistance, getGameTime, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
 import {
   BroadcastMessage,
