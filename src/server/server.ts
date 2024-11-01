@@ -218,25 +218,64 @@ io.on("connection", (socket) => {
     const currentVoteResults = voteResults[voteResults.length - 1]
     currentVoteResults.set(player!.username, candidate)
 
+    logger.info(`User ${player?.username} voted for ${candidate}`)
+
     const totalNPCVotes = Array.from(currentVoteResults.entries()).filter(([username]) => {
       const playerData = Array.from(players.values()).find((p) => p.username === username)
-      return playerData?.isNPC && username !== "Donald" && username !== "Kamala"
+      return playerData?.isNPC && !availableVoteCandidates.includes(username as VoteCandidate)
     }).length
 
     const totalEligibleNPCs = Array.from(players.values()).filter(
-      (p) => p.isNPC && p.username !== "Donald" && p.username !== "Kamala",
+      (p) => p.isNPC && !availableVoteCandidates.includes(p.username as VoteCandidate),
     ).length
 
     if (totalNPCVotes >= totalEligibleNPCs) {
+      // Create a map to store voters by candidate
+      const votersByCandidate = new Map<VoteCandidate, string[]>()
+      currentVoteResults.forEach((candidate, voter) => {
+        if (!votersByCandidate.has(candidate)) {
+          votersByCandidate.set(candidate, [])
+        }
+        votersByCandidate.get(candidate)!.push(voter)
+      })
+
+      // Calculate overall results
       const results = new Map<VoteCandidate, number>()
       currentVoteResults.forEach((candidate) => {
         const currentCount = results.get(candidate) || 0
         results.set(candidate, currentCount + 1)
       })
 
+      const totalVotes = Array.from(results.values()).reduce((sum, count) => sum + count, 0)
+
+      // Format the results with detailed breakdown
+      let formattedResults = `📊 Election Results\n\n`
+
+      // Sort candidates by vote count in descending order
+      const sortedResults = Array.from(results.entries()).sort(([, a], [, b]) => b - a)
+
+      sortedResults.forEach(([candidate, votes]) => {
+        const percentage = ((votes / totalVotes) * 100).toFixed(1)
+        const bar = "█".repeat(Math.floor((votes / totalVotes) * 20))
+        const voters = votersByCandidate.get(candidate) || []
+
+        // Sort voters alphabetically
+        voters.sort((a, b) => a.localeCompare(b))
+
+        // Format main candidate results
+        formattedResults += `${candidate}\n`
+        formattedResults += `${bar} ${votes} votes (${percentage}%)\n`
+
+        // Add voter breakdown
+        formattedResults += `Supported by: ${voters.join(", ")}\n`
+        formattedResults += `\n\n`
+      })
+
+      formattedResults += `Total Votes Cast: ${totalVotes}\n`
+
       const newsItem: NewsItem = {
         date: getGameTime().toISOString(),
-        message: `Voting results: ${JSON.stringify(Array.from(results.entries()))}`,
+        message: formattedResults,
       }
       newsPaper.push(newsItem)
       io.emit("news", newsItem)
