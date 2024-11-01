@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { calculateDistance, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import { calculateDistance, getGameTime, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
 import {
   BroadcastMessage,
@@ -9,6 +9,8 @@ import {
   PlayerData,
   PlayerSpriteDefinition,
   UpdatePlayerData,
+  VoteCandidate,
+  availableVoteCandidates,
 } from "../shared/types"
 import cors from "cors"
 import express from "express"
@@ -32,6 +34,8 @@ const newsPaper: NewsItem[] = []
 const places = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
 
 const spawnArea = places.find((obj) => obj.name === CONFIG.SPAWN_PLACE_NAME)!
+
+const voteResults: Map<string, VoteCandidate>[] = [new Map()]
 
 function isCellBlocked(cell: GridPosition): boolean {
   for (const player of players.values()) {
@@ -132,7 +136,6 @@ io.on("connection", (socket) => {
   })
 
   socket.on("broadcast", (message: BroadcastMessage) => {
-    console.log("broadcast received", message)
     const broadcastPlace = message.place
     const zoneObject = places.find((obj) => obj.name === broadcastPlace)!
 
@@ -210,6 +213,77 @@ io.on("connection", (socket) => {
     io.emit("news", newsItem)
   })
 
+  socket.on("vote", (candidate: VoteCandidate) => {
+    const player = players.get(playerId)
+    const currentVoteResults = voteResults[voteResults.length - 1]
+    currentVoteResults.set(player!.username, candidate)
+
+    logger.info(`User ${player?.username} voted for ${candidate}`)
+
+    const totalNPCVotes = Array.from(currentVoteResults.entries()).filter(([username]) => {
+      const playerData = Array.from(players.values()).find((p) => p.username === username)
+      return playerData?.isNPC && !availableVoteCandidates.includes(username as VoteCandidate)
+    }).length
+
+    const totalEligibleNPCs = Array.from(players.values()).filter(
+      (p) => p.isNPC && !availableVoteCandidates.includes(p.username as VoteCandidate),
+    ).length
+
+    if (totalNPCVotes >= totalEligibleNPCs) {
+      // Create a map to store voters by candidate
+      const votersByCandidate = new Map<VoteCandidate, string[]>()
+      currentVoteResults.forEach((candidate, voter) => {
+        if (!votersByCandidate.has(candidate)) {
+          votersByCandidate.set(candidate, [])
+        }
+        votersByCandidate.get(candidate)!.push(voter)
+      })
+
+      // Calculate overall results
+      const results = new Map<VoteCandidate, number>()
+      currentVoteResults.forEach((candidate) => {
+        const currentCount = results.get(candidate) || 0
+        results.set(candidate, currentCount + 1)
+      })
+
+      const totalVotes = Array.from(results.values()).reduce((sum, count) => sum + count, 0)
+
+      // Format the results with detailed breakdown
+      let formattedResults = `📊 Election Results\n\n`
+
+      // Sort candidates by vote count in descending order
+      const sortedResults = Array.from(results.entries()).sort(([, a], [, b]) => b - a)
+
+      sortedResults.forEach(([candidate, votes]) => {
+        const percentage = ((votes / totalVotes) * 100).toFixed(1)
+        const bar = "█".repeat(Math.floor((votes / totalVotes) * 20))
+        const voters = votersByCandidate.get(candidate) || []
+
+        // Sort voters alphabetically
+        voters.sort((a, b) => a.localeCompare(b))
+
+        // Format main candidate results
+        formattedResults += `${candidate}\n`
+        formattedResults += `${bar} ${votes} votes (${percentage}%)\n`
+
+        // Add voter breakdown
+        formattedResults += `Supported by: ${voters.join(", ")}\n`
+        formattedResults += `\n\n`
+      })
+
+      formattedResults += `Total Votes Cast: ${totalVotes}\n`
+
+      const newsItem: NewsItem = {
+        date: getGameTime().toISOString(),
+        message: formattedResults,
+      }
+      newsPaper.push(newsItem)
+      io.emit("news", newsItem)
+
+      voteResults.push(new Map())
+    }
+  })
+
   socket.on("disconnect", () => {
     const player = players.get(playerId)
     if (player) {
@@ -221,6 +295,32 @@ io.on("connection", (socket) => {
   })
 })
 
+function sendVotingReminder() {
+  const newsItem: NewsItem = {
+    date: getGameTime().toISOString(),
+    message: "🗳️ Polling is open! Make your voice heard - cast your vote for the next leader!",
+    place: CONFIG.VOTING_PLACE_NAME,
+  }
+  newsPaper.push(newsItem)
+  io.emit("news", newsItem)
+}
+
+function initializeVotingNotifications() {
+  let lastNotificationGameTime = new Date(getGameTime().setDate(getGameTime().getDate() - 1))
+  setInterval(() => {
+    const currentGameTime = getGameTime()
+
+    const gameHoursSinceLastNotification =
+      (currentGameTime.getTime() - lastNotificationGameTime.getTime()) / 1000 / 60 / 60
+
+    if (gameHoursSinceLastNotification >= CONFIG.VOTE_EVERY_N_HOURS) {
+      sendVotingReminder()
+      lastNotificationGameTime = currentGameTime
+    }
+  }, 10000)
+}
+
 server.listen(CONFIG.SERVER_PORT, () => {
   logger.info(`Server is running on ${CONFIG.SERVER_URL}`)
+  initializeVotingNotifications()
 })

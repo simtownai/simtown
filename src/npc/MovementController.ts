@@ -407,20 +407,27 @@ export class MovementController {
   }
 
   private async attemptPathRecalculation(considerPlayers: boolean): Promise<GridPosition[] | null> {
-    console.log("Attempting to recalculate path due to player blockage")
+    // logger.debug("Attempting to recalculate path due to player blockage")
+    // logger.debug(
+    //   `(${this.getPlayerData().username}) Attempting to recalculate path to ${this.currentMoveTarget?.targetType}`,
+    // )
     try {
       const playerData = this.getPlayerData()
       const currentPos: GridPosition = worldToGrid(playerData.x, playerData.y)
       const newPath = await this.calculatePath(currentPos, this.targetPosition, considerPlayers)
       if (newPath && newPath.length > 0) {
-        console.log("New path found after recalculation")
+        // logger.debug(
+        //   `(${this.getPlayerData().username}) Found alternative path to ${this.currentMoveTarget?.targetType}`,
+        // )
         return newPath
       } else {
-        console.log("No alternative path found after recalculating")
+        logger.debug(
+          `(${this.getPlayerData().username}) No alternative path found to ${this.currentMoveTarget?.targetType} after recalculation`,
+        )
         return null
       }
     } catch (error) {
-      console.error("Error recalculating path:", error)
+      logger.error(`(${this.getPlayerData().username}) Error recalculating path:`, error)
       return null
     }
   }

@@ -4,6 +4,7 @@ import { IdleAction } from "../actions/IdleAction"
 import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
+import { VoteAction } from "../actions/VoteAction"
 import { IdleActionDuration } from "../npcConfig"
 import client from "../openai/openai"
 import {
@@ -71,6 +72,9 @@ export const reflect = async (action: Action) => {
     return isInterrupted
       ? `I was listening to a broadcast but got interrupted. I managed to listen: ${summary}`
       : `I completed Listen Action, listened to a broadcast: ${summary}`
+  } else if (actionType === "VoteAction") {
+    const voteAction = action as VoteAction
+    return `I voted for ${voteAction.chosenCandidate} in the last voting round.`
   }
   throw new Error(`Could not reflect for action: ${actionType}`)
 }

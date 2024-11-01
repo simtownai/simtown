@@ -24,16 +24,10 @@ const currentDate = new Date()
 const realTimeDifferenceMs = CONFIG.TARGET_DATE.getTime() - currentDate.getTime()
 const startDateMs = CONFIG.TARGET_DATE.getTime() - realTimeDifferenceMs / 60
 
-// Time calculation function
-export function getTime(): Date {
+export function getGameTime(): Date {
   const currentDate = new Date()
-
   const timeDifferenceMs = currentDate.getTime() - startDateMs
-
-  // Scale the difference by 60 for in-game time progression
   const gameTimeDifferenceMs = timeDifferenceMs * 60
-
-  // Calculate and return the in-game date
   const inGameDate = new Date(startDateMs + gameTimeDifferenceMs)
   return inGameDate
 }

@@ -1,4 +1,5 @@
 import { CONFIG } from "../../shared/config"
+import logger from "../../shared/logger"
 import { MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
@@ -28,13 +29,15 @@ export class MoveAction extends Action {
   }
 
   async start() {
+    logger.debug(`${this.getBrainDump().playerData.username} starting MoveAction`, this.moveTarget)
+
     this.isStarted = true
     this.movementController.setMovementFailedCallback(() => {
       console.log("Movement failed callback received in MoveAction")
       this.isFailed = true
     })
     this.movementController.setMovementCompletedCallback(() => {
-      console.log("Movement completed callback received in MoveAction")
+      logger.debug(`${this.getBrainDump().playerData.username} received movement completed callback in MoveAction`)
       if (CONFIG.ENABLE_NPC_AUTOMATION) {
         this.isCompletedFlag = true
       }

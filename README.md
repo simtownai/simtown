@@ -1,13 +1,14 @@
 # ToDo
 
+- (Szymon) hunt down TalkAction bugs
+  - NPCs are far from each other when start talking
 - (Szymon) Optimize prompts
+  - Going out of character NPC ("as an AI roleplaying NPC")
+  - "Player228 decided to end the conversation"
+  - NPC's shouldn't broadcast
+  - "Player8361 emphasized the urgency to vote, and I need to focus on my upcoming broadcast."
 - (Szymon) give NPC's sense of time to prompt
 
-- (Alex) add the voting action
-  - once a day server emits voting news
-  - npcs have a voting action (go and emit msg)
-  - once evey NPC placed their vote server sends the result as news to everybody
-  - server resets votes
 - (Alex) player rotations
   - rotate to whom you are sending messages
   - rotate to incoming messages if idle
@@ -15,6 +16,15 @@
   - this should fix multiple broadcasting emits after resume, because we regenerated the same broadcast task after dialogue and reflection and technically it's a new task
 - (Alex) player can only write to NPC if within range
 
+- gpt generate a reason for every action
+- generic OpenAI loop
+  - feed prompt, messages and tools, returns result; handles function calls arguments retries; use for generating actions, messaages and voting
+  - voting bad because it is not a tool call so it might not be one of candidates
+- Plausible analytics
+- NPC's thinking as a separate action
+- Only 1 NPC can broadcast at a single place at a time
+- Generate reason for actions when generating the plan
+- Black screen on mobile
 - add start time to the plan (maybe not need?)
 - move action sometimes fails without emitting that it was over
 - end NPC movement only on grid

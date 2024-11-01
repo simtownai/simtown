@@ -94,7 +94,6 @@ const TalkSchema = z.object({
 })
 
 const IdleActivityTypeSchema = z.enum(["idle", "read"])
-
 export type IdleActivityType = z.infer<typeof IdleActivityTypeSchema>
 
 const IdleSchema = z.object({
@@ -111,7 +110,22 @@ const ListenSchema = z.object({
   targetPlace: z.string(),
 })
 
-const ActionSchema = z.discriminatedUnion("type", [MoveSchema, TalkSchema, IdleSchema, BroadcastSchema, ListenSchema])
+export const availableVoteCandidates = ["Donald", "Kamala"] as const
+const VoteCandidateSchema = z.enum(availableVoteCandidates)
+export type VoteCandidate = z.infer<typeof VoteCandidateSchema>
+
+const VoteSchema = z.object({
+  type: z.literal("vote"),
+})
+
+const ActionSchema = z.discriminatedUnion("type", [
+  MoveSchema,
+  TalkSchema,
+  IdleSchema,
+  BroadcastSchema,
+  ListenSchema,
+  VoteSchema,
+])
 
 const ActionSchemaWithPerson = z.discriminatedUnion("type", [
   MoveSchemaWithPerson,
@@ -119,6 +133,7 @@ const ActionSchemaWithPerson = z.discriminatedUnion("type", [
   IdleSchema,
   BroadcastSchema,
   ListenSchema,
+  VoteSchema,
 ])
 
 export type GeneratedAction = z.infer<typeof ActionSchema>
