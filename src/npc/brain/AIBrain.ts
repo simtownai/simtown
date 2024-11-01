@@ -161,7 +161,7 @@ export class AIBrain {
 
   pushNewAction(action: Action, index: number): string {
     this.actionQueue.splice(index, 0, action)
-    console.log(`Inserted new action at index ${index}:`, action.constructor.name)
+    logger.info(`(${this.getPlayerData().username}) inserted new '${action.constructor.name}' at index ${index}`)
     return `Inserted new action at index ${index}: ${action.constructor.name}`
   }
 
@@ -195,7 +195,7 @@ export class AIBrain {
     const nextAction = this.actionQueue.shift()
 
     if (!nextAction) {
-      console.log("No more actions planned")
+      logger.warn(`(${this.getPlayerData().username}) no more actions planned`)
       return
     }
 
@@ -237,7 +237,9 @@ export class AIBrain {
 
         await this.generatePlanAndSetActions()
       } else {
-        logger.warn(`(${this.getPlayerData().username}) not reflecting on the action`)
+        logger.warn(
+          `(${this.getPlayerData().username}) not reflecting on the action '${this.currentAction.constructor.name}'`,
+        )
       }
       // Clear the current action
       this.currentAction = null
@@ -245,7 +247,7 @@ export class AIBrain {
       // Start the next action
       await this.startNextAction()
     } catch (error) {
-      logger.error("Error during action completion:", error)
+      logger.error(`(${this.getPlayerData().username}) Error during action completion:`, error)
       this.currentAction = null
     }
   }
