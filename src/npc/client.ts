@@ -5,7 +5,7 @@ import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/t
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
-import { TalkAction } from "./actions/TalkAction"
+import { TIMEOUT_MESSAGE, TalkAction } from "./actions/TalkAction"
 import { AIBrain } from "./brain/AIBrain"
 import { NpcConfig, npcConfig } from "./npcConfig"
 
@@ -86,28 +86,18 @@ export class NPC {
   onEndConversation(message: ChatMessage) {
     if (message.to === this.npcConfig.username) {
       const currentAction = this.aiBrain.getCurrentAction()
+
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         currentAction.clearAllListenersAndMarkAsCompleted()
-      }
-      this.adjustDirection(message.from)
-      this.aiBrain.addChatMessage(message.from, message)
-      this.aiBrain.addAIMessage(message.from, {
-        role: "user",
-        content: message.message,
-      })
-      this.aiBrain.closeThread(message.from)
-    }
-
-    const threads = this.aiBrain.getBrainDump().conversations.threads
-    console.log("Current player is", this.playerData.username)
-    for (const thread of threads) {
-      const playerId = thread[0]
-      const messages = thread[1]
-      console.log("Player id", playerId)
-      for (const message of messages) {
-        console.log("Finsihed is", message.finished)
-        console.log(message.aiMessages)
-        console.log(message.messages)
+        this.adjustDirection(message.from)
+        this.aiBrain.addChatMessage(message.from, message)
+        this.aiBrain.addAIMessage(message.from, {
+          role: "user",
+          content: message.message,
+        })
+        this.aiBrain.closeThread(message.from)
+      } else if (message.message !== TIMEOUT_MESSAGE) {
+        throw new Error("Received end conversation message that is not a timeout message")
       }
     }
   }

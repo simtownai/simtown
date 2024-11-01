@@ -35,8 +35,8 @@ export type TalkAIResponse = {
 export const generateAssistantResponse = async (
   system_message: string,
   aiMessages: ChatCompletionMessageParam[],
-  tools: FunctionSchema[],
-  functionMap: { [functionName: string]: Function },
+  tools: FunctionSchema[] = [],
+  functionMap: { [functionName: string]: Function } = {},
 ): Promise<TalkAIResponse> => {
   let responseContent = ""
   let newAIMessages: ChatCompletionMessageParam[] = []
@@ -47,12 +47,18 @@ export const generateAssistantResponse = async (
       ...newAIMessages,
     ]
     try {
-      const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: toSubmit,
-        tools: tools as ChatCompletionTool[],
-        tool_choice: "auto",
-      })
+      const completion =
+        tools.length > 0
+          ? await client.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: toSubmit,
+              tools: tools as ChatCompletionTool[],
+              tool_choice: "auto",
+            })
+          : await client.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: toSubmit,
+            })
 
       const responseMessage = completion.choices[0].message
 

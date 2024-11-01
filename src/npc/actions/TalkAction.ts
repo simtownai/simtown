@@ -8,6 +8,9 @@ import { Action } from "./Action"
 import { TalkAIResponse, createChatMessage, generateAssistantResponse } from "./generateMessage"
 import { z } from "zod"
 
+export const TIMEOUT_MESSAGE =
+  "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
+
 type EmissionState = {
   chunksToBeEmitted: string[]
   emittedContent: string
@@ -77,10 +80,14 @@ export class TalkAction extends Action {
   }
 
   private splitMessageIntoChunks(message: string): string[] {
-    return message.match(/[^.!?]+[.!?]+/g) || [message]
+    const chunks = message.match(/[^.!?]+[.!?]+/g) || [message]
+    const filtered = chunks.filter((chunk) => chunk.length > 0)
+    return filtered
   }
 
   handleEmittedChunk(chunk: string) {
+    if (this.isCompletedFlag) return
+
     // Add to accumulated content
     this.emissionState.emittedContent += chunk
 
@@ -122,7 +129,6 @@ export class TalkAction extends Action {
   }
 
   endConversation(reason: string) {
-    this.clearAllListenersAndMarkAsCompleted()
     this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
       role: "assistant",
       content: reason,
@@ -130,21 +136,9 @@ export class TalkAction extends Action {
     const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
     this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
     this.getBrainDump().closeThread(this.targetPlayerUsername)
-    const threads = this.getBrainDump().conversations.threads
-    console.log("We are inside endConversation with reason:", reason)
-    console.log("Current player is", this.getBrainDump().playerData.username)
-    for (const thread of threads) {
-      const playerId = thread[0]
-      const messages = thread[1]
-      console.log("Player id", playerId)
-      for (const message of messages) {
-        console.log("Finsihed is", message.finished)
-        console.log(message.aiMessages)
-        console.log(message.messages)
-      }
-    }
-
     this.getEmitMethods().emitEndConversation(finalMessage)
+    this.clearAllListenersAndMarkAsCompleted()
+
     return reason
   }
 
@@ -164,14 +158,11 @@ export class TalkAction extends Action {
     const response = await generateAssistantResponse(
       system_message,
       this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername).aiMessages,
-      this.tools,
-      this.functionMap,
     )
     this.handleGeneratedResponse(response)
 
     const first_chunk = this.emissionState.chunksToBeEmitted.shift()!
     this.handleEmittedChunk(first_chunk)
-    this.resetConversationTimeout()
   }
 
   private endConversationTool = functionToSchema(
@@ -191,13 +182,12 @@ export class TalkAction extends Action {
   }
 
   private endConversationDueToTimeout() {
-    const timeoutMessage =
-      "I'm sorry, but I haven't heard from you in a while. I'll have to end our conversation for now. Feel free to chat with me again later!"
-
-    this.endConversation(timeoutMessage)
+    this.endConversation(TIMEOUT_MESSAGE)
   }
 
   private resetConversationTimeout() {
+    if (this.isCompletedFlag) return // Do not reset timeout if conversation has ended
+
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
     }
@@ -211,6 +201,8 @@ export class TalkAction extends Action {
     if (this.incomingMessageState.responseTimer) {
       clearTimeout(this.incomingMessageState.responseTimer)
     }
+    if (this.isCompletedFlag) return
+
     this.incomingMessageState.responseTimer = setTimeout(() => {
       this.processBufferedMessages().catch((error) => {
         logger.error("Error processing buffered messages:", error)
@@ -241,8 +233,6 @@ export class TalkAction extends Action {
     const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
     const system_message = continue_conversation(aiBrainSummary, this.targetPlayerUsername)
 
-    this.resetConversationTimeout()
-
     const response = await generateAssistantResponse(
       system_message,
       this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername).aiMessages,
@@ -253,6 +243,7 @@ export class TalkAction extends Action {
   }
 
   async start() {
+    this.resetConversationTimeout()
     this.isStarted = true
     this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
@@ -279,7 +270,6 @@ export class TalkAction extends Action {
       if (this.emissionState.timeSinceLastChunk >= this.CHUNK_DELAY) {
         const chunk = this.emissionState.chunksToBeEmitted.shift()!
         this.handleEmittedChunk(chunk)
-        this.resetConversationTimeout()
         this.emissionState.timeSinceLastChunk = 0
       }
     }

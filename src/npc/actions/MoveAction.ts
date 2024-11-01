@@ -28,8 +28,6 @@ export class MoveAction extends Action {
   }
 
   async start() {
-    console.log("MoveAction start", this.moveTarget)
-
     this.isStarted = true
     this.movementController.setMovementFailedCallback(() => {
       console.log("Movement failed callback received in MoveAction")
