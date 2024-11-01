@@ -307,18 +307,16 @@ function sendVotingReminder() {
 
 function initializeVotingNotifications() {
   let lastNotificationGameTime = new Date(getGameTime().setDate(getGameTime().getDate() - 1))
-  setTimeout(() => {
-    setInterval(() => {
-      const currentGameTime = getGameTime()
+  setInterval(() => {
+    const currentGameTime = getGameTime()
 
-      const gameHoursSinceLastNotification =
-        (currentGameTime.getTime() - lastNotificationGameTime.getTime()) / 1000 / 60 / 60
+    const gameHoursSinceLastNotification =
+      (currentGameTime.getTime() - lastNotificationGameTime.getTime()) / 1000 / 60 / 60
 
-      if (gameHoursSinceLastNotification >= CONFIG.VOTE_EVERY_N_HOURS) {
-        sendVotingReminder()
-        lastNotificationGameTime = currentGameTime
-      }
-    }, 10000)
+    if (gameHoursSinceLastNotification >= CONFIG.VOTE_EVERY_N_HOURS) {
+      sendVotingReminder()
+      lastNotificationGameTime = currentGameTime
+    }
   }, 10000)
 }
 
