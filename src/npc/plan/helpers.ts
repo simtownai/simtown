@@ -127,7 +127,7 @@ export const convertGeneratedPlanToActions = (
           name: actionData.name,
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.info(
+          logger.debug(
             `(${getBrainDump().playerData.username}) far from player '${actionData.name}', moving there before '${actionData.type}'`,
           )
           return [
@@ -155,7 +155,7 @@ export const convertGeneratedPlanToActions = (
           name: actionData.targetPlace + " (podium)",
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.info(
+          logger.debug(
             `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
           )
           return [
@@ -181,7 +181,7 @@ export const convertGeneratedPlanToActions = (
           name: actionData.targetPlace,
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.info(
+          logger.debug(
             `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
           )
           return [
@@ -204,7 +204,7 @@ export const convertGeneratedPlanToActions = (
           name: CONFIG.VOTING_PLACE_NAME,
         }
         if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.info(
+          logger.debug(
             `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
           )
           return [

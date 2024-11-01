@@ -216,7 +216,7 @@ export class TalkAction extends Action {
 
     // Check if there are messages to process
     if (this.incomingMessageState.messageBuffer.length === 0) {
-      console.log("No messages to process")
+      logger.info(`${this.getBrainDump().playerData.username} has no messages to process`)
       return
     }
 

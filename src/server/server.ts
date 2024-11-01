@@ -290,7 +290,7 @@ io.on("connection", (socket) => {
       const { username } = player
       players.delete(playerId)
       io.emit("playerLeft", username)
-      logger.info(`User ${socket.id} disconnected. Number of players: ${players.size}`)
+      logger.info(`User ${username} disconnected. Number of players: ${players.size}`)
     }
   })
 })

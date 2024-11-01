@@ -29,7 +29,9 @@ export class MoveAction extends Action {
   }
 
   async start() {
-    logger.debug(`${this.getBrainDump().playerData.username} starting MoveAction`, this.moveTarget)
+    logger.debug(
+      `(${this.getBrainDump().playerData.username}) starting MoveAction to ${JSON.stringify(this.moveTarget)}`,
+    )
 
     this.isStarted = true
     this.movementController.setMovementFailedCallback(() => {
@@ -37,7 +39,7 @@ export class MoveAction extends Action {
       this.isFailed = true
     })
     this.movementController.setMovementCompletedCallback(() => {
-      logger.debug(`${this.getBrainDump().playerData.username} received movement completed callback in MoveAction`)
+      logger.debug(`(${this.getBrainDump().playerData.username}) received movement completed callback in MoveAction`)
       if (CONFIG.ENABLE_NPC_AUTOMATION) {
         this.isCompletedFlag = true
       }

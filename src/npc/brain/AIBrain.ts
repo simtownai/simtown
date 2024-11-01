@@ -200,7 +200,7 @@ export class AIBrain {
     }
 
     this.currentAction = nextAction
-    logger.warn(`(${this.getPlayerData().username}) starting next action: ${nextAction.constructor.name}`)
+    logger.info(`(${this.getPlayerData().username}) starting next action: ${nextAction.constructor.name}`)
 
     this.getEmitMethods().updatePlayerData({
       action: convertActionToGeneratedAction(this.currentAction),
