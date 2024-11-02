@@ -13,6 +13,8 @@ import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
 import { BrainDump } from "../brain/AIBrain"
 
+const broadcastAnnouncementsCache: Set<string> = new Set()
+
 export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
   if (action instanceof IdleAction) {
     return { type: "idle", activityType: action.activityType }
@@ -144,12 +146,17 @@ export const convertGeneratedPlanToActions = (
         }
         return talkAction
       case "broadcast":
-        const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace)
-        getEmitMethods().emitNewsItem({
-          date: getGameTime().toISOString(),
-          message: `📢 ${getBrainDump().playerData.username} will be broadcasting soon`,
-          place: actionData.targetPlace,
+        const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
+          broadcastAnnouncementsCache.delete(`${getBrainDump().playerData.username}-${actionData.targetPlace}`)
         })
+        if (!broadcastAnnouncementsCache.has(`${getBrainDump().playerData.username}-${actionData.targetPlace}`)) {
+          broadcastAnnouncementsCache.add(`${getBrainDump().playerData.username}-${actionData.targetPlace}`)
+          getEmitMethods().emitNewsItem({
+            date: getGameTime().toISOString(),
+            message: `📢 ${getBrainDump().playerData.username} will be broadcasting soon`,
+            place: actionData.targetPlace,
+          })
+        }
         supportingMoveTarget = {
           targetType: "place",
           name: actionData.targetPlace + " (podium)",

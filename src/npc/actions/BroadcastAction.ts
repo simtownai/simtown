@@ -18,6 +18,7 @@ export class BroadcastAction extends Action {
     getEmitMethods: () => EmitInterface,
     targetPlace: string,
     reason: string = "",
+    private onStart: () => void,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.targetPlace = targetPlace
@@ -26,6 +27,7 @@ export class BroadcastAction extends Action {
   async start(): Promise<void> {
     this.isStarted = true
     await this.generateBroadcast()
+    this.onStart()
     this.startBroadcasting()
   }
 
