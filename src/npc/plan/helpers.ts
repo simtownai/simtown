@@ -161,7 +161,12 @@ export const convertGeneratedPlanToActions = (
         }
         return talkAction
       case "broadcast":
-        if (ifBroadcastAnnouncedAtPlace(actionData.targetPlace)) {
+        if (
+          ifBroadcastAnnouncedAtPlace(actionData.targetPlace) &&
+          !broadcastAnnouncementsCache.has(
+            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
+          )
+        ) {
           logger.warn(
             `(${getBrainDump().playerData.username}) broadcast is already announced at place ${actionData.targetPlace}`,
           )
