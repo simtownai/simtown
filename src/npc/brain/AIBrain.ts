@@ -240,7 +240,7 @@ export class AIBrain {
 
         await this.generatePlanAndSetActions()
       } else {
-        logger.warn(
+        logger.debug(
           `(${this.getPlayerData().username}) not reflecting on the action '${this.currentAction.constructor.name}'`,
         )
       }
