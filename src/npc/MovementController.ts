@@ -123,8 +123,23 @@ export class MovementController {
     this.isPaused = false
   }
 
+  private snapToGrid() {
+    const playerData = this.getPlayerData()
+    const currentGridPos = worldToGrid(playerData.x, playerData.y)
+    const snappedWorldPos = gridToWorld(currentGridPos)
+
+    // Only snap if we're not already on a grid position
+    if (Math.abs(playerData.x - snappedWorldPos.x) > 0.1 || Math.abs(playerData.y - snappedWorldPos.y) > 0.1) {
+      this.updateAndEmitPlayerData({
+        x: snappedWorldPos.x,
+        y: snappedWorldPos.y,
+      })
+    }
+  }
+
   move(deltaTime: number) {
     if (this.isPaused || this.isRecalculatingPath || this.pathIndex >= this.path.length) {
+      this.snapToGrid() // Add grid snapping when stopping
       this.setIdleAnimation()
       return
     }
@@ -137,6 +152,7 @@ export class MovementController {
 
         if (!player) {
           console.log("Target player not found")
+          this.snapToGrid() // Add grid snapping when target lost
           this.handleMovementCompleted()
           return
         }
@@ -160,15 +176,11 @@ export class MovementController {
       }
     }
 
-    // Ensure pathIndex is within bounds
-    if (this.pathIndex < 0) {
-      this.pathIndex = 0
-    }
-
     const nextTile = this.path[this.pathIndex]
     const worldPos = gridToWorld(nextTile)
 
     if (this.isCellBlocked(nextTile)) {
+      this.snapToGrid() // Add grid snapping when blocked
       this.setIdleAnimation()
       if (this.pathIndex === this.path.length - 1) {
         this.initiateMovement(this.currentMoveTarget!)
@@ -211,10 +223,10 @@ export class MovementController {
     }
 
     updatePlayerData.animation = this.getAnimation(playerData.username, moveX, moveY)
-
     this.updateAndEmitPlayerData(updatePlayerData)
 
     if (this.pathIndex >= this.path.length) {
+      this.snapToGrid() // Add grid snapping when path completed
       this.handleMovementCompleted()
     }
   }
