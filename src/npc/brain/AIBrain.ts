@@ -93,7 +93,7 @@ export class AIBrain {
         this.adjustDirection,
       )
     } catch (error) {
-      logger.error("Error generating new plan:", error)
+      logger.error(`(${this.getPlayerData().username}) Error generating new plan:`, error)
     }
   }
 
