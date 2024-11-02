@@ -33,6 +33,7 @@ export class TalkAction extends Action {
 
   private addEmittedContentToAIMessages() {
     if (this.emissionState.emittedContent) {
+      this.resetConversationTimeout()
       this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
         role: "assistant",
         content: this.emissionState.emittedContent,
@@ -88,7 +89,7 @@ export class TalkAction extends Action {
   }
 
   emitChunk(chunk: string) {
-    if (this.isCompletedFlag) return
+    if (this.isCompletedFlag || chunk.length < 1) return
 
     // Add to accumulated content
     this.emissionState.emittedContent += chunk
@@ -115,7 +116,6 @@ export class TalkAction extends Action {
       // Reset timers and prepare for next message
       this.resetResponseTimer()
     }
-    this.resetConversationTimeout()
   }
 
   clearAllListeners() {
@@ -124,11 +124,9 @@ export class TalkAction extends Action {
     this.incomingMessageState.messageBuffer = []
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
-      this.conversationTimeout = null
     }
     if (this.incomingMessageState.responseTimer) {
       clearTimeout(this.incomingMessageState.responseTimer)
-      this.incomingMessageState.responseTimer = null
     }
   }
 
@@ -138,6 +136,8 @@ export class TalkAction extends Action {
   }
 
   endConversation(reason: string) {
+    this.isCompletedFlag = true
+
     this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
       role: "assistant",
       content: reason,
@@ -147,7 +147,6 @@ export class TalkAction extends Action {
     this.getBrainDump().closeThread(this.targetPlayerUsername)
     this.getEmitMethods().emitEndConversation(finalMessage)
     this.clearAllListenersAndMarkAsCompleted()
-
     return reason
   }
 
@@ -198,7 +197,6 @@ export class TalkAction extends Action {
   private resetConversationTimeout() {
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
-      this.conversationTimeout = null
     }
 
     if (this.isCompletedFlag) return // Do not set timeout if conversation has ended
@@ -225,7 +223,6 @@ export class TalkAction extends Action {
 
   private async processBufferedMessages() {
     // Clear the response timer
-    this.incomingMessageState.responseTimer = null
 
     // Check if there are messages to process
     if (this.incomingMessageState.messageBuffer.length === 0) {
