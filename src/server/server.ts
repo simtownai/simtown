@@ -214,11 +214,17 @@ io.on("connection", (socket) => {
   })
 
   socket.on("vote", (candidate: VoteCandidate) => {
-    const player = players.get(playerId)
-    const currentVoteResults = voteResults[voteResults.length - 1]
-    currentVoteResults.set(player!.username, candidate)
+    const player = players.get(playerId)!
 
-    logger.info(`User ${player?.username} voted for ${candidate}`)
+    if (availableVoteCandidates.includes(player.username as VoteCandidate)) {
+      logger.warning(`User ${player.username} is not eligible to vote (voted for ${candidate})`)
+      return
+    }
+
+    const currentVoteResults = voteResults[voteResults.length - 1]
+    currentVoteResults.set(player.username, candidate)
+
+    logger.info(`User ${player.username} voted for ${candidate}`)
 
     const totalNPCVotes = Array.from(currentVoteResults.entries()).filter(([username]) => {
       const playerData = Array.from(players.values()).find((p) => p.username === username)
@@ -236,7 +242,9 @@ io.on("connection", (socket) => {
         if (!votersByCandidate.has(candidate)) {
           votersByCandidate.set(candidate, [])
         }
-        votersByCandidate.get(candidate)!.push(voter)
+        if (!availableVoteCandidates.includes(voter as VoteCandidate)) {
+          votersByCandidate.get(candidate)!.push(voter)
+        }
       })
 
       // Calculate overall results
