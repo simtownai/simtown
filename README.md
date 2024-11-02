@@ -16,6 +16,7 @@
   - rotate to incoming messages if idle
 - (Alex) player can only write to NPC if within range
 
+- Generate first message with the talk action
 - **refactor planning**
   - problem: new actions objects override old actions objects even they are exactly the same
   - problem: they manually generate move action before some other action which is already implies movement (e.g. move to voting place before vote) -> then they move there, reflect and decide not to vote
@@ -30,7 +31,6 @@
   - voting bad because it is not a tool call so it might not be one of candidates
 - Plausible analytics
 - NPC's thinking as a separate action
-- Only 1 NPC can broadcast at a single place at a time
 - Generate reason for actions when generating the plan
 - Black screen on mobile
 - add start time to the plan (maybe not need?)
