@@ -48,7 +48,7 @@ You will now generate a message to continue a conversation with a player named $
 
 export const broadcast_prompt = (reflections: StringifiedBrainDump) =>
   `${construct_base_prompt(reflections)}.
-You will now generate a speech a 1 page long speech which your character will give to the public. It should be relevant for the election / your goals or based on the knowledge of this player. It should contain just the content of the speech, without any comments or setups.`
+You will now generate a speech a 1 page long speech which your character will give to the public. It should be relevant for the election / your goals or based on the knowledge of this player. It should contain just the content of the speech, without any comments or setups. It should be very controversial to touch people's feelings.`
 
 export const summarize_broadcast_prompt = (reflections: StringifiedBrainDump, broadcastContent: string) =>
   `${construct_base_prompt(reflections)}.
