@@ -204,7 +204,9 @@ export class TalkAction extends Action {
     if (this.isCompletedFlag) return // Do not set timeout if conversation has ended
 
     this.conversationTimeout = setTimeout(() => {
-      this.endConversationDueToTimeout()
+      if (!this.isCompletedFlag) {
+        this.endConversationDueToTimeout()
+      }
     }, this.ConversationTimeoutThreshold)
   }
 
