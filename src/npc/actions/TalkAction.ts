@@ -268,6 +268,7 @@ export class TalkAction extends Action {
 
     if (!this.movementController.ifMoveTargetReached(moveTarget)) {
       this.movementController.initiateMovement(moveTarget)
+      this.movementController.resume()
       this.movementController.move(deltaTime)
     }
 
