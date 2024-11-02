@@ -119,7 +119,7 @@ export const convertGeneratedPlanToActions = (
         return new IdleAction(getBrainDump, getEmitMethods, actionData.activityType)
       case "move":
         return !movementController.ifMoveTargetReached(actionData.target)
-          ? new MoveAction(getBrainDump, getEmitMethods, movementController, actionData.target)
+          ? new MoveAction(getBrainDump, getEmitMethods, movementController, actionData.target, "", false)
           : []
       case "talk":
         const talkAction = new TalkAction(getBrainDump, getEmitMethods, "", actionData.name, { type: "new" })
