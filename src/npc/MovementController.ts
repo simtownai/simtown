@@ -164,9 +164,6 @@ export class MovementController {
           )
 
           if (distanceMoved > this.pathRecalculationThreshold) {
-            // logger.warn(
-            //   `(${this.getPlayerData().username}) target person '${this.currentMoveTarget.name}' moved significantly, recalculating path.`,
-            // )
             this.lastKnownTargetPosition = { x: player.x, y: player.y }
             this.lastPathRecalculationTime = currentTime
             this.initiateMovement(this.currentMoveTarget)
@@ -455,7 +452,7 @@ export class MovementController {
       this.onMovementFailed = null
     }
 
-    console.log("Blocked for 5 seconds, giving up on reaching the target.")
+    logger.error(`(${this.getPlayerData().username}) Blocked for 5 seconds, giving up on reaching the target`)
   }
 
   private recalculatePath() {

@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { ChatMessage } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
@@ -30,7 +31,7 @@ export class ListenAction extends Action {
 
     this.conversationTimeout = setTimeout(() => {
       this.isCompletedFlag = true
-      console.log("ListenAction timed out")
+      logger.debug(`(${this.getBrainDump().playerData.username}) ListenAction timed out`)
     }, this.ListenTimeoutThreshold)
   }
 

@@ -35,7 +35,7 @@ export class MoveAction extends Action {
 
     this.isStarted = true
     this.movementController.setMovementFailedCallback(() => {
-      console.log("Movement failed callback received in MoveAction")
+      logger.error(`(${this.getBrainDump().playerData.username}) movement failed in MoveAction`)
       this.isFailed = true
     })
     this.movementController.setMovementCompletedCallback(() => {
@@ -53,7 +53,7 @@ export class MoveAction extends Action {
     if (this.isInterrupted || !this.isStarted) return
 
     if (this.isFailed) {
-      console.log("MoveAction detected movement failure.")
+      logger.error(`(${this.getBrainDump().playerData.username}) detected movement failure in MoveAction`)
       this.isCompletedFlag = true
       return
     }
