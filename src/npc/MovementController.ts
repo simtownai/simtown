@@ -95,7 +95,9 @@ export class MovementController {
     try {
       const startPostion = worldToGrid(playerData.x, playerData.y)
       if (JSON.stringify(startPostion) === JSON.stringify(targetPosition)) {
-        logger.debug(`${this.getPlayerData().username} is already at the target position ${JSON.stringify(moveTarget)}`)
+        logger.debug(
+          `(${this.getPlayerData().username}) is already at the target position ${JSON.stringify(moveTarget)}`,
+        )
         this.handleMovementCompleted()
         return
       }
