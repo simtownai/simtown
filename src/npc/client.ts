@@ -96,7 +96,7 @@ export class NPC {
           content: message.message,
         })
         this.aiBrain.closeThread(message.from)
-      } else if (message.message === TIMEOUT_MESSAGE) {
+      } else if (currentAction instanceof TalkAction && message.message === TIMEOUT_MESSAGE) {
         throw new Error("Received conversation timeout message but we are not talking with this player")
       }
     }
