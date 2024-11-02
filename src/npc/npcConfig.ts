@@ -127,19 +127,34 @@ export const npcConfig: NpcConfig[] = [
   },
   {
     username: "Mike",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_02",
+      eyes: "Eyes_01",
+      outfit: "Outfit_19_01",
+      hairstyle: "Hairstyle_13_06",
+      accessory: "Accessory_06_Policeman_Hat_05",
+    },
     backstory: [
+      "You are Mike Johnson",
       "You are 50 years old",
-      "You are a police officer and you live in a small town close to Pittsburgh",
+      "You are a police officer",
+      "You live in a small town close to Pittsburgh",
       "You have just finished paying back your student loans but are still paying for your mortgage",
-      "You have two kids but your wife died 5 years ago from cancer",
+      "Your wife died 5 years ago from cancer",
+      "You have two kids",
       "Kids are senior and freshman in high school and you are trying to figure out how to pay for their college",
     ],
   },
   {
     username: "Connor",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_04",
+      eyes: "Eyes_01",
+      outfit: "Outfit_16_02",
+      hairstyle: "Hairstyle_08_04",
+    },
     backstory: [
+      "You are Connor O'Malley",
       "You are 29 years old black man",
       "You have just been released from prison",
       "You were senteced 5 years ago for having cocaine on you",
@@ -153,9 +168,16 @@ export const npcConfig: NpcConfig[] = [
   },
   {
     username: "Anna",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_04",
+      eyes: "Eyes_01",
+      outfit: "Outfit_18_02",
+      hairstyle: "Hairstyle_25_05",
+      accessory: "Accessory_15_Glasses_06",
+    },
     backstory: [
-      "You are 55 years old black woman",
+      "You are Anna Smith",
+      "You are 60 years old black woman",
       "You are teaching US History and US Government at a local high school",
       "You care a lot about your students and community",
       "You volunteer at local food bank",
@@ -166,10 +188,17 @@ export const npcConfig: NpcConfig[] = [
 
   {
     username: "Veronica",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_02",
+      eyes: "Eyes_04",
+      outfit: "Outfit_27_01",
+      hairstyle: "Hairstyle_09_04",
+      accessory: "Accessory_18_Chef_02",
+    },
     backstory: [
+      "You are Veronica Rossi",
       "You are 30 years old white woman",
-      "You come from American-Italian family who immigrated to the US2 generations ago",
+      "You come from American-Italian family who immigrated to the US 2 generations ago",
       "Your parents are still alive but are in poor health",
       "They used to own their own restaurant but sold it 5 years ago",
       "You are now trying to get back into the restaurant business",
@@ -182,8 +211,15 @@ export const npcConfig: NpcConfig[] = [
   },
   {
     username: "Joe",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_07",
+      eyes: "Eyes_04",
+      outfit: "Outfit_02_02",
+      hairstyle: "Hairstyle_12_03",
+      accessory: "Accessory_13_Beard_01",
+    },
     backstory: [
+      "You are Joe Miller",
       "You are 45 years old white man",
       "You are a truck driver",
       "You are worried about AI taking your job and replacing you with robots",
@@ -196,8 +232,15 @@ export const npcConfig: NpcConfig[] = [
   },
   {
     username: "Peter",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_04",
+      eyes: "Eyes_04",
+      outfit: "Outfit_26_02",
+      hairstyle: "Hairstyle_14_05",
+      accessory: "Accessory_13_Beard_04",
+    },
     backstory: [
+      "You are Peter Jackson",
       "You are 65 years old black man",
       "You were the owner of a construction company and you sold it 5 years ago for a lot of money",
       "You live in Philadelphia and own a big lake cabin in Poconos",
@@ -211,8 +254,15 @@ export const npcConfig: NpcConfig[] = [
   },
   {
     username: "Maya",
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_01",
+      eyes: "Eyes_04",
+      outfit: "Outfit_10_05",
+      hairstyle: "Hairstyle_15_03",
+      accessory: "Accessory_03_Backpack_01",
+    },
     backstory: [
+      "You are Maya Patel",
       "You are 25 years Cuban descent woman",
       "You have just graduated from University of Pensylvania with a degree in Computer Science",
       "You are a first generation college student",
