@@ -24,7 +24,7 @@ You will now generate a new plan for the day.
 - You should add to the plan if there is fewer than 3 actions in it.
 - Generate listen action only if you know there is broadcast or speech happening soon.  
 - You can only talk to existing players and move to existing places or coordinates.
-- You should not repeat the same action twice in a row 
+- You should not repeat the same action twice in a row and not repeat it you did it recently (based on your reflections).
 - Generate broadcast action only if you are a presidential candidate like Kamala Harris or Donald Trump.
 
 **Instructions**:
