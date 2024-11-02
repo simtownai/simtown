@@ -59,7 +59,7 @@ export class MovementController {
     } else if (moveTarget.targetType === "person") {
       const player = this.getOtherPlayers().get(moveTarget.name)
       if (!player) {
-        console.error(`${this.getPlayerData().username} couldn't find ${moveTarget.name}`)
+        logger.error(`(${this.getPlayerData().username}) couldn't find ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
@@ -69,7 +69,7 @@ export class MovementController {
 
       const bestAdjacentPosition = this.findBestAdjacentPosition(playerGridPos, playerData)
       if (!bestAdjacentPosition) {
-        console.error(`${this.getPlayerData().username} couldn't find a path to ${moveTarget.name}`)
+        logger.error(`(${this.getPlayerData().username}) couldn't find a path to ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
@@ -77,14 +77,14 @@ export class MovementController {
     } else if (moveTarget.targetType === "place") {
       const place = this.getPlace(moveTarget.name)
       if (!place) {
-        console.error(`${this.getPlayerData().username} couldn't find ${moveTarget.name}`)
+        logger.error(`(${this.getPlayerData().username}) couldn't find ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
 
       const availablePositions = this.findAvailablePositionsInPlace(place)
       if (availablePositions.length === 0) {
-        console.error(`${this.getPlayerData().username} couldn't find a path to ${moveTarget.name}`)
+        logger.error(`(${this.getPlayerData().username}) couldn't find a path to ${moveTarget.name}`)
         this.handleMovementCompleted()
         return
       }
@@ -95,7 +95,7 @@ export class MovementController {
     try {
       const startPostion = worldToGrid(playerData.x, playerData.y)
       if (JSON.stringify(startPostion) === JSON.stringify(targetPosition)) {
-        console.log(`${this.getPlayerData().username} is already at the target position ${targetPosition}`)
+        logger.debug(`${this.getPlayerData().username} is already at the target position ${targetPosition}`)
         this.handleMovementCompleted()
         return
       }
@@ -109,7 +109,7 @@ export class MovementController {
       this.setPath(foundPath, targetPosition)
       return `${this.getPlayerData().username} is moving to ${moveTarget}`
     } catch (error) {
-      console.error("Error in move_to:", error)
+      logger.error(`(${this.getPlayerData().username}) Error initiating movement:`, error)
       return "Couldn't move there, those numbers are not valid coordinates"
     }
   }
