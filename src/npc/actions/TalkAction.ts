@@ -1,5 +1,6 @@
 import logger from "../../shared/logger"
-import { ChatMessage } from "../../shared/types"
+import { ChatMessage, MoveTarget } from "../../shared/types"
+import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
@@ -59,6 +60,7 @@ export class TalkAction extends Action {
     reason: string = "",
     private targetPlayerUsername: string,
     private conversationType: ConversationType,
+    private movementController: MovementController,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.tools = [this.endConversationTool]
@@ -85,7 +87,7 @@ export class TalkAction extends Action {
     return filtered
   }
 
-  handleEmittedChunk(chunk: string) {
+  emitChunk(chunk: string) {
     if (this.isCompletedFlag) return
 
     // Add to accumulated content
@@ -162,7 +164,8 @@ export class TalkAction extends Action {
     this.handleGeneratedResponse(response)
 
     const first_chunk = this.emissionState.chunksToBeEmitted.shift()!
-    this.handleEmittedChunk(first_chunk)
+
+    this.emitChunk(first_chunk)
   }
 
   private endConversationTool = functionToSchema(
@@ -186,11 +189,12 @@ export class TalkAction extends Action {
   }
 
   private resetConversationTimeout() {
-    if (this.isCompletedFlag) return // Do not reset timeout if conversation has ended
-
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
+      this.conversationTimeout = null
     }
+
+    if (this.isCompletedFlag) return // Do not set timeout if conversation has ended
 
     this.conversationTimeout = setTimeout(() => {
       this.endConversationDueToTimeout()
@@ -243,7 +247,6 @@ export class TalkAction extends Action {
   }
 
   async start() {
-    this.resetConversationTimeout()
     this.isStarted = true
     this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
@@ -261,7 +264,12 @@ export class TalkAction extends Action {
   async update(deltaTime: number) {
     if (this.isInterrupted || !this.isStarted || this.isCompletedFlag) return
 
-    this.elapsedTime += deltaTime
+    const moveTarget: MoveTarget = { name: this.targetPlayerUsername, targetType: "person" }
+
+    if (!this.movementController.ifMoveTargetReached(moveTarget)) {
+      this.movementController.initiateMovement(moveTarget)
+      this.movementController.move(deltaTime)
+    }
 
     // Handle chunk emission
     if (this.emissionState.chunksToBeEmitted.length > 0) {
@@ -269,7 +277,7 @@ export class TalkAction extends Action {
 
       if (this.emissionState.timeSinceLastChunk >= this.CHUNK_DELAY) {
         const chunk = this.emissionState.chunksToBeEmitted.shift()!
-        this.handleEmittedChunk(chunk)
+        this.emitChunk(chunk)
         this.emissionState.timeSinceLastChunk = 0
       }
     }

@@ -1,3 +1,4 @@
+import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../../shared/types"
 import { MovementController } from "../MovementController"
@@ -25,6 +26,7 @@ export type StringifiedBrainDump = {
   reflections: string
   currentPlan: string
   currentAction: string
+  currentTime: string
 }
 
 export type BrainDump = {
@@ -155,6 +157,7 @@ export class AIBrain {
       reflections: reflectionsString,
       currentPlan: currentActionQueueString,
       currentAction: currentActionString,
+      currentTime: getGameTime().toISOString(),
     }
     return result
   }

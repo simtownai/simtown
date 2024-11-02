@@ -172,6 +172,7 @@ export class NPC {
             type: "existing",
             message: message,
           },
+          this.movementController,
         )
         const refusalMessage: ChatMessage = {
           to: message.from,
@@ -191,6 +192,7 @@ export class NPC {
             type: "existing",
             message: message,
           },
+          this.movementController,
         )
         this.aiBrain.interruptCurrentActionAndExecuteNew(action)
       }

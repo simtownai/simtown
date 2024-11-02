@@ -1,17 +1,18 @@
 import { StringifiedBrainDump } from "./brain/AIBrain"
 
 export const construct_base_prompt = (reflections: StringifiedBrainDump) => `
-You are playing a role of a non-playable character agent named ${reflections.name} in an election simulation game. The game is happening in Pensylwania in 2024.Your actions and thoughts should be guided by your background: ${reflections.backstory}. 
+You should assume a role of ${reflections.name} in an election simulation game. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
 
 Your current expierences and thoughts from today are: ${reflections.reflections}. 
 
-Your current plan for the day is: ${reflections.currentPlan} and you are currently doing ${reflections.currentAction}.
+Your current plan for the day is: ${reflections.currentPlan}.
 
 Other players currently in the game are: ${reflections.playerNames}.
 Avaialble places to visit are: ${reflections.placesNames}.
 
-**News for the day**: ${reflections.newsPaper}
+**Curent time is** ${reflections.currentTime}
 
+**Happening today**: ${reflections.newsPaper}
 `
 
 export const planning_prompt = (reflections: StringifiedBrainDump) => `
@@ -19,9 +20,12 @@ ${construct_base_prompt(reflections)}.
 You will now generate a new plan for the day.
 
 **Constraints**:
-- You can choose to **keep**, **modify**, or **discard** the existing planned actions.
-- You can only talk to existing players and  move to existing places or coordinates.
-- You should not repeat the same action twice in a row (so if your reflections contain talking to a given person, you should not talk to them again in the next action, same for moving to a place)
+- You should modify the current plan only if you have a good reason to do so based on your own reflections or news.
+- You should add to the plan if there is fewer than 3 actions in it.
+- Generate listen action only if you know there is broadcast or speech happening soon.  
+- You can only talk to existing players and move to existing places or coordinates.
+- You should not repeat the same action twice in a row 
+- Generate broadcast action only if you are a presidential candidate like Kamala Harris or Donald Trump.
 
 **Instructions**:
 - Generate a new action plan for the NPC, considering the existing planned actions.
@@ -44,7 +48,7 @@ export const continue_conversation = (
   reflections: StringifiedBrainDump,
   targetPlayer: string,
 ) => `${construct_base_prompt(reflections)}.
-You will now generate a message to continue a conversation with a player named ${targetPlayer}. It should be short and relevant for the election / your goals or based on the knowledge of this player. You should keep in mind your plan for the day and if you decide that those plans are more important than continuing the conversation, you should call endConversation. Keep the messages short but relevant (3-4 sentences max).`
+You will now generate a message to continue a conversation with a player named ${targetPlayer}. It should be short and relevant for the election / your goals or based on the knowledge of this player. You should keep in mind your plan for the day and if you decide that those plans are more important than continuing the conversation, you should call function endConversation. The explanation for ending the conversation should be something you would actually say in real life, e.g. "I need to go as I want to prep for upcoming spedch I am about to give" or "We will never agree on this topic so I will stop talking to you, Bye!" or "Ok got it, talk to you later". Keep the messages short but relevant (3-4 sentences max). Remember, if you want to end the conversation, you need to call endConversation function.`
 
 export const broadcast_prompt = (reflections: StringifiedBrainDump) =>
   `${construct_base_prompt(reflections)}.

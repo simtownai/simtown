@@ -21,7 +21,7 @@ export class MoveAction extends Action {
     movementController: MovementController,
     moveTarget: MoveTarget,
     reason: string = "",
-    shouldReflect: boolean = true,
+    shouldReflect: boolean = false,
   ) {
     super(getBrainDump, getEmitMethods, reason, shouldReflect)
     this.moveTarget = moveTarget
