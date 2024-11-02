@@ -15,6 +15,14 @@ import { BrainDump } from "../brain/AIBrain"
 
 const broadcastAnnouncementsCache: Set<string> = new Set()
 
+function getBroadcastAnnouncementsKey(targetPlace: string, username: string): string {
+  return `${targetPlace}-${username}`
+}
+
+function ifBroadcastAnnouncedAtPlace(targetPlace: string): boolean {
+  return Array.from(broadcastAnnouncementsCache.values()).some((key) => key.includes(targetPlace))
+}
+
 export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
   if (action instanceof IdleAction) {
     return { type: "idle", activityType: action.activityType }
@@ -153,11 +161,26 @@ export const convertGeneratedPlanToActions = (
         }
         return talkAction
       case "broadcast":
+        if (ifBroadcastAnnouncedAtPlace(actionData.targetPlace)) {
+          logger.warn(
+            `(${getBrainDump().playerData.username}) broadcast is already announced at place ${actionData.targetPlace}`,
+          )
+          return []
+        }
         const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
-          broadcastAnnouncementsCache.delete(`${getBrainDump().playerData.username}-${actionData.targetPlace}`)
+          logger.error(`(${getBrainDump().playerData.username}) broadcast ended`)
+          broadcastAnnouncementsCache.delete(
+            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
+          )
         })
-        if (!broadcastAnnouncementsCache.has(`${getBrainDump().playerData.username}-${actionData.targetPlace}`)) {
-          broadcastAnnouncementsCache.add(`${getBrainDump().playerData.username}-${actionData.targetPlace}`)
+        if (
+          !broadcastAnnouncementsCache.has(
+            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
+          )
+        ) {
+          broadcastAnnouncementsCache.add(
+            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
+          )
           getEmitMethods().emitNewsItem({
             date: getGameTime().toISOString(),
             message: `📢 ${getBrainDump().playerData.username} will be broadcasting soon`,
@@ -187,6 +210,12 @@ export const convertGeneratedPlanToActions = (
 
         return broadcastAction
       case "listen":
+        if (!ifBroadcastAnnouncedAtPlace(actionData.targetPlace)) {
+          logger.warn(
+            `(${getBrainDump().playerData.username}) broadcast is not announced at place ${actionData.targetPlace}`,
+          )
+          return []
+        }
         const listenAction = new ListenAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", (username) => {
           adjustDirection(username)
         })

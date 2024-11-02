@@ -18,7 +18,7 @@ export class BroadcastAction extends Action {
     getEmitMethods: () => EmitInterface,
     targetPlace: string,
     reason: string = "",
-    private onStart: () => void,
+    private onEnd: () => void,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.targetPlace = targetPlace
@@ -27,7 +27,6 @@ export class BroadcastAction extends Action {
   async start(): Promise<void> {
     this.isStarted = true
     await this.generateBroadcast()
-    this.onStart()
     this.startBroadcasting()
   }
 
@@ -60,6 +59,7 @@ export class BroadcastAction extends Action {
   private startBroadcasting(): void {
     this.broadcastInterval = setInterval(() => {
       if (this.sentenceIndex >= this.sentences.length) {
+        this.onEnd()
         this.endBroadcast()
         return
       }
