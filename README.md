@@ -3,19 +3,27 @@
 - (Szymon) hunt down TalkAction bugs
   - NPCs are far from each other when start talking
 - (Szymon) Optimize prompts
+  - listen actions generated when nobody is announced broadcasting at place
   - Going out of character NPC ("as an AI roleplaying NPC")
   - "Player228 decided to end the conversation"
   - NPC's shouldn't broadcast
   - "Player8361 emphasized the urgency to vote, and I need to focus on my upcoming broadcast."
+  - "Moving to the Stadium for an important broadcast."
 - (Szymon) give NPC's sense of time to prompt
 
 - (Alex) player rotations
   - rotate to whom you are sending messages
   - rotate to incoming messages if idle
-- (Alex) `generatePlanAndSetActions` create new action queue and algorithmically merge the two plans, then insert actions
-  - this should fix multiple broadcasting emits after resume, because we regenerated the same broadcast task after dialogue and reflection and technically it's a new task
 - (Alex) player can only write to NPC if within range
 
+- **refactor planning**
+  - problem: new actions objects override old actions objects even they are exactly the same
+  - problem: they manually generate move action before some other action which is already implies movement (e.g. move to voting place before vote) -> then they move there, reflect and decide not to vote
+  - it has no ability NOT to change current plan
+  - `generatePlanAndSetActions` create new action queue and algorithmically merge the two plans, then insert actions
+    - this should fix multiple broadcasting emits after resume, because we regenerated the same broadcast task after dialogue and reflection and technically it's a new task (this is currently fixed with `broadcastAnnouncementsCache`)
+  - add time & duration to the plan
+  - support arbitrary actions (e.g. take a shower, cook breakfast, etc -- only location and time needed)
 - gpt generate a reason for every action
 - generic OpenAI loop
   - feed prompt, messages and tools, returns result; handles function calls arguments retries; use for generating actions, messaages and voting
