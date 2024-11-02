@@ -95,6 +95,13 @@ export class TalkAction extends Action {
 
     // Create and emit the message
     const chatMessage = createChatMessage(chunk, this.targetPlayerUsername, this.getBrainDump().playerData.username)
+
+    const moveTarget: MoveTarget = { name: this.targetPlayerUsername, targetType: "person" }
+    if (!this.movementController.ifMoveTargetReached(moveTarget)) {
+      this.movementController.initiateMovement(moveTarget)
+      this.movementController.resume()
+    }
+
     this.getEmitMethods().emitSendMessage(chatMessage)
 
     // Save the individual chunk as a chat message
@@ -264,13 +271,7 @@ export class TalkAction extends Action {
   async update(deltaTime: number) {
     if (this.isInterrupted || !this.isStarted || this.isCompletedFlag) return
 
-    const moveTarget: MoveTarget = { name: this.targetPlayerUsername, targetType: "person" }
-
-    if (!this.movementController.ifMoveTargetReached(moveTarget)) {
-      this.movementController.initiateMovement(moveTarget)
-      this.movementController.resume()
-      this.movementController.move(deltaTime)
-    }
+    this.movementController.move(deltaTime)
 
     // Handle chunk emission
     if (this.emissionState.chunksToBeEmitted.length > 0) {
