@@ -630,8 +630,8 @@
                  "type":"",
                  "visible":true,
                  "width":128,
-                 "x":384,
-                 "y":448
+                 "x":368,
+                 "y":432
                 }, 
                 {
                  "height":32,
@@ -662,8 +662,19 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":96,
+                 "width":128,
                  "x":320,
+                 "y":560
+                }, 
+                {
+                 "height":32,
+                 "id":11,
+                 "name":"LibertySquare (podium)",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":464,
                  "y":560
                 }],
          "opacity":1,
@@ -673,7 +684,7 @@
          "y":0
         }],
  "nextlayerid":13,
- "nextobjectid":11,
+ "nextobjectid":12,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",
