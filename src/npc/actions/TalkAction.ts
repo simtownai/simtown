@@ -178,7 +178,7 @@ export class TalkAction extends Action {
   }
 
   handleGeneratedResponse(response: TalkAIResponse) {
-    logger.error(response)
+    console.error(response)
     if (response.type === "endedConversation") {
       return
     }
