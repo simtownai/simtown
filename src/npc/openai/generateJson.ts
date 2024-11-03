@@ -11,6 +11,7 @@ export async function generateJson<T>(
   validate: ValidateFunction<T>,
   model: string = "gpt-4o-mini",
   maxAttempts: number = 5,
+  temperature: number = 1.5,
 ): Promise<T> {
   let attempts = 0
   let messages = [{ role: "system", content: prompt }] as ChatCompletionMessageParam[]
@@ -21,6 +22,7 @@ export async function generateJson<T>(
       model,
       messages,
       response_format: zodResponseFormat(responseSchema, "response"),
+      temperature: temperature,
     })
 
     const parsed = completion.choices[0].message.parsed
