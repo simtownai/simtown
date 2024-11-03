@@ -166,7 +166,7 @@ export class NPC {
         const refusalMessage: ChatMessage = {
           to: message.from,
           from: this.npcConfig.username,
-          message: "I'm sorry, but I'm in the middle of broadcasting right now.",
+          message: `Sorry ${message.from}, I'm in the middle of broadcasting at ${currentAction.targetPlace} right now.`,
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)
@@ -186,7 +186,7 @@ export class NPC {
         const refusalMessage: ChatMessage = {
           to: message.from,
           from: this.npcConfig.username,
-          message: "I'm sorry, but I'm already talking with someone else right now.",
+          message: `Sorry ${message.from}, I'm already talking with ${currentAction.getTargetPlayerUsername()} right now.`,
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)

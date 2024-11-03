@@ -173,7 +173,7 @@ export const convertGeneratedPlanToActions = (
           return []
         }
         const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
-          logger.error(`(${getBrainDump().playerData.username}) broadcast ended`)
+          logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
           broadcastAnnouncementsCache.delete(
             getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
           )

@@ -1,4 +1,5 @@
 // IdleAction.ts
+import logger from "../../shared/logger"
 import { IdleActivityType } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
@@ -21,7 +22,7 @@ export class IdleAction extends Action {
   start() {
     this.setAnimation()
     this.isStarted = true
-    console.log("Idle action started")
+    logger.debug(`(${this.getBrainDump().playerData.username}) Idle action started`)
   }
 
   update(deltaTime: number) {
@@ -34,7 +35,7 @@ export class IdleAction extends Action {
     if (this.elapsedTime >= IdleActionDuration) {
       this.resetAnimation()
       this.isCompletedFlag = true
-      console.log("Idle action completed")
+      logger.debug(`(${this.getBrainDump().playerData.username}) Idle action completed`)
     }
   }
 
