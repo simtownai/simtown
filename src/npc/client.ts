@@ -69,7 +69,8 @@ export class NPC {
             this.aiBrain.generatePlanAndSetActions()
             this.startUpdateLoop()
           } catch (error) {
-            logger.error("Error generating plan for the day:", error)
+            logger.error(`(${this.npcConfig.username}) Error initializing NPC`)
+            console.error(error)
           }
         }, 5000)
       } else {
@@ -198,7 +199,7 @@ export class NPC {
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)
-        console.error(
+        logger.debug(
           `(${this.npcConfig.username}) Refused to talk with ${message.from} while talking with ${currentAction.getTargetPlayerUsername()}`,
         )
         return this.aiBrain.pushNewAction(action, 0)
@@ -206,7 +207,7 @@ export class NPC {
         const currentActionName = this.aiBrain.getCurrentAction()
           ? this.aiBrain.getCurrentAction()!.constructor.name
           : "no action"
-        logger.error(
+        logger.debug(
           `(${this.npcConfig.username}) Received message from ${message.from} while doing ${currentActionName}`,
         )
         const action = new TalkAction(
