@@ -87,13 +87,22 @@ export class AIBrain {
       const newPlanData = await generatePlanForTheday(this.getStringifiedBrainDump())
       // ToDo: calculate diffs of plans, generate new actions for what is not there already,
       // and insert actions from actions queue
-      this.actionQueue = convertGeneratedPlanToActions(
-        newPlanData,
-        this.getBrainDump,
-        this.getEmitMethods,
-        this.getMovementController(),
-        this.adjustDirection,
-      )
+
+      let isAnyActionReflecting = false
+      while (!isAnyActionReflecting) {
+        this.actionQueue = convertGeneratedPlanToActions(
+          newPlanData,
+          this.getBrainDump,
+          this.getEmitMethods,
+          this.getMovementController(),
+          this.adjustDirection,
+        )
+        isAnyActionReflecting = this.actionQueue.some((action) => action.shouldReflect)
+        if (!isAnyActionReflecting) {
+          console.warn(JSON.stringify(this.actionQueue))
+          logger.warn(`(${this.getPlayerData().username}) No action is reflecting, generating new plan`)
+        }
+      }
     } catch (error) {
       logger.error(`(${this.getPlayerData().username}) Error generating new plan:`, error)
     }
