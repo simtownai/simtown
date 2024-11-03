@@ -88,6 +88,8 @@ export class NPC {
     if (message.to === this.npcConfig.username) {
       const currentAction = this.aiBrain.getCurrentAction()
 
+      log_threads(this.aiBrain.getBrainDump(), message.from)
+
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         currentAction.clearAllListeners()
         currentAction.markAsCompleted()
@@ -106,7 +108,11 @@ export class NPC {
         logger.error(
           `(${this.npcConfig.username}) Received conversation timeout message but we are not talking with this player, message: ${JSON.stringify(message)}`,
         )
-        log_threads(this.aiBrain.getBrainDump())
+        logger.debug(`Currently talking with ${currentAction.getTargetPlayerUsername()}`)
+        logger.debug(`Reflections are ${this.aiBrain.getStringifiedBrainDump().reflections}`)
+        logger.debug(`Plan are ${JSON.stringify(this.aiBrain.getStringifiedBrainDump().currentPlan)}`)
+        log_threads(this.aiBrain.getBrainDump(), message.from)
+        throw new Error("Received conversation timeout message but we are not talking with this player")
       }
     }
   }

@@ -49,6 +49,7 @@ export const reflect = async (action: Action) => {
     if (!latestThread.finished) {
       logger.error("This thread should be finished!")
       log_threads(talkAction.getBrainDump())
+      throw new Error("This thread should be finished!")
     }
     const messages = latestThread.messages
 

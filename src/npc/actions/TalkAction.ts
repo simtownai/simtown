@@ -3,6 +3,7 @@ import { ChatMessage, MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
+import { log_threads } from "../loghelpers"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
 import { continue_conversation, start_conversation } from "../prompts"
 import { Action } from "./Action"
@@ -74,22 +75,64 @@ export class TalkAction extends Action {
   }
 
   private endConversationDueToTimeout() {
-    if (!this.isCompletedFlag) {
-      this.endConversation(TIMEOUT_MESSAGE)
-    }
-  }
+    logger.debug(
+      `[TIMEOUT] (${this.getBrainDump().playerData.username}) Timeout handler triggered for ${
+        this.targetPlayerUsername
+      }. isCompletedFlag=${this.isCompletedFlag}, conversationTimeout=${!!this.conversationTimeout}`,
+    )
 
-  private resetConversationTimeout() {
+    // Move this check before any side effects
+    if (this.isCompletedFlag) {
+      logger.debug(
+        `[TIMEOUT] (${this.getBrainDump().playerData.username}) Skipping timeout handler - conversation already completed with ${
+          this.targetPlayerUsername
+        }`,
+      )
+      return
+    }
+
+    logger.debug(
+      `[TIMEOUT] (${this.getBrainDump().playerData.username}) Executing timeout handler for ${this.targetPlayerUsername}`,
+    )
+    log_threads(this.getBrainDump(), this.targetPlayerUsername)
+
+    // Clear timeout before calling endConversation to prevent races
     if (this.conversationTimeout) {
       clearTimeout(this.conversationTimeout)
       this.conversationTimeout = null
     }
 
+    this.endConversation(TIMEOUT_MESSAGE)
+  }
+
+  private resetConversationTimeout() {
+    const username = this.getBrainDump().playerData.username
+    logger.debug(
+      `[TIMEOUT] (${username}) Resetting timeout for ${
+        this.targetPlayerUsername
+      }. Current state: isCompletedFlag=${this.isCompletedFlag}, hasTimeout=${!!this.conversationTimeout}`,
+    )
+
+    if (this.conversationTimeout) {
+      logger.debug(`[TIMEOUT] (${username}) Clearing existing timeout for ${this.targetPlayerUsername}`)
+      clearTimeout(this.conversationTimeout)
+      this.conversationTimeout = null
+    }
+
     if (this.isCompletedFlag) {
+      logger.debug(
+        `[TIMEOUT] (${username}) Not setting new timeout for ${this.targetPlayerUsername} - conversation completed`,
+      )
       return
     }
 
+    logger.debug(`[TIMEOUT] (${username}) Setting new timeout for ${this.targetPlayerUsername}`)
     this.conversationTimeout = setTimeout(() => {
+      logger.debug(
+        `[TIMEOUT] (${username}) Timeout fired for ${this.targetPlayerUsername}. isCompletedFlag=${
+          this.isCompletedFlag
+        }, hasTimeout=${!!this.conversationTimeout}`,
+      )
       this.endConversationDueToTimeout()
     }, this.ConversationTimeoutThreshold)
   }
@@ -137,13 +180,23 @@ export class TalkAction extends Action {
   markAsCompleted() {
     this.isCompletedFlag = true
   }
-
   clearAllListeners() {
+    logger.debug(
+      `[TIMEOUT] (${this.getBrainDump().playerData.username}) Clearing listeners for ${
+        this.targetPlayerUsername
+      }. Current state: isCompletedFlag=${this.isCompletedFlag}, hasTimeout=${!!this.conversationTimeout}`,
+    )
+
     this.addEmittedContentToAIMessages()
     this.resetEmissionState()
     this.incomingMessageState.messageBuffer = []
 
     if (this.conversationTimeout) {
+      logger.debug(
+        `[TIMEOUT] (${this.getBrainDump().playerData.username}) Clearing timeout in clearAllListeners for ${
+          this.targetPlayerUsername
+        }`,
+      )
       clearTimeout(this.conversationTimeout)
       this.conversationTimeout = null
     }
@@ -154,25 +207,46 @@ export class TalkAction extends Action {
   }
 
   endConversation(reason: string) {
-    if (this.isCompletedFlag) {
+    logger.debug(
+      `[TIMEOUT] (${this.getBrainDump().playerData.username}) Ending conversation with ${
+        this.targetPlayerUsername
+      }. Current state: isCompletedFlag=${this.isCompletedFlag}, hasTimeout=${!!this.conversationTimeout}`,
+    )
+
+    // Early return if already completed
+    if (this.isCompletedFlag && reason === TIMEOUT_MESSAGE) {
+      logger.debug(
+        `[TIMEOUT] (${this.getBrainDump().playerData.username}) Skipping duplicate timeout end for ${
+          this.targetPlayerUsername
+        }`,
+      )
       return reason
     }
 
     this.isCompletedFlag = true
 
     if (this.conversationTimeout) {
+      logger.debug(
+        `[TIMEOUT] (${this.getBrainDump().playerData.username}) Clearing timeout in endConversation for ${
+          this.targetPlayerUsername
+        }`,
+      )
       clearTimeout(this.conversationTimeout)
       this.conversationTimeout = null
     }
 
-    this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
-      role: "assistant",
-      content: reason,
-    })
-    const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
-    this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
-    this.getBrainDump().closeThread(this.targetPlayerUsername)
-    this.getEmitMethods().emitEndConversation(finalMessage)
+    // Only proceed with conversation end if not already ended
+    if (!this.getBrainDump().getLatestThread(this.targetPlayerUsername).finished) {
+      this.getBrainDump().addAIMessage(this.targetPlayerUsername, {
+        role: "assistant",
+        content: reason,
+      })
+      const finalMessage = createChatMessage(reason, this.targetPlayerUsername, this.getBrainDump().playerData.username)
+      this.getBrainDump().addChatMessage(this.targetPlayerUsername, finalMessage)
+      this.getBrainDump().closeThread(this.targetPlayerUsername)
+      this.getEmitMethods().emitEndConversation(finalMessage)
+    }
+
     this.clearAllListeners()
     return reason
   }
@@ -264,10 +338,6 @@ export class TalkAction extends Action {
     } else {
       await this.handleMessage(this.conversationType.message)
     }
-  }
-
-  setIsCompletedFlag(flag: boolean) {
-    this.isCompletedFlag = flag
   }
 
   async update(deltaTime: number) {
