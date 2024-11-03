@@ -99,7 +99,6 @@ export class AIBrain {
         )
         isAnyActionReflecting = this.actionQueue.some((action) => action.shouldReflect)
         if (!isAnyActionReflecting) {
-          console.warn(JSON.stringify(this.actionQueue))
           logger.warn(`(${this.getPlayerData().username}) No action is reflecting, generating new plan`)
         }
       }

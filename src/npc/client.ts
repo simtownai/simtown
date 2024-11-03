@@ -159,9 +159,11 @@ export class NPC {
       const currentAction = this.aiBrain.getCurrentAction()
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
+        logger.debug(`(${this.npcConfig.username}) Received message from ${message.from} while talking with them`)
         // Update the current TalkAction with the new message
         currentAction.handleMessage(message)
       } else if (currentAction instanceof BroadcastAction) {
+        logger.debug(`(${this.npcConfig.username}) Received message from ${message.from} while broadcasting`)
         // TODO: figure out whether we want to save talk aproach in memory and come back to the person, I think no
         const refusalMessage: ChatMessage = {
           to: message.from,
@@ -190,8 +192,14 @@ export class NPC {
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)
+        logger.debug(
+          `(${this.npcConfig.username}) Refused to talk with ${message.from} while talking with ${currentAction.getTargetPlayerUsername()}`,
+        )
         return this.aiBrain.pushNewAction(action, 0)
       } else {
+        logger.debug(
+          `(${this.npcConfig.username}) Received message from ${message.from} while not ${this.aiBrain.getCurrentAction()!.constructor.name}`,
+        )
         const action = new TalkAction(
           this.aiBrain.getBrainDump,
           () => this.socketManager.getEmitMethods(),
