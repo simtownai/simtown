@@ -12,7 +12,7 @@ export async function generateJson<T>(
   validate: ValidateFunction<T>,
   model: string = "gpt-4o-mini",
   maxAttempts: number = 5,
-  temperature: number = 1.5,
+  temperature: number = 1.1,
 ): Promise<T> {
   let attempts = 0
   let messages = [{ role: "system", content: prompt }] as ChatCompletionMessageParam[]
