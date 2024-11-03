@@ -94,3 +94,7 @@ export function createRandomSpriteDefinition(): PlayerSpriteDefinition {
 
   return spriteDefinition
 }
+
+export function getBroadcastAnnouncementsKey(targetPlace: string, username: string): string {
+  return `${targetPlace}-${username}`
+}

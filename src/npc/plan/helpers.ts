@@ -1,7 +1,7 @@
 import { CONFIG } from "../../shared/config"
-import { getGameTime } from "../../shared/functions"
+import { getBroadcastAnnouncementsKey, getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
-import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, MoveTarget } from "../../shared/types"
+import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, NewsItem } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -12,16 +12,6 @@ import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
 import { BrainDump } from "../brain/AIBrain"
-
-const broadcastAnnouncementsCache: Set<string> = new Set()
-
-function getBroadcastAnnouncementsKey(targetPlace: string, username: string): string {
-  return `${targetPlace}-${username}`
-}
-
-function ifBroadcastAnnouncedAtPlace(targetPlace: string): boolean {
-  return Array.from(broadcastAnnouncementsCache.values()).some((key) => key.includes(targetPlace))
-}
 
 export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
   if (action instanceof IdleAction) {
@@ -121,7 +111,7 @@ export const convertGeneratedPlanToActions = (
   adjustDirection: (username: string) => void,
 ): Action[] => {
   return planData.flatMap((actionData: GeneratedAction) => {
-    let supportingMoveTarget: MoveTarget
+    let moveAction: MoveAction
     switch (actionData.type) {
       case "idle":
         return new IdleAction(getBrainDump, getEmitMethods, actionData.activityType)
@@ -150,39 +140,18 @@ export const convertGeneratedPlanToActions = (
         return [moveAction, talkAction]
       case "broadcast":
         if (
-          ifBroadcastAnnouncedAtPlace(actionData.targetPlace) &&
-          !broadcastAnnouncementsCache.has(
+          !getBrainDump().broadcastAnnouncementsCache.has(
             getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
           )
         ) {
-          logger.warn(
-            `(${getBrainDump().playerData.username}) broadcast is already announced at place ${actionData.targetPlace}`,
-          )
-          return []
-        }
-        const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
-          logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
-          broadcastAnnouncementsCache.delete(
-            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
-          )
-        })
-        if (
-          !broadcastAnnouncementsCache.has(
-            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
-          )
-        ) {
-          broadcastAnnouncementsCache.add(
+          getBrainDump().broadcastAnnouncementsCache.add(
             getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
           )
           getEmitMethods().emitNewsItem({
             date: getGameTime().toISOString(),
             message: `📢 ${getBrainDump().playerData.username} will be broadcasting soon`,
             place: actionData.targetPlace,
-          })
-        }
-        supportingMoveTarget = {
-          targetType: "place",
-          name: actionData.targetPlace + " (podium)",
+          } as NewsItem)
         }
         moveAction = new MoveAction(
           getBrainDump,
