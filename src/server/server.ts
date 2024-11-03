@@ -217,7 +217,7 @@ io.on("connection", (socket) => {
     const player = players.get(playerId)!
 
     if (availableVoteCandidates.includes(player.username as VoteCandidate)) {
-      logger.warning(`User ${player.username} is not eligible to vote (voted for ${candidate})`)
+      logger.warn(`User ${player.username} is not eligible to vote (voted for ${candidate})`)
       return
     }
 
