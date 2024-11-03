@@ -192,13 +192,16 @@ export class NPC {
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)
-        logger.debug(
+        console.error(
           `(${this.npcConfig.username}) Refused to talk with ${message.from} while talking with ${currentAction.getTargetPlayerUsername()}`,
         )
         return this.aiBrain.pushNewAction(action, 0)
       } else {
-        logger.debug(
-          `(${this.npcConfig.username}) Received message from ${message.from} while not ${this.aiBrain.getCurrentAction()!.constructor.name}`,
+        const currentActionName = this.aiBrain.getCurrentAction()
+          ? this.aiBrain.getCurrentAction()!.constructor.name
+          : "no action"
+        logger.error(
+          `(${this.npcConfig.username}) Received message from ${message.from} while doing ${currentActionName}`,
         )
         const action = new TalkAction(
           this.aiBrain.getBrainDump,
