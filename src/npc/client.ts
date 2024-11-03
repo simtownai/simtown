@@ -88,7 +88,7 @@ export class NPC {
       const currentAction = this.aiBrain.getCurrentAction()
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
-        currentAction.clearAllListenersAndMarkAsCompleted()
+        currentAction.clearAllListeners()
         this.adjustDirection(message.from)
         this.aiBrain.addChatMessage(message.from, message)
         this.aiBrain.addAIMessage(message.from, {
