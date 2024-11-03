@@ -7,6 +7,7 @@ import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
 import { TIMEOUT_MESSAGE, TalkAction } from "./actions/TalkAction"
 import { AIBrain } from "./brain/AIBrain"
+import { log_threads } from "./loghelpers"
 import { NpcConfig, npcConfig } from "./npcConfig"
 
 export class NPC {
@@ -105,7 +106,7 @@ export class NPC {
         logger.error(
           `(${this.npcConfig.username}) Received conversation timeout message but we are not talking with this player, message: ${JSON.stringify(message)}`,
         )
-        console.error(this.aiBrain.getBrainDump().conversations.threads)
+        log_threads(this.aiBrain.getBrainDump())
       }
     }
   }

@@ -6,6 +6,7 @@ import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
+import { log_threads } from "../loghelpers"
 import { IdleActionDuration } from "../npcConfig"
 import client from "../openai/openai"
 import {
@@ -41,13 +42,17 @@ export const reflect = async (action: Action) => {
       : `I completed Move Action, moved to ${destination}`
   } else if (actionType === "TalkAction") {
     const talkAction = action as TalkAction
+    logger.error(`(${talkAction.getBrainDump().playerData.username}) Reflecting on Talk Action`)
+
     const lastTalkedPlayerName = talkAction.getTargetPlayerUsername()
 
     const latestThread = talkAction.getBrainDump().getLatestThread(lastTalkedPlayerName)
 
+    log_threads(talkAction.getBrainDump())
+
     if (!latestThread.finished) {
       logger.error("This thread should be finished!")
-      console.error(talkAction.getBrainDump().conversations.threads)
+      log_threads(talkAction.getBrainDump())
     }
     const messages = latestThread.messages
 

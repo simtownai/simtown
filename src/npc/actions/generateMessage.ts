@@ -47,8 +47,6 @@ export const generateAssistantResponse = async (
       ...aiMessages,
       ...newAIMessages,
     ]
-    logger.debug("Submitting to OpenAI")
-    console.debug(toSubmit)
     try {
       const completion =
         tools.length > 0
