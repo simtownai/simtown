@@ -111,7 +111,7 @@ const ListenSchema = z.object({
 })
 
 export const availableVoteCandidates = ["Donald", "Kamala"] as const
-const VoteCandidateSchema = z.enum(availableVoteCandidates)
+export const VoteCandidateSchema = z.enum(availableVoteCandidates)
 export type VoteCandidate = z.infer<typeof VoteCandidateSchema>
 
 const VoteSchema = z.object({
