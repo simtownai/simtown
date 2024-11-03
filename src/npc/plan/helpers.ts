@@ -126,10 +126,19 @@ export const convertGeneratedPlanToActions = (
       case "idle":
         return new IdleAction(getBrainDump, getEmitMethods, actionData.activityType)
       case "move":
-        return !movementController.ifMoveTargetReached(actionData.target)
-          ? new MoveAction(getBrainDump, getEmitMethods, movementController, actionData.target, "", false)
-          : []
+        return new MoveAction(getBrainDump, getEmitMethods, movementController, actionData.target, "", false)
       case "talk":
+        moveAction = new MoveAction(
+          getBrainDump,
+          getEmitMethods,
+          movementController,
+          {
+            targetType: "person",
+            name: actionData.name,
+          },
+          `Moving before talking`,
+          false,
+        )
         const talkAction = new TalkAction(
           getBrainDump,
           getEmitMethods,
@@ -138,28 +147,7 @@ export const convertGeneratedPlanToActions = (
           { type: "new" },
           movementController,
         )
-
-        supportingMoveTarget = {
-          targetType: "person",
-          name: actionData.name,
-        }
-        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.debug(
-            `(${getBrainDump().playerData.username}) far from player '${actionData.name}', moving there before '${actionData.type}'`,
-          )
-          return [
-            new MoveAction(
-              getBrainDump,
-              getEmitMethods,
-              movementController,
-              supportingMoveTarget,
-              "We are not close to the target player, so before we initialize the talk action, we need to move towards them.",
-              false,
-            ),
-            talkAction,
-          ]
-        }
-        return talkAction
+        return [moveAction, talkAction]
       case "broadcast":
         if (
           ifBroadcastAnnouncedAtPlace(actionData.targetPlace) &&
@@ -196,78 +184,54 @@ export const convertGeneratedPlanToActions = (
           targetType: "place",
           name: actionData.targetPlace + " (podium)",
         }
-        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.debug(
-            `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
+        moveAction = new MoveAction(
+          getBrainDump,
+          getEmitMethods,
+          movementController,
+          {
+            targetType: "place",
+            name: actionData.targetPlace + " (podium)",
+          },
+          `Moving before broadcasting`,
+          false,
+        )
+        const broadcastAction = new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
+          logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
+          getBrainDump().broadcastAnnouncementsCache.delete(
+            getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
           )
-          return [
-            new MoveAction(
-              getBrainDump,
-              getEmitMethods,
-              movementController,
-              supportingMoveTarget,
-              "We are not close to the target place, so before we initialize the broadcast action, we need to move towards it.",
-              false,
-            ),
-            broadcastAction,
-          ]
-        }
-
-        return broadcastAction
+        })
+        return [moveAction, broadcastAction]
       case "listen":
-        if (!ifBroadcastAnnouncedAtPlace(actionData.targetPlace)) {
-          logger.warn(
-            `(${getBrainDump().playerData.username}) broadcast is not announced at place ${actionData.targetPlace}`,
-          )
-          return []
-        }
+        moveAction = new MoveAction(
+          getBrainDump,
+          getEmitMethods,
+          movementController,
+          {
+            targetType: "place",
+            name: actionData.targetPlace,
+          },
+          `Moving before listening`,
+          false,
+        )
         const listenAction = new ListenAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", (username) => {
           adjustDirection(username)
         })
-        supportingMoveTarget = {
-          targetType: "place",
-          name: actionData.targetPlace,
-        }
-        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.debug(
-            `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
-          )
-          return [
-            new MoveAction(
-              getBrainDump,
-              getEmitMethods,
-              movementController,
-              supportingMoveTarget,
-              "We are not close to the target place, so before we initialize the listen action, we need to move towards it.",
-              false,
-            ),
-            listenAction,
-          ]
-        }
-        return listenAction
+        return [moveAction, listenAction]
       case "vote":
+        moveAction = new MoveAction(
+          getBrainDump,
+          getEmitMethods,
+          movementController,
+          {
+            targetType: "place",
+            name: CONFIG.VOTING_PLACE_NAME,
+          },
+          `Moving before voting`,
+          false,
+        )
         const voteAction = new VoteAction(getBrainDump, getEmitMethods, "")
-        supportingMoveTarget = {
-          targetType: "place",
-          name: CONFIG.VOTING_PLACE_NAME,
-        }
-        if (!movementController.ifMoveTargetReached(supportingMoveTarget)) {
-          logger.debug(
-            `(${getBrainDump().playerData.username}) far from place ${supportingMoveTarget.name}, moving there before '${actionData.type}'`,
-          )
-          return [
-            new MoveAction(
-              getBrainDump,
-              getEmitMethods,
-              movementController,
-              supportingMoveTarget,
-              "We are not close to the target place, so before we initialize the vote action, we need to move towards it.",
-              false,
-            ),
-            voteAction,
-          ]
-        }
-        return voteAction
+        return [moveAction, voteAction]
       default:
         throw new Error("Unknown action type:")
     }
