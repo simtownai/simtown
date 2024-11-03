@@ -216,6 +216,13 @@ io.on("connection", (socket) => {
   socket.on("vote", (candidate: VoteCandidate) => {
     const player = players.get(playerId)!
 
+    if (!player) {
+      logger.error(
+        `User ${playerId} not found. Available players: ${Array.from(players.keys())} (${players.size} total)`,
+      )
+      return
+    }
+
     if (availableVoteCandidates.includes(player.username as VoteCandidate)) {
       logger.warn(`User ${player.username} is not eligible to vote (voted for ${candidate})`)
       return
