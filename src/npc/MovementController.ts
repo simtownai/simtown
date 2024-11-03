@@ -153,7 +153,7 @@ export class MovementController {
         const player = this.getOtherPlayers().get(this.currentMoveTarget.name)
 
         if (!player) {
-          console.log("Target player not found")
+          logger.error(`(${this.getPlayerData().username}) couldn't find ${this.currentMoveTarget.name}`)
           this.snapToGrid() // Add grid snapping when target lost
           this.handleMovementCompleted()
           return
@@ -473,7 +473,7 @@ export class MovementController {
     if (newPath && newPath.length > 0) {
       this.setPath(newPath, this.targetPosition)
     } else {
-      console.log("No alternative path found after recalculating.")
+      logger.error(`(${this.getPlayerData().username}) No alternative path found after recalculating`)
       if (this.onMovementFailed) {
         this.onMovementFailed()
         this.onMovementFailed = null
@@ -483,7 +483,8 @@ export class MovementController {
 
   private handleRecalculationError(error: any) {
     this.isRecalculatingPath = false
-    console.error("Error recalculating path:", error)
+    logger.error(`(${this.getPlayerData().username}) Error recalculating path:`)
+    console.error(error)
     if (this.onMovementFailed) {
       this.onMovementFailed()
       this.onMovementFailed = null
