@@ -89,6 +89,7 @@ export class NPC {
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         currentAction.clearAllListeners()
+        currentAction.markAsCompleted()
         this.adjustDirection(message.from)
         this.aiBrain.addChatMessage(message.from, message)
         this.aiBrain.addAIMessage(message.from, {
