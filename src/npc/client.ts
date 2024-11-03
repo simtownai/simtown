@@ -102,7 +102,9 @@ export class NPC {
         message.message === TIMEOUT_MESSAGE &&
         currentAction.getTargetPlayerUsername() !== message.from
       ) {
-        throw new Error("Received conversation timeout message but we are not talking with this player")
+        logger.error(
+          `(${this.npcConfig.username}) Received conversation timeout message but we are not talking with this player, message: ${JSON.stringify(message)}`,
+        )
       }
     }
   }
