@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import client from "../openai/openai"
 import { zodResponseFormat } from "openai/helpers/zod.mjs"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
@@ -35,7 +36,7 @@ export async function generateJson<T>(
       return parsed
     } else {
       messages.push({ role: "system", content: validation.error } as ChatCompletionMessageParam)
-      console.error("Invalid response, retrying...", validation.error)
+      logger.error(`(${attempts}/${maxAttempts}) Invalid response: ${validation.error}`)
     }
   }
   throw new Error("Couldn't get a valid response after max attempts")
