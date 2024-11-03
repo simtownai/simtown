@@ -289,11 +289,14 @@ export class TalkAction extends Action {
 
   interrupt(): void {
     super.interrupt()
+    this.shouldReflect = false
     this.clearAllListeners()
   }
 
   resume(): void {
     super.resume()
+    this.shouldReflect = true
+
     if (!this.isCompletedFlag) {
       this.resetConversationTimeout()
     }
