@@ -1,3 +1,4 @@
+import logger from "../../shared/logger"
 import { Action } from "../actions/Action"
 import { BroadcastAction } from "../actions/BroadcastAction"
 import { IdleAction } from "../actions/IdleAction"
@@ -45,7 +46,8 @@ export const reflect = async (action: Action) => {
     const latestThread = talkAction.getBrainDump().getLatestThread(lastTalkedPlayerName)
 
     if (!latestThread.finished) {
-      throw new Error("This thread should be finished!")
+      logger.error("This thread should be finished!")
+      console.error(talkAction.getBrainDump().conversations.threads)
     }
     const messages = latestThread.messages
 
