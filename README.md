@@ -10,12 +10,17 @@
   - "Player8361 emphasized the urgency to vote, and I need to focus on my upcoming broadcast."
   - "Moving to the Stadium for an important broadcast."
 - (Szymon) give NPC's sense of time to prompt
+- reflections are gigantic
+- unable to generate plan because of errors (like no broadcast announced), but doenst pay atention to that, generates same shit every time and reaches max attempts
 
 - (Alex) player rotations
   - rotate to whom you are sending messages
   - rotate to incoming messages if idle
 - (Alex) player can only write to NPC if within range
 
+- `broadcastAnnouncementsCache` is shared among each NPC; update it from the news for each individual npc
+- Freeze on movement
+  - probably because no actions left
 - Generate first message with the talk action
 - **refactor planning**
   - problem: new actions objects override old actions objects even they are exactly the same
