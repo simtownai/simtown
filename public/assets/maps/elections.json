@@ -676,6 +676,28 @@
                  "width":16,
                  "x":464,
                  "y":560
+                }, 
+                {
+                 "height":32,
+                 "id":12,
+                 "name":"PicnicPlace (podium)",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":688,
+                 "y":576
+                }, 
+                {
+                 "height":16,
+                 "id":13,
+                 "name":"FountainSquare (podium)",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":48,
+                 "x":208,
+                 "y":528
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -684,7 +706,7 @@
          "y":0
         }],
  "nextlayerid":13,
- "nextobjectid":12,
+ "nextobjectid":14,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",
