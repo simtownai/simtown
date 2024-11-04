@@ -9,6 +9,18 @@ function ifBroadcastAnnouncedAtPlace(broadcastAnnouncementsCache: Set<string>, t
   return Array.from(broadcastAnnouncementsCache.values()).some((key) => key.includes(targetPlace))
 }
 
+function ifBroadcastAnnouncedByPerson(broadcastAnnouncementsCache: Set<string>, targetPerson: string): boolean {
+  return Array.from(broadcastAnnouncementsCache.values()).some((key) => key.includes(targetPerson))
+}
+
+function getBroadcastAnnouncementPlace(broadcastAnnouncementsCache: Set<string>, targetPerson: string): string {
+  return (
+    Array.from(broadcastAnnouncementsCache.values())
+      .find((key) => key.includes(targetPerson))
+      ?.split("-")[0] || ""
+  )
+}
+
 const ResponseSchema = z.object({
   plan: ActionPlanSchema,
 })
@@ -38,6 +50,27 @@ const validateActions =
             error: `(${getBrainDump().playerData.username}) Broadcast already announced at ${action.targetPlace}. Existing broadcast announcements: ${JSON.stringify(
               Array.from(getBrainDump().broadcastAnnouncementsCache.values()),
             )}`,
+          }
+        }
+        if (
+          ifBroadcastAnnouncedByPerson(
+            getBrainDump().broadcastAnnouncementsCache,
+            getBrainDump().playerData.username,
+          ) &&
+          getBroadcastAnnouncementPlace(
+            getBrainDump().broadcastAnnouncementsCache,
+            getBrainDump().playerData.username,
+          ) !== action.targetPlace
+        ) {
+          return {
+            isValid: false,
+            error: `(${getBrainDump().playerData.username}) You already announced broadcast at ${getBroadcastAnnouncementPlace(
+              getBrainDump().broadcastAnnouncementsCache,
+              getBrainDump().playerData.username,
+            )}. Cannot broadcast at new place ${action.targetPlace}. Choose a ${getBroadcastAnnouncementPlace(
+              getBrainDump().broadcastAnnouncementsCache,
+              getBrainDump().playerData.username,
+            )} place for broadcasting`,
           }
         }
       }
