@@ -19,6 +19,7 @@ interface IProps {
   setIsChatCollapsed: (value: boolean) => void
   setChatmate: (value: string) => void
   onGameLoaded: () => void
+  soundEnabled: boolean
 }
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
@@ -32,6 +33,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     setIsChatCollapsed,
     setChatmate,
     onGameLoaded,
+    soundEnabled,
   },
   ref,
 ) {
@@ -57,6 +59,10 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
       }
     }
   }, [ref])
+
+  useEffect(() => {
+    EventBus.emit("audio-mute-change", soundEnabled)
+  }, [soundEnabled])
 
   useEffect(() => {
     EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {

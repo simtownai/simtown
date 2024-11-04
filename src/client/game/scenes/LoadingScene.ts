@@ -90,19 +90,7 @@ export class LoadingScene extends Scene {
   }
 
   private loadGameAssets() {
-    // Load manifest first
     this.load.json("componentManifest", "assets/sprites/Character_Generator/componentManifest.json")
-    this.load.tilemapTiledJSON("map", "assets/maps/elections.json")
-    this.load.image(
-      "tiles",
-      "assets/tiles/modernexteriors/Modern_Exteriors_16x16/Modern_Exteriors_Complete_Tileset.png",
-    )
-    this.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
-      frameWidth: 11,
-      frameHeight: 11,
-    })
-
-    // Load character sprites after manifest is loaded
     this.load.once("filecomplete-json-componentManifest", () => {
       const manifest = this.cache.json.get("componentManifest")
 
@@ -117,5 +105,16 @@ export class LoadingScene extends Scene {
         })
       })
     })
+
+    this.load.tilemapTiledJSON("map", "assets/maps/elections.json")
+    this.load.image(
+      "tiles",
+      "assets/tiles/modernexteriors/Modern_Exteriors_16x16/Modern_Exteriors_Complete_Tileset.png",
+    )
+    this.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
+      frameWidth: 11,
+      frameHeight: 11,
+    })
+    this.load.audio("background-music", "assets/audio/medieval-background-music.mp3")
   }
 }

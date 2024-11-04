@@ -3,6 +3,8 @@ import { formatTimeAMPM, getGameTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import newsIcon from "../_images/overlay/news-icon.png"
+import soundOffIcon from "../_images/overlay/sound-off-icon.png"
+import soundOnIcon from "../_images/overlay/sound-on-icon.png"
 import HelpContainer from "./HelpContainer"
 import styles from "./styles.module.css"
 import React, { useEffect, useState } from "react"
@@ -14,6 +16,8 @@ interface OverlayProps {
   totalUnreadCount: number
   setIsNewsContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   totalNewsUnreadCount: number
+  soundEnabled: boolean
+  setSoundEnabled: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export default function Overlay({
@@ -23,6 +27,8 @@ export default function Overlay({
   totalUnreadCount,
   setIsNewsContainerCollapsed,
   totalNewsUnreadCount,
+  soundEnabled,
+  setSoundEnabled,
 }: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
   const [currentTime, setCurrentTime] = useState(getGameTime())
@@ -45,6 +51,8 @@ export default function Overlay({
         } else if (event.key === "?") {
           event.preventDefault()
           setIsHelpContainerCollapsed((prev) => !prev)
+        } else if (event.key === "m") {
+          setSoundEnabled((prev) => !prev)
         }
       }
     }
@@ -88,6 +96,15 @@ export default function Overlay({
           }}
         >
           <img src={hintsIcon} className={styles.buttonImage} />
+        </button>
+        <button
+          className={`${styles.iconButton}`}
+          onClick={(e) => {
+            handleClick(e)
+            setSoundEnabled((prev) => !prev)
+          }}
+        >
+          <img src={soundEnabled ? soundOnIcon : soundOffIcon} className={styles.buttonImage} />
         </button>
       </div>
       <div className={`${styles.overlay} ${styles.overlayBottomLeft}`}>

@@ -51,6 +51,12 @@ export class MovementController {
   async initiateMovement(moveTarget: MoveTarget) {
     this.currentMoveTarget = moveTarget
 
+    if (this.ifMoveTargetReached(moveTarget)) {
+      logger.debug(`(${this.getPlayerData().username}) is already at the target position ${JSON.stringify(moveTarget)}`)
+      this.handleMovementCompleted()
+      return
+    }
+
     let targetPosition: GridPosition = { gridX: 0, gridY: 0 }
     const playerData = this.getPlayerData()
 

@@ -17,6 +17,10 @@ import { Memory } from "./memory/Memory"
 import { reflect, summarizeReflections } from "./reflect"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 
+// It is here because it is shared between every NPC
+// ToDo: make it individual for each NPC and update from news
+const broadcastAnnouncementsCache = new Set<string>()
+
 export type StringifiedBrainDump = {
   name: string
   backstory: string
@@ -27,6 +31,7 @@ export type StringifiedBrainDump = {
   currentPlan: string
   currentAction: string
   currentTime: string
+  broadcastAnnouncements: string
 }
 
 export type BrainDump = {
@@ -42,6 +47,7 @@ export type BrainDump = {
   addChatMessage: (playerName: string, message: ChatMessage) => void
   addAIMessage: (playerName: string, message: ChatCompletionMessageParam) => void
   closeThread: (playerName: string) => void
+  broadcastAnnouncementsCache: Set<string>
 }
 
 type AIBrainInterface = {
@@ -84,25 +90,17 @@ export class AIBrain {
   async generatePlanAndSetActions() {
     try {
       const currentPlanData = convertActionsToGeneratedPlan(this.actionQueue)
-      const newPlanData = await generatePlanForTheday(this.getStringifiedBrainDump())
+      const newPlanData = await generatePlanForTheday(this.getBrainDump, this.getStringifiedBrainDump())
       // ToDo: calculate diffs of plans, generate new actions for what is not there already,
       // and insert actions from actions queue
 
-      let isAnyActionReflecting = false
-      while (!isAnyActionReflecting) {
-        this.actionQueue = convertGeneratedPlanToActions(
-          newPlanData,
-          this.getBrainDump,
-          this.getEmitMethods,
-          this.getMovementController(),
-          this.adjustDirection,
-        )
-        isAnyActionReflecting = this.actionQueue.some((action) => action.shouldReflect)
-        if (!isAnyActionReflecting) {
-          logger.warn(`(${this.getPlayerData().username}) No action is reflecting, generating new plan. Plan:`)
-          console.warn(JSON.stringify(this.actionQueue.map((action) => action.constructor.name)))
-        }
-      }
+      this.actionQueue = convertGeneratedPlanToActions(
+        newPlanData,
+        this.getBrainDump,
+        this.getEmitMethods,
+        this.getMovementController(),
+        this.adjustDirection,
+      )
     } catch (error) {
       logger.error(`(${this.getPlayerData().username}) Error generating new plan:`, error)
     }
@@ -126,6 +124,7 @@ export class AIBrain {
         this.addChatMessage(targetPlayerName, message),
       addAIMessage: (targetPlayerName: string, message: ChatCompletionMessageParam) =>
         this.addAIMessage(targetPlayerName, message),
+      broadcastAnnouncementsCache: broadcastAnnouncementsCache,
     }
   }
 
@@ -156,6 +155,7 @@ export class AIBrain {
             : convertActionToGeneratedAction(this.currentAction),
         )
       : "No current action"
+    const broadcastAnnouncementsString = Array.from(broadcastAnnouncementsCache).join("\n")
 
     const result: StringifiedBrainDump = {
       name,
@@ -167,6 +167,7 @@ export class AIBrain {
       currentPlan: currentActionQueueString,
       currentAction: currentActionString,
       currentTime: getGameTime().toISOString(),
+      broadcastAnnouncements: broadcastAnnouncementsString,
     }
     return result
   }
