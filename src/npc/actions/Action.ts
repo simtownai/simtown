@@ -29,6 +29,9 @@ export abstract class Action {
   interrupt(): void {
     this.isInterrupted = true
   }
+  markAsCompleted(): void {
+    this.isCompletedFlag = true
+  }
 
   resume(): void {
     this.isInterrupted = false

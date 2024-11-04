@@ -91,14 +91,9 @@ export class NPC {
       log_threads(this.aiBrain.getBrainDump(), message.from)
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
-        currentAction.clearAllListeners()
         currentAction.markAsCompleted()
         this.adjustDirection(message.from)
         this.aiBrain.addChatMessage(message.from, message)
-        this.aiBrain.addAIMessage(message.from, {
-          role: "user",
-          content: message.message,
-        })
         this.aiBrain.closeThread(message.from)
       } else if (
         currentAction instanceof TalkAction &&
