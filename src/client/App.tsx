@@ -25,6 +25,7 @@ function App() {
   const [isMessageLoading, setIsMessageLoading] = useState(false)
   const [newsPaper, setNewsPaper] = useState<NewsItem[]>([])
   const [isNewsContainerCollapsed, setIsNewsContainerCollapsed] = useState(true)
+  const [soundEnabled, setSoundEnabled] = useState(localStorage.getItem("soundEnabled") === "true")
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -214,6 +215,7 @@ function App() {
           setIsChatCollapsed={setIsChatCollapsed}
           setChatmate={setChatmate}
           onGameLoaded={handleGameLoaded}
+          soundEnabled={soundEnabled}
         />
       )}
       {socket && isGameLoaded && (
@@ -224,6 +226,8 @@ function App() {
           totalUnreadCount={totalUnreadCount}
           setIsNewsContainerCollapsed={setIsNewsContainerCollapsed}
           totalNewsUnreadCount={totalNewsUnreadCount}
+          soundEnabled={soundEnabled}
+          setSoundEnabled={setSoundEnabled}
         />
       )}
       {socket && isGameLoaded && !isChatsContainerCollapsed && (

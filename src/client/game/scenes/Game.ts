@@ -1,6 +1,7 @@
 import { CONFIG } from "../../../shared/config"
 import { GeneratedActionWithPerson, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
+import { AudioManager } from "./AudioManager"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
 import { SpriteHandler } from "./spriteHandler"
 import VirtualJoystick from "phaser3-rex-plugins/plugins/virtualjoystick.js"
@@ -79,6 +80,8 @@ export class Game extends Phaser.Scene {
   private touchMoved: boolean = false
   private lastDirection: "up" | "down" | "left" | "right" = "down"
 
+  private audioManager: AudioManager
+
   constructor(socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition) {
     super({ key: "Game" })
     this.socket = socket
@@ -88,6 +91,7 @@ export class Game extends Phaser.Scene {
 
   create() {
     this.spriteHandler = new SpriteHandler(this)
+    this.audioManager = new AudioManager(this)
 
     this.setupMap()
     this.spriteHandler.createAnimations()
@@ -97,6 +101,7 @@ export class Game extends Phaser.Scene {
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
+    this.audioManager.startBackgroundMusic()
 
     this.socket.emit("joinGame", false, this.username, this.spriteDefinition)
 
