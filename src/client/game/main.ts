@@ -26,6 +26,8 @@ const config: Phaser.Types.Core.GameConfig = {
   autoRound: true,
   autoFocus: true,
   roundPixels: true,
+  disableContextMenu: true,
+  backgroundColor: "#6c4a2b",
 }
 
 const StartGame = (parent: string, socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition) => {
