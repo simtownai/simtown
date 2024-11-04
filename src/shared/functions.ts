@@ -2,6 +2,8 @@ import componentManifest from "../../public/assets/sprites/Character_Generator/c
 import { CONFIG } from "./config"
 import { GridPosition, PlayerSpriteDefinition } from "./types"
 
+export const get_move_message = (username: string) => `Hey ${username}, you're blocking my path.`
+
 export function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
 }

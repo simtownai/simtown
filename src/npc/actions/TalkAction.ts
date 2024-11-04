@@ -1,8 +1,10 @@
+import logger from "../../shared/logger"
 import { ChatMessage, MoveTarget } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import { mapChatMessagesToAIMessages } from "../brain/memory/ConversationMemory"
+import { log_threads } from "../loghelpers"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
 import { continue_conversation, start_conversation } from "../prompts"
 import { Action } from "./Action"
@@ -10,6 +12,7 @@ import { TalkAIResponse, createChatMessage, generateAssistantResponse } from "./
 import { z } from "zod"
 
 export const TIMEOUT_MESSAGE = "I haven't heard from you in a while. Feel free to chat again later!"
+
 type BufferingState = {
   type: "buffering_messages"
   timeSinceLastMessage: number
@@ -28,9 +31,14 @@ type AwaitingMessageState = {
   timeSinceLastMessage: number
 }
 
-type TalkActionState = BufferingState | RespondingState | AwaitingMessageState
+type ProcessingState = {
+  type: "processing"
+  messages: ChatMessage[]
+}
 
-export type ConversationType = { type: "existing"; message: ChatMessage } | { type: "new" }
+type TalkActionState = BufferingState | RespondingState | AwaitingMessageState | ProcessingState
+
+export type ConversationType = { type: "existing"; message: ChatMessage } | { type: "new"; message?: string }
 
 export class TalkAction extends Action {
   private readonly MESSAGE_BUFFER_TIMEOUT = 3000
@@ -71,7 +79,6 @@ export class TalkAction extends Action {
   )
 
   private transitionToState(newState: TalkActionState) {
-    console.log("Transitioning to state", newState)
     if (this.isCompletedFlag) return
     this.state = newState
   }
@@ -100,8 +107,6 @@ export class TalkAction extends Action {
   async handleMessage(chatMessage: ChatMessage) {
     if (this.isCompletedFlag) return
 
-    console.log("In handle messageCurrent state is", this.state)
-
     this.getBrainDump().addChatMessage(chatMessage.from, chatMessage)
     switch (this.state.type) {
       case "awaiting_message":
@@ -116,33 +121,37 @@ export class TalkAction extends Action {
         this.state.messages.push(chatMessage)
         this.state.timeSinceLastMessage = 0
         break
+      case "processing":
+        this.transitionToState({
+          type: "buffering_messages",
+          messages: [...this.state.messages, chatMessage],
+          timeSinceLastMessage: 0,
+        })
+        break
     }
   }
 
   private async processBufferedMessages() {
     if (this.state.type !== "buffering_messages") {
-      throw new Error("TalkAction is not in buffering_messages state, we should not be processing buffered messages")
+      logger.error("TalkAction is not in buffering_messages state, we should not be processing buffered messages")
+      return
+      // throw new Error("TalkAction is not in buffering_messages state, we should not be processing buffered messages")
     }
-    const old_messages_length = this.state.messages.length
+    this.transitionToState({ type: "processing", messages: this.state.messages })
 
     const response = await this.generateResponse()
     if (!response) {
-      throw new Error("We couldn't generate response")
+      logger.error("We couldn't generate response")
+      // throw new Error("We couldn't generate response")
       return
     }
     if (response.type === "endedConversation") {
       return
     }
-
-    if (this.state.type !== "buffering_messages") {
-      console.log(this.state)
-      throw new Error("After generating response, TalkAction is not in buffering_messages state anymore")
-    }
-
-    const new_messages_length = this.state.messages.length
-
-    if (new_messages_length === old_messages_length) {
+    // @ts-ignore
+    if (this.state.type === "processing") {
       const chunks = this.splitIntoChunks(response.finalChatMessage)
+      console.log("We succefuly splitted chunks and are transitioning to responding")
       this.transitionToState({
         type: "responding",
         chunksToEmit: chunks,
@@ -150,19 +159,21 @@ export class TalkAction extends Action {
         timeSinceLastMessage: 0,
       })
     } else {
-      console.log("Messages have changed, recalling processBufferedMessages")
-      this.processBufferedMessages()
+      console.log("State got changed outside of this method")
+      console.log(this.state)
     }
   }
 
   private emitNextChunk() {
     if (this.state.type !== "responding") {
-      throw new Error("TalkAction is not in responding state, we should not be emitting chunks")
+      logger.error("TalkAction is not in responding state, we should not be emitting chunks")
+      // throw new Error("TalkAction is not in responding state, we should not be emitting chunks")
+      return
     }
 
     const nextChunk = this.state.chunksToEmit.shift()
     if (!nextChunk) {
-      console.log("No next chunk to emit, transitioning to awaiting_message")
+      console.log("No next chunk to emit transitioning to awaiting_message")
       this.transitionToState({
         type: "awaiting_message",
         timeSinceLastMessage: 0,
@@ -185,7 +196,9 @@ export class TalkAction extends Action {
 
   endConversation(reason: string): string {
     if (this.isCompletedFlag) {
-      throw new Error("TalkAction is completed, we should not be ending conversation")
+      logger.error("TalkAction is completed, we should not be ending conversation")
+      // throw new Error("TalkAction is completed, we should not be ending conversation")
+      return reason
     }
     this.isCompletedFlag = true
 
@@ -195,7 +208,9 @@ export class TalkAction extends Action {
       this.getBrainDump().closeThread(this.targetPlayerUsername)
       this.getEmitMethods().emitEndConversation(finalMessage)
     } else {
-      throw new Error("TalkAction has a latest thread that is finished")
+      logger.error("TalkAction has a latest thread that is finished")
+      // throw new Error("TalkAction has a latest thread that is finished")
+      return reason
     }
 
     return reason
@@ -206,21 +221,45 @@ export class TalkAction extends Action {
     this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
     if (this.conversationType.type === "new") {
-      const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
-      const system_message = start_conversation(aiBrainSummary, this.targetPlayerUsername)
+      const thread = this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
-      if (this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername).messages.length > 0) {
-        throw new Error("Starting new talkAction but it has an active thread that is not empty")
+      if (thread.messages.length > 0) {
+        logger.error("Starting new talkAction but it has an active thread that is not empty")
+        log_threads(this.getBrainDump(), this.targetPlayerUsername)
+        // throw new Error("Starting new talkAction but it has an active thread that is not empty")
       }
-      const response = await generateAssistantResponse(system_message, [])
+
+      let response: TalkAIResponse | null = null
+
+      if (this.conversationType.message) {
+        response = {
+          type: "gotString",
+          finalChatMessage: this.conversationType.message,
+        }
+      } else {
+        const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
+        const system_message = start_conversation(aiBrainSummary, this.targetPlayerUsername)
+        response = await generateAssistantResponse(system_message, [])
+      }
+
+      if (!response) {
+        logger.error("We couldn't generate response")
+        // throw new Error("We couldn't generate response")
+        return
+      }
       if (response.type !== "endedConversation") {
         const chunks = this.splitIntoChunks(response.finalChatMessage)
+        console.log("We succefuly got start of conversation response and are transitioning to responding")
         this.transitionToState({
           type: "responding",
           chunksToEmit: chunks,
           emittedChunks: [],
           timeSinceLastMessage: 0,
         })
+      } else {
+        logger.error("We ended conversation before we started it")
+        // throw new Error("We ended conversation before we started it")
+        return
       }
     } else {
       await this.handleMessage(this.conversationType.message)
@@ -229,17 +268,18 @@ export class TalkAction extends Action {
 
   update(deltaTime: number) {
     if (this.isInterrupted || !this.isStarted || this.isCompletedFlag) return
+    if (this.state.type === "processing") {
+      return
+    }
+
     this.elapsedTime += deltaTime
-
     this.movementController.move(deltaTime)
-
     this.state.timeSinceLastMessage += deltaTime
 
     switch (this.state.type) {
       case "buffering_messages":
         if (this.state.timeSinceLastMessage >= this.MESSAGE_BUFFER_TIMEOUT) {
           this.processBufferedMessages()
-          this.state.timeSinceLastMessage = 0
         }
         break
       case "responding":

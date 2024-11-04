@@ -46,7 +46,8 @@ export const convertActionToGeneratedAction = (action: Action): GeneratedActionW
         },
       }
     } else {
-      throw new Error("Unknown move target type")
+      logger.error("Unknown move target type")
+      // throw new Error("Unknown move target type")
     }
   } else if (action instanceof TalkAction) {
     const talkAction = action as TalkAction

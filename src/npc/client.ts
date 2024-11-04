@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { getDirection } from "../shared/functions"
+import { getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
@@ -89,7 +89,7 @@ export class NPC {
     if (message.to === this.npcConfig.username) {
       const currentAction = this.aiBrain.getCurrentAction()
 
-      log_threads(this.aiBrain.getBrainDump(), message.from)
+      // log_threads(this.aiBrain.getBrainDump(), message.from)
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         currentAction.markAsCompleted()
@@ -107,8 +107,9 @@ export class NPC {
         logger.debug(`Currently talking with ${currentAction.getTargetPlayerUsername()}`)
         logger.debug(`Reflections are ${this.aiBrain.getStringifiedBrainDump().reflections}`)
         logger.debug(`Plan are ${JSON.stringify(this.aiBrain.getStringifiedBrainDump().currentPlan)}`)
-        log_threads(this.aiBrain.getBrainDump(), message.from)
-        throw new Error("Received conversation timeout message but we are not talking with this player")
+        // log_threads(this.aiBrain.getBrainDump(), message.from)
+        logger.error("Received conversation timeout message but we are not talking with this player")
+        // throw new Error("Received conversation timeout message but we are not talking with this player")
       }
     }
   }
@@ -229,15 +230,18 @@ export class NPC {
   }
 
   sendMoveMessage(blockingPlayer: PlayerData) {
-    const message = `Hey ${blockingPlayer.username}, you're blocking my path.`
-    const replyMessage: ChatMessage = {
-      from: this.playerData.username,
-      to: blockingPlayer.username,
-      message: message,
-      date: new Date().toISOString(),
-    }
-    this.aiBrain.addChatMessage(blockingPlayer.username, replyMessage)
-    this.socketManager.emitSendMessage(replyMessage)
+    const talkAction = new TalkAction(
+      this.aiBrain.getBrainDump,
+      () => this.socketManager.getEmitMethods(),
+      "",
+      blockingPlayer.username,
+      {
+        type: "new",
+        message: get_move_message(blockingPlayer.username),
+      },
+      this.movementController,
+    )
+    this.aiBrain.interruptCurrentActionAndExecuteNew(talkAction)
   }
 
   setupPlaces() {

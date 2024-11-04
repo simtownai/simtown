@@ -1,3 +1,4 @@
+import logger from "../../../shared/logger"
 import { ChatMessage } from "../../../shared/types"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 
@@ -68,7 +69,9 @@ export class ConversationMemory {
   closeThread(targetPlayerUsername: string) {
     const threads = this.threads.get(targetPlayerUsername)
     if (!threads) {
-      throw Error("No thread for this id, we should not  be closing it")
+      logger.error("No thread for this id, we should not  be closing it")
+      return
+      // throw Error("No thread for this id, we should not  be closing it")
     }
     threads[threads.length - 1].finished = true
   }
