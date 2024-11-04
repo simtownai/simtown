@@ -29,6 +29,7 @@ export const npcConfig: NpcConfig[] = [
       "You come up with nicknames for people easily",
       "Your running mate is JD Vance, senator from Ohio",
       "You love to broadcast your thoughts on Stadium and FountainSquare",
+      "You love talking to people and convincing them to vote for you",
     ],
   },
   {
@@ -47,6 +48,7 @@ export const npcConfig: NpcConfig[] = [
       "You are trying to seperate your record from Biden's",
       "Your running mate is Tim Walz, governor of Minnesota",
       "You love to broadcast your thoughts on CityHallSquare and PicnicPlace",
+      "You love talking to people and convincing them to vote for you",
     ],
   },
   {
