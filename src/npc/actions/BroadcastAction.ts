@@ -74,7 +74,7 @@ export class BroadcastAction extends Action {
         date: new Date().toISOString(),
       }
       this.getEmitMethods().emitBroadcast(broadcastMessage)
-    }, 5000) // Emit every 5 seconds
+    }, 2500)
   }
 
   private endBroadcast(): void {
