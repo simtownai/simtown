@@ -46,7 +46,6 @@ export const generateAssistantResponse = async (
       ...aiMessages,
       ...newAIMessages,
     ]
-    console.log("To submit are", toSubmit)
     try {
       const completion =
         tools.length > 0
