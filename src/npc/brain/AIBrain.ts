@@ -1,6 +1,13 @@
 import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
-import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../../shared/types"
+import {
+  ChatMessage,
+  NewsItem,
+  PlayerData,
+  UpdatePlayerData,
+  VoteCandidate,
+  availableVoteCandidates,
+} from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -130,9 +137,11 @@ export class AIBrain {
     const playerNames = Array.from(this.getOtherPlayers().keys())
     const playerNamesString = playerNames.length > 0 ? `${playerNames.join(", ")}` : "No other players available"
     const placesNames = this.places
-    const newsPaperString = `\n${this.getNewsPaper()
-      .map((newsItem) => `${newsItem.date}: ${newsItem.message} ${newsItem.place ? `at ${newsItem.place}` : ""}`)
-      .join("\n")}`
+    const newsPaperString = availableVoteCandidates.includes(this.npcConfig.username as VoteCandidate)
+      ? ""
+      : `\n${this.getNewsPaper()
+          .map((newsItem) => `${newsItem.date}: ${newsItem.message} ${newsItem.place ? `at ${newsItem.place}` : ""}`)
+          .join("\n")}`
     const placesNamesString = placesNames.length > 0 ? `${placesNames.join(", ")}` : "No other places available"
     const reflections = this.memory.reflections
     const reflectionsString =
