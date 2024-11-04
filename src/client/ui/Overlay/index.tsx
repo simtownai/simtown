@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { formatTimeAMPM, getGameTime } from "../../../shared/functions"
+import { formatTimeAMPM, getDaysRemaining, getGameTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import newsIcon from "../_images/overlay/news-icon.png"
@@ -62,14 +62,6 @@ export default function Overlay({
       window.removeEventListener("keydown", handleKeyDown)
     }
   }, [isChatsContainerCollapsed, setIsNewsContainerCollapsed, setIsHelpContainerCollapsed])
-
-  const getDaysRemaining = () => {
-    const now = currentTime
-    const targetDate = CONFIG.TARGET_DATE
-    const diffTime = targetDate.getTime() - now.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const button = e.currentTarget

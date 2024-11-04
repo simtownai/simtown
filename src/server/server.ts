@@ -1,5 +1,12 @@
 import { CONFIG } from "../shared/config"
-import { calculateDistance, getGameTime, gridToWorld, isInZone, worldToGrid } from "../shared/functions"
+import {
+  calculateDistance,
+  getDaysRemaining,
+  getGameTime,
+  gridToWorld,
+  isInZone,
+  worldToGrid,
+} from "../shared/functions"
 import logger from "../shared/logger"
 import {
   BroadcastMessage,
@@ -313,7 +320,7 @@ io.on("connection", (socket) => {
 function sendVotingReminder() {
   const newsItem: NewsItem = {
     date: getGameTime().toISOString(),
-    message: "🗳️ Polling is open! Make your voice heard - cast your vote for the next leader!",
+    message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader! Only ${getDaysRemaining()} game days left.`,
     place: CONFIG.VOTING_PLACE_NAME,
   }
   newsPaper.push(newsItem)

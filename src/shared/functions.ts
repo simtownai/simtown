@@ -34,6 +34,13 @@ export function getGameTime(): Date {
   return inGameDate
 }
 
+export function getDaysRemaining(): number {
+  const now = getGameTime()
+  const diffTime = CONFIG.TARGET_DATE.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+}
+
 export function formatDate(date: Date) {
   const now = new Date()
   const diff = now.getTime() - date.getTime()
