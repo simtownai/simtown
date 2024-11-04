@@ -133,7 +133,9 @@ export class TalkAction extends Action {
 
   private async processBufferedMessages() {
     if (this.state.type !== "buffering_messages") {
-      logger.error("TalkAction is not in buffering_messages state, we should not be processing buffered messages")
+      logger.error(
+        `(${this.getBrainDump().playerData.username}) TalkAction is not in buffering_messages state, we should not be processing buffered messages`,
+      )
       return
       // throw new Error("TalkAction is not in buffering_messages state, we should not be processing buffered messages")
     }
@@ -141,7 +143,7 @@ export class TalkAction extends Action {
 
     const response = await this.generateResponse()
     if (!response) {
-      logger.error("We couldn't generate response")
+      logger.error(`(${this.getBrainDump().playerData.username}) We couldn't generate response`)
       // throw new Error("We couldn't generate response")
       return
     }
@@ -151,7 +153,9 @@ export class TalkAction extends Action {
     // @ts-ignore
     if (this.state.type === "processing") {
       const chunks = this.splitIntoChunks(response.finalChatMessage)
-      console.log("We succefuly splitted chunks and are transitioning to responding")
+      // logger.debug(
+      //   `(${this.getBrainDump().playerData.username}) We succefuly splitted chunks and are transitioning to responding`,
+      // )
       this.transitionToState({
         type: "responding",
         chunksToEmit: chunks,
@@ -159,21 +163,25 @@ export class TalkAction extends Action {
         timeSinceLastMessage: 0,
       })
     } else {
-      console.log("State got changed outside of this method")
-      console.log(this.state)
+      // logger.debug(`(${this.getBrainDump().playerData.username}) State got changed outside of this method`)
+      // console.log(this.state)
     }
   }
 
   private emitNextChunk() {
     if (this.state.type !== "responding") {
-      logger.error("TalkAction is not in responding state, we should not be emitting chunks")
+      logger.error(
+        `(${this.getBrainDump().playerData.username}) TalkAction is not in responding state, we should not be emitting chunks`,
+      )
       // throw new Error("TalkAction is not in responding state, we should not be emitting chunks")
       return
     }
 
     const nextChunk = this.state.chunksToEmit.shift()
     if (!nextChunk) {
-      console.log("No next chunk to emit transitioning to awaiting_message")
+      // logger.debug(
+      //   `(${this.getBrainDump().playerData.username}) No next chunk to emit transitioning to awaiting_message`,
+      // )
       this.transitionToState({
         type: "awaiting_message",
         timeSinceLastMessage: 0,
@@ -196,7 +204,9 @@ export class TalkAction extends Action {
 
   endConversation(reason: string): string {
     if (this.isCompletedFlag) {
-      logger.error("TalkAction is completed, we should not be ending conversation")
+      logger.error(
+        `(${this.getBrainDump().playerData.username}) TalkAction is completed, we should not be ending conversation`,
+      )
       // throw new Error("TalkAction is completed, we should not be ending conversation")
       return reason
     }
@@ -208,7 +218,7 @@ export class TalkAction extends Action {
       this.getBrainDump().closeThread(this.targetPlayerUsername)
       this.getEmitMethods().emitEndConversation(finalMessage)
     } else {
-      logger.error("TalkAction has a latest thread that is finished")
+      logger.error(`(${this.getBrainDump().playerData.username}) TalkAction has a latest thread that is finished`)
       // throw new Error("TalkAction has a latest thread that is finished")
       return reason
     }
@@ -224,8 +234,9 @@ export class TalkAction extends Action {
       const thread = this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
       if (thread.messages.length > 0) {
-        console.log(this.conversationType)
-        logger.error("Starting new talkAction but it has an active thread that is not empty")
+        logger.error(
+          `(${this.getBrainDump().playerData.username}) Starting new talkAction but it has an active thread that is not empty. Conversation type: ${JSON.stringify(this.conversationType)}`,
+        )
         log_threads(this.getBrainDump(), this.targetPlayerUsername)
         // throw new Error("Starting new talkAction but it has an active thread that is not empty")
       }
@@ -244,13 +255,15 @@ export class TalkAction extends Action {
       }
 
       if (!response) {
-        logger.error("We couldn't generate response")
+        logger.error(`(${this.getBrainDump().playerData.username}) We couldn't generate response`)
         // throw new Error("We couldn't generate response")
         return
       }
       if (response.type !== "endedConversation") {
         const chunks = this.splitIntoChunks(response.finalChatMessage)
-        console.log("We succefuly got start of conversation response and are transitioning to responding")
+        // logger.debug(
+        //   `(${this.getBrainDump().playerData.username}) We succefuly got start of conversation response and are transitioning to responding`,
+        // )
         this.transitionToState({
           type: "responding",
           chunksToEmit: chunks,
@@ -258,7 +271,7 @@ export class TalkAction extends Action {
           timeSinceLastMessage: 0,
         })
       } else {
-        logger.error("We ended conversation before we started it")
+        logger.error(`(${this.getBrainDump().playerData.username}) We ended conversation before we started it`)
         // throw new Error("We ended conversation before we started it")
         return
       }
