@@ -224,6 +224,7 @@ export class TalkAction extends Action {
       const thread = this.getBrainDump().getNewestActiveThread(this.targetPlayerUsername)
 
       if (thread.messages.length > 0) {
+        console.log(this.conversationType)
         logger.error("Starting new talkAction but it has an active thread that is not empty")
         log_threads(this.getBrainDump(), this.targetPlayerUsername)
         // throw new Error("Starting new talkAction but it has an active thread that is not empty")

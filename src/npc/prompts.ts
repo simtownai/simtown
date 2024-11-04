@@ -1,14 +1,19 @@
 import { StringifiedBrainDump } from "./brain/AIBrain"
 
 export const construct_base_prompt = (reflections: StringifiedBrainDump) => `
-You should assume a role of ${reflections.name} in an election simulation game. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
+You are playing a role of ${reflections.name} in an election simulation game. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
 
+**Past reflections**:
 Your current expierences and thoughts from today are: ${reflections.reflections}. 
 
+**Current plan**:
 Your current plan for the day is: ${reflections.currentPlan}.
 
-Other players currently in the game are: ${reflections.playerNames}.
-Avaialble places to visit are: ${reflections.placesNames}.
+**Other players currently in the game**:
+${reflections.playerNames}.
+
+**Avaialble places to visit**:
+${reflections.placesNames}.
 
 **Curent time is** ${reflections.currentTime}
 
@@ -35,7 +40,7 @@ You will now generate a new plan for the day.
 
 export const summarize_conversation_prompt = (reflections: StringifiedBrainDump) =>
   `${construct_base_prompt(reflections)}.
-You will now summarize following conversation. Focus on extracting key information, things that can be important for your plan, or might influence your voting.
+Provide a short summary of the conversation. It should consist of concise bullet points (1,2) for short conversations and up to 4-5 points for longer ones. Extract only points that can affect your opinion or goals. If nothing relevant is mentioned, just say "No relevant information". Remember that your name is ${reflections.name} and you are to provide a summary based from your perspective. Reply just with the summary and nothing else.
 `
 
 export const start_conversation = (
@@ -56,16 +61,17 @@ You will now generate a speech a 1 page long speech which your character will gi
 
 export const summarize_broadcast_prompt = (reflections: StringifiedBrainDump, broadcastContent: string) =>
   `${construct_base_prompt(reflections)}.
-You will now extract key information from following speech that you just gave: ${broadcastContent}`
+Provide a short summary of the speech. Summary should consist of concise bullet points (1,2) for short conversations and up to 4-5 points for longer ones. Reply just with the summary and nothing else.
+${broadcastContent}`
 
 export const summarize_speech_prompt = (reflections: StringifiedBrainDump, speechContent: string) =>
   `${construct_base_prompt(reflections)}.
-You will now extract key information from following speech that you just heard: ${speechContent}`
+Provide a short summary of the speech. Summary should consist of concise bullet points (1,2) for short conversations and up to 4-5 points for longer ones. Reply just with the summary and nothing else. ${speechContent}`
 
 export const summarize_reflections_prompt = (braindump: StringifiedBrainDump) =>
   `${construct_base_prompt(braindump)}.
 Your reflections are getting too long, so you need to summarize them.
-Focus on the most important events and information that you think are relevant for your plan and goals in the future. Current reflections are: ${braindump.reflections}`
+Focus on the most important events and information that you think are relevant for your plan and goals in the future. Limit to 10 bullet points max. Current reflections are: ${braindump.reflections}`
 
 export const vote_prompt = (reflections: StringifiedBrainDump, candidates: string[]) =>
   `${construct_base_prompt(reflections)}

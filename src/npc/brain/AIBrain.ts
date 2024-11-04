@@ -15,7 +15,6 @@ import {
 import { ConversationMemory, Thread } from "./memory/ConversationMemory"
 import { Memory } from "./memory/Memory"
 import { reflect, summarizeReflections } from "./reflect"
-import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 
 // It is here because it is shared between every NPC
 // ToDo: make it individual for each NPC and update from news
@@ -129,21 +128,19 @@ export class AIBrain {
     const backstory = this.npcConfig.backstory.join(" ")
     const name = this.npcConfig.username
     const playerNames = Array.from(this.getOtherPlayers().keys())
-    const playerNamesString =
-      playerNames.length > 0 ? `Available players: ${playerNames.join(", ")}` : "No other players available"
+    const playerNamesString = playerNames.length > 0 ? `${playerNames.join(", ")}` : "No other players available"
     const placesNames = this.places
-    const newsPaperString = `News:\n${this.getNewsPaper()
+    const newsPaperString = `\n${this.getNewsPaper()
       .map((newsItem) => `${newsItem.date}: ${newsItem.message} ${newsItem.place ? `at ${newsItem.place}` : ""}`)
       .join("\n")}`
-    const placesNamesString =
-      placesNames.length > 0 ? `Available places: ${placesNames.join(", ")}` : "No other places available"
+    const placesNamesString = placesNames.length > 0 ? `${placesNames.join(", ")}` : "No other places available"
     const reflections = this.memory.reflections
     const reflectionsString =
-      reflections.length > 0 ? `Reflections: ${reflections}` : "We are just starting our day, no reflections"
+      reflections.length > 0 ? `${reflections.join("\n")}` : "We are just starting our day, no reflections"
     const currentActionQueue = this.actionQueue
     const currentActionQueueString =
       currentActionQueue.length > 0
-        ? `Current plan is: ${JSON.stringify(convertActionsToGeneratedPlan(currentActionQueue))}`
+        ? `${JSON.stringify(convertActionsToGeneratedPlan(currentActionQueue))}`
         : "We don't have a plan yet"
     const currentActionString = this.currentAction
       ? JSON.stringify(

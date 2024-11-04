@@ -6,7 +6,6 @@ import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
-import { log_threads } from "../loghelpers"
 import { IdleActionDuration } from "../npcConfig"
 import client from "../openai/openai"
 import {
@@ -37,9 +36,7 @@ export const reflect = async (action: Action) => {
     } else if (target === "coordinates") {
       destination = `Coordinates ${moveAction.moveTarget.x}, ${moveAction.moveTarget.y}`
     }
-    return isInterrupted
-      ? `I was moving to ${destination} but got interrupted.`
-      : `I completed Move Action, moved to ${destination}`
+    return isInterrupted ? `I was moving to ${destination} but got interrupted.` : `I moved to ${destination}`
   } else if (actionType === "TalkAction") {
     const talkAction = action as TalkAction
     const lastTalkedPlayerName = talkAction.getTargetPlayerUsername()
@@ -63,19 +60,19 @@ export const reflect = async (action: Action) => {
     const result = await summarizeConversation(reflections, content.join("\n"))
     return isInterrupted
       ? `I was talking to ${lastTalkedPlayerName} but got interrupted. Summary of the conversation: ${result}`
-      : `I completed Talk Action, talked to ${lastTalkedPlayerName}, summary of the conversation: ${result}`
+      : `I talked with ${lastTalkedPlayerName}, summary of the conversation: ${result}`
   } else if (actionType === "BroadcastAction") {
     const broadcastAction = action as BroadcastAction
     const summary = await summarizeBroadcast(reflections, broadcastAction.broadcastContent)
     return isInterrupted
-      ? `I was broadcasting but got interrupted. I managed to broadcast: ${summary}`
-      : `I completed Broadcast Action, broadcasted: ${summary}`
+      ? `I was giving a speech but got interrupted. I managed to broadcast: ${summary}`
+      : `I gave a speech, talked about: ${summary}`
   } else if (actionType === "ListenAction") {
     const listenAction = action as ListenAction
     const summary = await summarizeSpeech(reflections, listenAction.accumulatedBroadcast)
     return isInterrupted
-      ? `I was listening to a broadcast but got interrupted. I managed to listen: ${summary}`
-      : `I completed Listen Action, listened to a broadcast: ${summary}`
+      ? `I was listening to a a speech. Summary of what I heard: ${summary}`
+      : `I listen to the speech, quick summary:: ${summary}`
   } else if (actionType === "VoteAction") {
     const voteAction = action as VoteAction
     return `I voted for ${voteAction.chosenCandidate} in the last voting round.`

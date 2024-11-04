@@ -87,6 +87,8 @@ export const generatePlanForTheday = async (
 ): Promise<GeneratedActionPlan> => {
   const prompt = planning_prompt(stringifiedBrainDump)
 
+  console.log("prompt", prompt)
+
   const response = await generateJson(
     prompt,
     ResponseSchema,
