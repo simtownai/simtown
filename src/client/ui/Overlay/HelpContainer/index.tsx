@@ -65,10 +65,13 @@ const HelpContainer: React.FC<HelpContainerProps> = ({ isMobile, setIsHelpContai
               <span className={styles.key}>Arrow Keys</span> - Move
             </li>
             <li>
-              <span className={styles.key}>Space</span> - Attack
+              <span className={styles.key}>C</span> - Open chat with closest player if in range, else open chat window
             </li>
             <li>
-              <span className={styles.key}>C</span> - Open chat with closest player if in range, else open chat window
+              <span className={styles.key}>I</span> - Toggle news container
+            </li>
+            <li>
+              <span className={styles.key}>M</span> - Toggle sound
             </li>
           </ul>
         </div>

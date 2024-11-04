@@ -72,6 +72,10 @@
   border-radius: 4px;
 }
 
+.content::-webkit-scrollbar {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .container {
     border-radius: 0;
