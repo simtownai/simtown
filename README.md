@@ -13,6 +13,8 @@
 - reflections are gigantic
 - unable to generate plan because of errors (like no broadcast announced), but doenst pay atention to that, generates same shit every time and reaches max attempts
 
+- enter username + save in local storage
+- add discord
 - (Alex) player rotations
   - rotate to whom you are sending messages
   - rotate to incoming messages if idle
