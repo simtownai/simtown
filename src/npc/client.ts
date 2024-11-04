@@ -161,7 +161,9 @@ export class NPC {
       const currentAction = this.aiBrain.getCurrentAction()
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
-        logger.debug(`(${this.npcConfig.username}) Received message from ${message.from} while talking with them`)
+        logger.debug(
+          `(${this.npcConfig.username}) Received message from ${message.from} ${message.message} while talking with them`,
+        )
         // Update the current TalkAction with the new message
         currentAction.handleMessage(message)
       } else if (currentAction instanceof BroadcastAction) {
@@ -235,10 +237,6 @@ export class NPC {
       date: new Date().toISOString(),
     }
     this.aiBrain.addChatMessage(blockingPlayer.username, replyMessage)
-    this.aiBrain.addAIMessage(blockingPlayer.username, {
-      role: "assistant",
-      content: message,
-    })
     this.socketManager.emitSendMessage(replyMessage)
   }
 

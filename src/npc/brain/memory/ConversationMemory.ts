@@ -1,13 +1,40 @@
 import { ChatMessage } from "../../../shared/types"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs"
 
+export const mapChatMessageToChatAIMessage = (
+  current_player: string,
+  message: ChatMessage,
+): ChatCompletionMessageParam => {
+  return {
+    role: current_player === message.from ? "assistant" : "user",
+    content: message.message,
+  }
+}
+
+export const mapChatMessagesToAIMessages = (
+  current_player: string,
+  messages: ChatMessage[],
+): ChatCompletionMessageParam[] => {
+  return messages.reduce((acc: ChatCompletionMessageParam[], message) => {
+    const role = current_player === message.from ? "assistant" : "user"
+    const lastMessage = acc[acc.length - 1]
+
+    if (lastMessage && lastMessage.role === role) {
+      // Append to existing message
+      lastMessage.content += "\n" + message.message
+      return acc
+    }
+
+    // Add new message
+    return [...acc, { role, content: message.message }]
+  }, [])
+}
+
 export class Thread {
   messages: ChatMessage[]
-  aiMessages: ChatCompletionMessageParam[]
   finished: boolean
   constructor() {
     this.messages = []
-    this.aiMessages = []
     this.finished = false
   }
 }
@@ -30,11 +57,6 @@ export class ConversationMemory {
       return false
     }
     return !threads[threads.length - 1].finished
-  }
-
-  addAIMessage(targetPlayerId: string, message: ChatCompletionMessageParam) {
-    const thread = this.getNewestActiveThread(targetPlayerId)
-    thread.aiMessages.push(message)
   }
 
   addChatMessage(targetPlayerUsername: string, message: ChatMessage) {

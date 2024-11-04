@@ -13,7 +13,6 @@ export const log_threads = (aiBrainDumop: BrainDump, playerNameToFilter?: string
     const threadMeat = conversation[1]
     for (const thread of threadMeat) {
       console.debug("Finished", thread.finished)
-      console.debug("AI messages", thread.aiMessages)
       console.debug("Chat messages", thread.messages)
     }
   }

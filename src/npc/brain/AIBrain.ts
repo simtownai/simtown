@@ -45,7 +45,6 @@ export type BrainDump = {
   getNewestActiveThread: (playerName: string) => Thread
   isLatestThreadActive: (playerName: string) => boolean
   addChatMessage: (playerName: string, message: ChatMessage) => void
-  addAIMessage: (playerName: string, message: ChatCompletionMessageParam) => void
   closeThread: (playerName: string) => void
   broadcastAnnouncementsCache: Set<string>
 }
@@ -122,8 +121,6 @@ export class AIBrain {
         this.memory.conversations.isLatestThreadActive(targetPlayerName),
       addChatMessage: (targetPlayerName: string, message: ChatMessage) =>
         this.addChatMessage(targetPlayerName, message),
-      addAIMessage: (targetPlayerName: string, message: ChatCompletionMessageParam) =>
-        this.addAIMessage(targetPlayerName, message),
       broadcastAnnouncementsCache: broadcastAnnouncementsCache,
     }
   }
@@ -294,9 +291,6 @@ export class AIBrain {
 
   addChatMessage(targetPlayerUsername: string, message: ChatMessage) {
     this.memory.conversations.addChatMessage(targetPlayerUsername, message)
-  }
-  addAIMessage(targetPlayerUsername: string, message: ChatCompletionMessageParam) {
-    this.memory.conversations.addAIMessage(targetPlayerUsername, message)
   }
   closeThread(targetPlayerUsername: string) {
     this.memory.conversations.closeThread(targetPlayerUsername)

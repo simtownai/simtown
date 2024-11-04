@@ -1,4 +1,3 @@
-import logger from "../../shared/logger"
 import { ChatMessage } from "../../shared/types"
 import { FunctionSchema } from "../openai/aihelper"
 import client from "../openai/openai"
@@ -47,6 +46,7 @@ export const generateAssistantResponse = async (
       ...aiMessages,
       ...newAIMessages,
     ]
+    console.log("To submit are", toSubmit)
     try {
       const completion =
         tools.length > 0
