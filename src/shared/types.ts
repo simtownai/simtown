@@ -120,20 +120,20 @@ const VoteSchema = z.object({
 
 const ActionSchema = z.discriminatedUnion("type", [
   MoveSchema,
-  TalkSchema,
+  // TalkSchema,
   IdleSchema,
-  BroadcastSchema,
-  ListenSchema,
-  VoteSchema,
+  // BroadcastSchema,
+  // ListenSchema,
+  // VoteSchema,
 ])
 
 const ActionSchemaWithPerson = z.discriminatedUnion("type", [
   MoveSchemaWithPerson,
-  TalkSchema,
+  // TalkSchema,
   IdleSchema,
-  BroadcastSchema,
-  ListenSchema,
-  VoteSchema,
+  // BroadcastSchema,
+  // ListenSchema,
+  // VoteSchema,
 ])
 
 export type GeneratedAction = z.infer<typeof ActionSchema>

@@ -32,6 +32,8 @@ export type StringifiedBrainDump = {
   backstory: string
   playerNames: string
   placesNames: string
+  npcConfig: NpcConfig
+
   newsPaper: string
   reflections: string
   currentPlan: string
@@ -161,6 +163,7 @@ export class AIBrain {
     const broadcastAnnouncementsString = Array.from(broadcastAnnouncementsCache).join("\n")
 
     const result: StringifiedBrainDump = {
+      npcConfig: this.npcConfig,
       name,
       backstory,
       playerNames: playerNamesString,

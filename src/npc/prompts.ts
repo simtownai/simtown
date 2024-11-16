@@ -1,23 +1,16 @@
 import { StringifiedBrainDump } from "./brain/AIBrain"
 
 export const construct_base_prompt = (reflections: StringifiedBrainDump) => `
-You are playing a role of ${reflections.name} in an election simulation game. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
+You are playing the role of ${reflections.name} in the a fictional town Simtown next to Philadelphia
+in a scavenger hunt game. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. Your key knowledge is: ${reflections.npcConfig.key_knowledge} and you will get this knowledge if you ${reflections.npcConfig.trigger_for_knowledge}.
 
-**Past reflections**:
-Your current expierences and thoughts from today are: ${reflections.reflections}. 
-
-**Current plan**:
-Your current plan for the day is: ${reflections.currentPlan}.
-
-**Other players currently in the game**:
+**Other NPCs currently in the game**:
 ${reflections.playerNames}.
 
-**Avaialble places to visit**:
+**Available locations to visit**:
 ${reflections.placesNames}.
 
-**Curent time is** ${reflections.currentTime}
-
-**Happening today**: ${reflections.newsPaper}
+**Current in-game time**: ${reflections.currentTime}
 `
 
 export const planning_prompt = (reflections: StringifiedBrainDump) => `
@@ -40,20 +33,22 @@ You will now generate a new plan for the day.
 
 export const summarize_conversation_prompt = (reflections: StringifiedBrainDump) =>
   `${construct_base_prompt(reflections)}.
-Provide a short summary of the conversation. It should consist of concise bullet points (1,2) for short conversations and up to 4-5 points for longer ones. Extract only points that can affect your opinion or goals. If nothing relevant is mentioned, just say "No relevant information". Remember that your name is ${reflections.name} and you are to provide a summary based from your perspective. Reply just with the summary and nothing else.
+Provide a short summary of the conversation. It should consist of concise bullet points (1-2) for short conversations and up to 4-5 points for longer ones. Extract only points that can affect your knowledge or objectives. If nothing relevant is mentioned, just say "No relevant information". Remember that your name is ${reflections.name} and you are to provide a summary based on your perspective. Reply just with the summary and nothing else.
 `
 
 export const start_conversation = (
   reflections: StringifiedBrainDump,
-  targetPlayer: string,
+  targetNPC: string,
 ) => `${construct_base_prompt(reflections)}.
-You will now generate  message to start a conversation with a player named ${targetPlayer}. It should be short (2 sentences max) and relevant for the election / your goals or based on the knowledge of this player.`
+You will now generate a message to start a conversation with an NPC named ${targetNPC}. It should be short (2 sentences max) and relevant for the scavenger hunt / your objectives or based on the knowledge of this NPC.
+`
 
 export const continue_conversation = (
   reflections: StringifiedBrainDump,
-  targetPlayer: string,
+  targetNPC: string,
 ) => `${construct_base_prompt(reflections)}.
-You will now generate a message to continue a conversation with a player named ${targetPlayer}. It should be short and relevant for the election / your goals or based on the knowledge of this player. You should keep in mind your plan for the day and if you decide that those plans are more important than continuing the conversation, you should call function endConversation. The explanation for ending the conversation given to the function should be something you would actually say in real life, e.g. "I need to go as I want to prep for upcoming spedch I am about to give" or "We will never agree on this topic so I will stop talking to you, Bye!" or "Ok got it, talk to you later". Remember to always call endConversation if you decide it's better to stop talking to this player. Keep the messages short but relevant (3-4 sentences max).`
+You will now generate a message to continue a conversation with an NPC named ${targetNPC}. It should be short and relevant for the scavenger hunt / your objectives or based on the knowledge of this NPC. You can call endConversation if you decide it's better to stop talking with a player. If you ever use, you should provide clues for the player why you are ending the conversation and for next steps. Keep the messages short but relevant (3-4 sentences max).
+`
 
 export const broadcast_prompt = (reflections: StringifiedBrainDump) =>
   `${construct_base_prompt(reflections)}.
