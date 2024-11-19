@@ -371,42 +371,6 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  private getTextFromAction(action: GeneratedActionWithPerson | undefined): string {
-    if (!action) return ""
-    switch (action.type) {
-      case "move":
-        let emoji = "🚶"
-        if (action.target.targetType === "coordinates") {
-          return emoji + `📍${action.target.x},${action.target.y}`
-        } else if (action.target.targetType === "person") {
-          return emoji + `👤${action.target.name}`
-        } else if (action.target.targetType === "place") {
-          return emoji + `🏠${action.target.name}`
-        } else {
-          return emoji
-        }
-      case "talk":
-        return `💬${action.name}`
-      case "idle":
-        if (action.activityType === "read") {
-          return `📖📖📖`
-          // } else if (action.activityType === "phone") {
-          //   return `📱📱📱`
-        } else {
-          return `😴😴😴`
-        }
-      case "broadcast":
-        // return `📢${action.targetPlace}`
-        return `📢`
-      case "listen":
-        return `👂`
-      case "vote":
-        return `🗳️`
-      default:
-        return ""
-    }
-  }
-
   private setupSocketListeners() {
     this.socket.on("existingPlayers", (players: PlayerData[]) => {
       console.log("Received existing players:", players)
@@ -442,7 +406,7 @@ export class Game extends Phaser.Scene {
           player.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
         )
         if (player.action && JSON.stringify(player.action) !== JSON.stringify(otherPlayerData.playerData.action)) {
-          const emoji = this.getTextFromAction(player.action)
+          const emoji = getTextFromAction(player.action)
           if (emoji) {
             otherPlayerData.actionEmoji!.setText(emoji)
             otherPlayerData.actionEmoji!.setVisible(true)

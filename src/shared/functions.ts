@@ -1,6 +1,6 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { GridPosition, PlayerSpriteDefinition } from "./types"
+import { GeneratedActionWithPerson, GridPosition, PlayerSpriteDefinition } from "./types"
 
 export const get_move_message = (username: string) => `Hey ${username}, you're blocking my path.`
 
@@ -106,4 +106,41 @@ export function createRandomSpriteDefinition(): PlayerSpriteDefinition {
 
 export function getBroadcastAnnouncementsKey(targetPlace: string, username: string): string {
   return `${targetPlace}-${username}`
+}
+
+export function getTextFromAction(action: GeneratedActionWithPerson | undefined): string {
+  if (!action) return ""
+  switch (action.type) {
+    case "move":
+      let emoji = "🚶"
+      if (action.target.targetType === "coordinates") {
+        return emoji + `📍${action.target.x},${action.target.y}`
+      } else if (action.target.targetType === "person") {
+        return emoji + `👤${action.target.name}`
+      } else if (action.target.targetType === "place") {
+        return emoji + `🏠${action.target.name}`
+      } else {
+        return emoji
+      }
+    case "talk":
+      return `💬${action.name}`
+    case "idle":
+      if (action.activityType === "read") {
+        return `📖📖📖`
+        // } else if (action.activityType === "phone") {
+        //   return `📱📱📱`
+      } else {
+        return `😴😴😴`
+      }
+    case "broadcast":
+      return `📢${action.targetPlace}`
+    // return `📢`
+    case "listen":
+      return `👂${action.targetPlace}`
+    // return `👂`
+    case "vote":
+      return `🗳️`
+    default:
+      return ""
+  }
 }
