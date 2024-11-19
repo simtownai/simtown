@@ -9,6 +9,12 @@ export type PlayerSpriteDefinition = {
   book?: "Book_01" | "Book_02" | "Book_03" | "Book_04" | "Book_05" | "Book_06"
 }
 
+export interface NPCState {
+  backstory: string[]
+  reflections: string[]
+  plan: GeneratedActionPlan
+}
+
 export interface PlayerData {
   id: string
   isNPC: boolean
@@ -18,6 +24,7 @@ export interface PlayerData {
   y: number
   animation: string
   action?: GeneratedAction
+  npcState?: Partial<NPCState>
 }
 
 export interface UpdatePlayerData {
@@ -25,6 +32,7 @@ export interface UpdatePlayerData {
   y?: number
   animation?: string
   action?: GeneratedAction
+  npcState?: Partial<NPCState>
 }
 
 export interface ChatMessage {
