@@ -291,13 +291,20 @@ export class Game extends Phaser.Scene {
     otherPlayerSprite.body!.immovable = true
 
     const speechBubble = this.spriteHandler.createSpeechBubble()
+    speechBubble.setInteractive({ cursor: "pointer" })
     speechBubble.on("pointerdown", () => {
       console.log(`Opening chat with player ID: ${playerInfo.username}`)
       EventBus.emit("chat-collapse", false)
       EventBus.emit("set-chatmate", playerInfo.username)
     })
+    speechBubble.on("pointerover", () => {
+      document.body.style.cursor = "pointer"
+    })
+    speechBubble.on("pointerout", () => {
+      document.body.style.cursor = "default"
+    })
 
-    otherPlayerSprite.setInteractive()
+    otherPlayerSprite.setInteractive({ cursor: "pointer" })
     otherPlayerSprite.on("pointerdown", () => {
       if (playerInfo.isNPC) {
         EventBus.emit("observe-collapse", false)
