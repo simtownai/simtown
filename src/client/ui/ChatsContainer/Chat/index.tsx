@@ -1,5 +1,4 @@
 import { ChatMessage } from "../../../../shared/types"
-import { defaultConfiguration } from "../../configuration"
 import Compose from "./Compose"
 import Footer from "./Footer"
 import Header from "./Header"
@@ -43,10 +42,6 @@ export default function Chat({
   setIsMessageLoading: (value: boolean) => void
   handleClearConversation: (() => void) | null
 }) {
-  const configuration = {
-    ...defaultConfiguration,
-    windowHeading: chatmate || "",
-  }
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -89,7 +84,7 @@ export default function Chat({
     <div className={styles.chat}>
       <Header
         isMobile={isMobile}
-        text={configuration.windowHeading}
+        text={chatmate || ""}
         onCollapseButtonClick={handleCollapseButtonClick}
         onBackButtonClick={
           isMobile
@@ -126,7 +121,6 @@ export default function Chat({
       {chatmate && !chatmate.endsWith("(broadcast)") && !chatmate.endsWith("(overheard)") && (
         <>
           <Compose
-            configuration={configuration}
             composeValue={composeValue}
             setComposeValue={setComposeValue}
             isLoading={isMessageLoading}
@@ -136,7 +130,7 @@ export default function Chat({
           />
         </>
       )}
-      {!configuration.whitelabel && <Footer />}
+      {false && <Footer />}
     </div>
   )
 }

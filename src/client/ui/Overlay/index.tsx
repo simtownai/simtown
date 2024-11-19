@@ -2,6 +2,7 @@ import { CONFIG } from "../../../shared/config"
 import { formatTimeAMPM, getDaysRemaining, getGameTime } from "../../../shared/functions"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
+import homeIcon from "../_images/overlay/home-icon.png"
 import newsIcon from "../_images/overlay/news-icon.png"
 import soundOffIcon from "../_images/overlay/sound-off-icon.png"
 import soundOnIcon from "../_images/overlay/sound-on-icon.png"
@@ -16,6 +17,7 @@ interface OverlayProps {
   totalUnreadCount: number
   setIsNewsContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   totalNewsUnreadCount: number
+  setIsObserveContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   soundEnabled: boolean
   setSoundEnabled: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -27,6 +29,7 @@ export default function Overlay({
   totalUnreadCount,
   setIsNewsContainerCollapsed,
   totalNewsUnreadCount,
+  setIsObserveContainerCollapsed,
   soundEnabled,
   setSoundEnabled,
 }: OverlayProps) {
@@ -53,6 +56,8 @@ export default function Overlay({
           setIsHelpContainerCollapsed((prev) => !prev)
         } else if (event.key === "m") {
           setSoundEnabled((prev) => !prev)
+        } else if (event.key === "o") {
+          setIsObserveContainerCollapsed((prev) => !prev)
         }
       }
     }
@@ -80,6 +85,15 @@ export default function Overlay({
         </div>
       </div>
       <div className={`${styles.overlay} ${styles.overlayTopLeft}`}>
+        <button
+          className={`${styles.iconButton}`}
+          onClick={(e) => {
+            handleClick(e)
+            setIsObserveContainerCollapsed((prev) => !prev)
+          }}
+        >
+          <img src={homeIcon} className={styles.buttonImage} />
+        </button>
         <button
           className={`${styles.iconButton}`}
           onClick={(e) => {

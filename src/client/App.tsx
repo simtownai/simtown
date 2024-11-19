@@ -1,9 +1,10 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { BroadcastMessage, ChatMessage, NewsItem, PlayerSpriteDefinition } from "../shared/types"
+import { BroadcastMessage, ChatMessage, NewsItem, PlayerData, PlayerSpriteDefinition } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import NewsContainer from "./ui/NewsContainer"
+import ObserveContainer from "./ui/ObserveContainer"
 import Overlay from "./ui/Overlay"
 import { useEffect, useMemo, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
@@ -26,6 +27,12 @@ function App() {
   const [newsPaper, setNewsPaper] = useState<NewsItem[]>([])
   const [isNewsContainerCollapsed, setIsNewsContainerCollapsed] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(localStorage.getItem("soundEnabled") === "true")
+  const [players, setPlayers] = useState<Map<string, PlayerData>>(new Map())
+
+  const [observedNPC, setObservedNPC] = useState<string | null>(null)
+  const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
+  const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
+  const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -54,6 +61,31 @@ function App() {
 
     newSocket.on("connect", () => {
       console.log(`Connected to server with id: ${newSocket.id}`)
+    })
+
+    newSocket.on("playerJoined", (player: PlayerData) => {
+      if (player.username !== username) {
+        setPlayers((prevPlayers) => new Map(prevPlayers).set(player.username, player))
+      }
+    })
+
+    newSocket.on("existingPlayers", (players: PlayerData[]) => {
+      const playersMap = new Map(players.map((player) => [player.username, player]))
+      setPlayers(playersMap)
+    })
+
+    newSocket.on("playerDataChanged", (player: PlayerData) => {
+      setPlayers((prevPlayers) =>
+        new Map(prevPlayers).set(player.username, { ...prevPlayers.get(player.username), ...player }),
+      )
+    })
+
+    newSocket.on("playerLeft", (username: string) => {
+      setPlayers((prevPlayers) => {
+        const newPlayers = new Map(prevPlayers)
+        newPlayers.delete(username)
+        return newPlayers
+      })
     })
 
     newSocket.on("newMessage", (message: ChatMessage) => {
@@ -201,24 +233,28 @@ function App() {
     setIsGameLoaded(true)
   }
 
+  if (!socket) {
+    return <div>Connecting to server...</div>
+  }
+
   return (
     <>
-      {socket && (
-        <PhaserGame
-          ref={phaserRef}
-          username={username}
-          spriteDefinition={spriteDefinition}
-          socket={socket}
-          currentActiveScene={currentScene}
-          isChatContainerCollapsed={isChatsContainerCollapsed}
-          setIsChatContainerCollapsed={setIsChatsContainerCollapsed}
-          setIsChatCollapsed={setIsChatCollapsed}
-          setChatmate={setChatmate}
-          onGameLoaded={handleGameLoaded}
-          soundEnabled={soundEnabled}
-        />
-      )}
-      {socket && isGameLoaded && (
+      <PhaserGame
+        ref={phaserRef}
+        username={username}
+        spriteDefinition={spriteDefinition}
+        socket={socket}
+        currentActiveScene={currentScene}
+        isChatContainerCollapsed={isChatsContainerCollapsed}
+        setIsChatContainerCollapsed={setIsChatsContainerCollapsed}
+        setIsChatCollapsed={setIsChatCollapsed}
+        setChatmate={setChatmate}
+        onGameLoaded={handleGameLoaded}
+        soundEnabled={soundEnabled}
+        setObservedNPC={setObservedNPC}
+        setIsObserveContainerCollapsed={setIsObserveContainerCollapsed}
+      />
+      {isGameLoaded && (
         <Overlay
           isMobile={isMobile}
           isChatsContainerCollapsed={isChatsContainerCollapsed}
@@ -226,11 +262,12 @@ function App() {
           totalUnreadCount={totalUnreadCount}
           setIsNewsContainerCollapsed={setIsNewsContainerCollapsed}
           totalNewsUnreadCount={totalNewsUnreadCount}
+          setIsObserveContainerCollapsed={setIsObserveContainerCollapsed}
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
         />
       )}
-      {socket && isGameLoaded && !isChatsContainerCollapsed && (
+      {isGameLoaded && !isChatsContainerCollapsed && (
         <ChatsContainer
           socket={socket}
           username={username}
@@ -251,11 +288,24 @@ function App() {
           handleClearConversation={null}
         />
       )}
-      {socket && isGameLoaded && !isNewsContainerCollapsed && (
+      {isGameLoaded && !isNewsContainerCollapsed && (
         <NewsContainer
           isMobile={isMobile}
           newsPaper={newsPaper}
           setIsNewsContainerCollapsed={setIsNewsContainerCollapsed}
+        />
+      )}
+      {isGameLoaded && !isObserveContainerCollapsed && (
+        <ObserveContainer
+          NPCs={new Map(Array.from(players).filter(([_, player]) => player.isNPC))}
+          observedNPC={observedNPC}
+          setObservedNPC={setObservedNPC}
+          setIsObserveContainerCollapsed={setIsObserveContainerCollapsed}
+          isObservedNPCCollapsed={isObservedNPCCollapsed}
+          setIsObservedNPCCollapsed={setIsObservedNPCCollapsed}
+          isMobile={isMobile}
+          isExpanded={isObservedContainerExpanded}
+          setIsExpanded={setIsObservedContainerExpanded}
         />
       )}
     </>

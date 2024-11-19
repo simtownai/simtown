@@ -1,12 +1,10 @@
 import RecizeIcon from "../../../_images/chat/message/compose-resize.svg?react"
 import SendIcon from "../../../_images/chat/message/compose-send.svg?react"
-import { Configuration } from "../../../_interfaces"
 import localizations from "../../../_lib/localization"
 import styles from "./styles.module.css"
 import { FormEvent, useEffect, useRef } from "react"
 
 export default function Compose({
-  configuration,
   composeValue,
   setComposeValue,
   isLoading,
@@ -14,7 +12,6 @@ export default function Compose({
   onSubmitUserMessage,
   isMobile,
 }: {
-  configuration: Configuration
   composeValue: string
   setComposeValue: (value: string) => void
   isLoading: boolean
@@ -34,15 +31,13 @@ export default function Compose({
     <div className={styles.compose}>
       {!isMobile && (
         <button
-          aria-label={localizations[configuration.lang].resize}
+          aria-label={localizations["en-US"].resize}
           className="askguru-small-btn"
           onClick={() => onResizeClick()}
         >
           <RecizeIcon width={24} height={24} />
           {!isMobile && (
-            <div className={`askguru-tooltip ${styles.composeTooltipLeft}`}>
-              {localizations[configuration.lang].resize}
-            </div>
+            <div className={`askguru-tooltip ${styles.composeTooltipLeft}`}>{localizations["en-US"].resize}</div>
           )}
         </button>
       )}
@@ -53,21 +48,19 @@ export default function Compose({
           autoComplete="off"
           value={composeValue}
           onChange={(e) => setComposeValue(e.target.value)}
-          placeholder={localizations[configuration.lang].inputPlaceholder}
+          placeholder={localizations["en-US"].inputPlaceholder}
           className={styles.input}
           ref={!isMobile ? inputRef : undefined}
         />
         <button
-          aria-label={localizations[configuration.lang].send}
+          aria-label={localizations["en-US"].send}
           type="submit"
           disabled={isLoading || !composeValue}
           className="askguru-small-btn"
         >
           <SendIcon width={28} height={28} />
           {!isMobile && (
-            <div className={`askguru-tooltip ${styles.composeTooltipRight}`}>
-              {localizations[configuration.lang].send}
-            </div>
+            <div className={`askguru-tooltip ${styles.composeTooltipRight}`}>{localizations["en-US"].send}</div>
           )}
         </button>
       </form>
