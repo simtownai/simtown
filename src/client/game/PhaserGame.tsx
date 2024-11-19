@@ -20,6 +20,8 @@ interface IProps {
   setChatmate: (value: string) => void
   onGameLoaded: () => void
   soundEnabled: boolean
+  setObservedNPC: (value: string) => void
+  setIsObserveContainerCollapsed: (value: boolean) => void
 }
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
@@ -34,6 +36,8 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     setChatmate,
     onGameLoaded,
     soundEnabled,
+    setObservedNPC,
+    setIsObserveContainerCollapsed,
   },
   ref,
 ) {
@@ -111,6 +115,24 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
       EventBus.removeListener("set-chatmate")
     }
   }, [setChatmate])
+
+  useEffect(() => {
+    EventBus.on("observe-collapse", (value: boolean) => {
+      setIsObserveContainerCollapsed(value)
+    })
+    return () => {
+      EventBus.removeListener("observe-collapse")
+    }
+  }, [setIsObserveContainerCollapsed])
+
+  useEffect(() => {
+    EventBus.on("observed-npc", (username: string) => {
+      setObservedNPC(username)
+    })
+    return () => {
+      EventBus.removeListener("observed-npc")
+    }
+  }, [setObservedNPC])
 
   useEffect(() => {
     EventBus.emit("input-enabled", isChatContainerCollapsed)

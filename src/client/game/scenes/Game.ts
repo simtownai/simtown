@@ -1,5 +1,6 @@
 import { CONFIG } from "../../../shared/config"
-import { GeneratedActionWithPerson, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { getTextFromAction } from "../../../shared/functions"
+import { PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { AudioManager } from "./AudioManager"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
@@ -296,8 +297,16 @@ export class Game extends Phaser.Scene {
       EventBus.emit("set-chatmate", playerInfo.username)
     })
 
+    otherPlayerSprite.setInteractive()
+    otherPlayerSprite.on("pointerdown", () => {
+      if (playerInfo.isNPC) {
+        EventBus.emit("observe-collapse", false)
+        EventBus.emit("observed-npc", playerInfo.username)
+      }
+    })
+
     const actionEmoji = this.add
-      .text(0, 0, this.getTextFromAction(playerInfo.action), {
+      .text(0, 0, getTextFromAction(playerInfo.action), {
         fontSize: "24px",
         fontFamily: "Roboto",
         color: "#ffffff",
