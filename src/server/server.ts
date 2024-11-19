@@ -101,29 +101,30 @@ io.on("connection", (socket) => {
     const currentPlayerData = players.get(playerId)
     if (!currentPlayerData) return
 
-    let newPlayerData: PlayerData = {
+    if (playerData.npcState) {
+      const newNPCState = {
+        ...currentPlayerData.npcState,
+        ...playerData.npcState,
+      }
+      playerData.npcState = newNPCState
+    }
+
+    const newPlayerData: PlayerData = {
       ...currentPlayerData,
       ...playerData,
     }
 
-    let collisionDetected = false
-    // // Check for collisions with other players
-    // let collisionDetected = false
-    // for (const [otherId, otherPlayerData] of players) {
-    //   if (otherId !== playerId && checkCollision(newPlayerData, otherPlayerData)) {
-    //     collisionDetected = true
-    //     break
-    //   }
+    players.set(playerId, newPlayerData)
+
+    // // avoiding sending npcState to other players if it didn't change
+    // if (!playerData.npcState) {
+    //   const { npcState, ...playerDataToSend } = newPlayerData
+    //   socket.broadcast.emit("playerDataChanged", playerDataToSend)
+    // } else {
+    //   socket.broadcast.emit("playerDataChanged", newPlayerData)
     // }
 
-    if (!collisionDetected) {
-      // If no collision, update the player's position
-      players.set(playerId, newPlayerData)
-      socket.broadcast.emit("playerDataChanged", newPlayerData)
-    } else {
-      // If collision detected, send the current (non-updated) position back to the client
-      socket.emit("positionRejected", currentPlayerData)
-    }
+    socket.broadcast.emit("playerDataChanged", newPlayerData)
   })
 
   socket.on("endConversation", (message: ChatMessage) => {
