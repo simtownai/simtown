@@ -1,5 +1,15 @@
 # ToDo
 
+- observer interface
+  - resize on header in observer interface and chat (on desktip)
+  - add characters icons
+- minimap
+- idlining like in generative agents
+  - eat
+  - rest (idle idle)
+- fix broadcast announcements in rooms
+- add character names above their heads
+
 - (Szymon) hunt down TalkAction bugs
   - NPCs are far from each other when start talking
 - (Szymon) Optimize prompts
