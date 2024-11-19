@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config"
-import { getDirection, get_move_message } from "../shared/functions"
+import { getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
@@ -7,7 +7,6 @@ import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
 import { TIMEOUT_MESSAGE, TalkAction } from "./actions/TalkAction"
 import { AIBrain } from "./brain/AIBrain"
-import { log_threads } from "./loghelpers"
 import { NpcConfig, npcConfig } from "./npcConfig"
 
 export class NPC {
@@ -16,6 +15,7 @@ export class NPC {
   private playerData: PlayerData
   private otherPlayers: Map<string, PlayerData>
   private newsPaper: NewsItem[]
+  private broadcastAnnouncements: Set<string>
   private lastUpdateTime: number
   private places: Map<string, { x: number; y: number }>
   private socketManager: SocketManager
@@ -23,6 +23,7 @@ export class NPC {
   constructor(private npcConfig: NpcConfig) {
     this.otherPlayers = new Map<string, PlayerData>()
     this.newsPaper = []
+    this.broadcastAnnouncements = new Set<string>()
     this.lastUpdateTime = Date.now()
     this.setupPlaces()
     this.socketManager = new SocketManager({
@@ -66,6 +67,7 @@ export class NPC {
               getOtherPlayers: () => this.otherPlayers,
               getPlayerData: () => this.playerData,
               getNewsPaper: () => this.newsPaper,
+              getBroadcastAnnouncements: () => this.broadcastAnnouncements,
               getMovementController: () => this.movementController,
               places: Array.from(this.places.keys()),
               getEmitMethods: () => this.socketManager.getEmitMethods(),
@@ -231,6 +233,15 @@ export class NPC {
   }
 
   onNews(news: NewsItem | NewsItem[]) {
+    if (!(news instanceof Array)) {
+      if (news.message.includes("broadcasting")) {
+        const key = getBroadcastAnnouncementsKey(news.place!, news.message.split(" ")[1])
+        if (news.message.includes("will be")) this.broadcastAnnouncements.add(key)
+        if (news.message.includes("finished")) this.broadcastAnnouncements.delete(key)
+        // logger.debug(`(${this.npcConfig.username}) Broadcasting: ${JSON.stringify([...this.broadcastAnnouncements])}`)
+      }
+    }
+
     const newsArray = Array.isArray(news) ? news : [news]
     this.newsPaper = [...this.newsPaper, ...newsArray]
   }

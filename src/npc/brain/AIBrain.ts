@@ -23,10 +23,6 @@ import { ConversationMemory, Thread } from "./memory/ConversationMemory"
 import { Memory } from "./memory/Memory"
 import { reflect, summarizeReflections } from "./reflect"
 
-// It is here because it is shared between every NPC
-// ToDo: make it individual for each NPC and update from news
-const broadcastAnnouncementsCache = new Set<string>()
-
 export type StringifiedBrainDump = {
   name: string
   backstory: string
@@ -60,6 +56,7 @@ type AIBrainInterface = {
   config: NpcConfig
   getOtherPlayers: () => Map<string, PlayerData>
   getNewsPaper: () => NewsItem[]
+  getBroadcastAnnouncements: () => Set<string>
   getMovementController: () => MovementController
   places: string[]
   getEmitMethods: () => EmitInterface
@@ -76,6 +73,7 @@ export class AIBrain {
   private getOtherPlayers: () => Map<string, PlayerData>
   private getPlayerData: () => PlayerData
   private getNewsPaper: () => NewsItem[]
+  private getBroadcastAnnouncements: () => Set<string>
   private getMovementController: () => MovementController
   private getEmitMethods: () => EmitInterface
   private adjustDirection: (username: string) => void
@@ -88,6 +86,7 @@ export class AIBrain {
     this.getOtherPlayers = args.getOtherPlayers
     this.getPlayerData = args.getPlayerData
     this.getNewsPaper = args.getNewsPaper
+    this.getBroadcastAnnouncements = args.getBroadcastAnnouncements
     this.getMovementController = args.getMovementController
     this.adjustDirection = args.adjustDirection
   }
@@ -133,7 +132,7 @@ export class AIBrain {
         this.memory.conversations.isLatestThreadActive(targetPlayerName),
       addChatMessage: (targetPlayerName: string, message: ChatMessage) =>
         this.addChatMessage(targetPlayerName, message),
-      broadcastAnnouncementsCache: broadcastAnnouncementsCache,
+      broadcastAnnouncementsCache: this.getBroadcastAnnouncements(),
     }
   }
 
@@ -164,7 +163,7 @@ export class AIBrain {
             : convertActionToGeneratedAction(this.currentAction),
         )
       : "No current action"
-    const broadcastAnnouncementsString = Array.from(broadcastAnnouncementsCache).join("\n")
+    const broadcastAnnouncementsString = Array.from(this.getBroadcastAnnouncements()).join("\n")
 
     const result: StringifiedBrainDump = {
       name,

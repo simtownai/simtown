@@ -70,7 +70,6 @@ export const convertGeneratedPlanToActions = (
   const handleBroadcastAnnouncement = (targetPlace: string, username: string) => {
     const key = getBroadcastAnnouncementsKey(targetPlace, username)
     if (!getBrainDump().broadcastAnnouncementsCache.has(key)) {
-      getBrainDump().broadcastAnnouncementsCache.add(key)
       getEmitMethods().emitNewsItem({
         date: getGameTime().toISOString(),
         message: `📢 ${username} will be broadcasting soon`,
@@ -117,9 +116,11 @@ export const convertGeneratedPlanToActions = (
           moveAction,
           new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
             logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
-            getBrainDump().broadcastAnnouncementsCache.delete(
-              getBroadcastAnnouncementsKey(actionData.targetPlace, getBrainDump().playerData.username),
-            )
+            getEmitMethods().emitNewsItem({
+              date: getGameTime().toISOString(),
+              message: `📢 ${getBrainDump().playerData.username} has finished broadcasting`,
+              place: actionData.targetPlace,
+            } as NewsItem)
           }),
         ]
 
