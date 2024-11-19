@@ -1,7 +1,7 @@
 # ToDo
 
 - observer interface
-  - resize on header in observer interface and chat (on desktip)
+  - add past actions
   - add characters icons
 - minimap
 - idlining like in generative agents
