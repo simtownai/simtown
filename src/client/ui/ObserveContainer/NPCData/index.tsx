@@ -45,6 +45,7 @@ export default function NPCData({
             : null
         }
         onClearButtonClick={null}
+        onResizeButtonClick={handleResizeClick}
       />
       <div className={styles.content}>
         {observedNPCData && observedNPCData.npcState ? (

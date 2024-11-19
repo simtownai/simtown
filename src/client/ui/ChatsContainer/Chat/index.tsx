@@ -95,6 +95,7 @@ export default function Chat({
             : null
         }
         onClearButtonClick={handleClearConversation}
+        onResizeButtonClick={handleResizeClick}
       />
       <div className={styles.content}>
         {chatmate ? (

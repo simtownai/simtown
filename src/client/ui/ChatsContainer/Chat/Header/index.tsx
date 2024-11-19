@@ -1,5 +1,7 @@
 import CloseIcon from "../../../_images/chat/header/close-icon.svg?react"
 import RefreshIcon from "../../../_images/chat/header/refresh-icon.svg?react"
+import RecizeIcon from "../../../_images/chat/message/compose-resize.svg?react"
+import localizations from "../../../_lib/localization"
 import styles from "./styles.module.css"
 
 export default function Header({
@@ -8,12 +10,14 @@ export default function Header({
   onCollapseButtonClick,
   onBackButtonClick,
   onClearButtonClick,
+  onResizeButtonClick,
 }: {
   isMobile: boolean
   text: string
   onCollapseButtonClick: (() => void) | null
   onBackButtonClick: (() => void) | null
   onClearButtonClick: (() => void) | null
+  onResizeButtonClick?: () => void
 }) {
   return (
     <div className={styles.header}>
@@ -27,6 +31,18 @@ export default function Header({
       )}
       <div className={styles.heading}>{text}</div>
       <div className={styles.buttons}>
+        {!isMobile && onResizeButtonClick && (
+          <button
+            aria-label={localizations["en-US"].resize}
+            className="askguru-small-btn"
+            onClick={() => onResizeButtonClick()}
+          >
+            <RecizeIcon width={24} height={24} />
+            {!isMobile && (
+              <div className={`askguru-tooltip ${styles.composeTooltipLeft}`}>{localizations["en-US"].resize}</div>
+            )}
+          </button>
+        )}
         {onClearButtonClick && (
           <button className="askguru-small-btn" onClick={() => onClearButtonClick()} aria-label="Clear conversation">
             <RefreshIcon height={18} width={18} />

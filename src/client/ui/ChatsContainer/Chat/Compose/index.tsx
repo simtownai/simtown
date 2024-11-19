@@ -29,18 +29,18 @@ export default function Compose({
 
   return (
     <div className={styles.compose}>
-      {!isMobile && (
-        <button
-          aria-label={localizations["en-US"].resize}
-          className="askguru-small-btn"
-          onClick={() => onResizeClick()}
-        >
-          <RecizeIcon width={24} height={24} />
-          {!isMobile && (
-            <div className={`askguru-tooltip ${styles.composeTooltipLeft}`}>{localizations["en-US"].resize}</div>
-          )}
-        </button>
-      )}
+      {/* {!isMobile && ( */}
+      {/*   <button */}
+      {/*     aria-label={localizations["en-US"].resize} */}
+      {/*     className="askguru-small-btn" */}
+      {/*     onClick={() => onResizeClick()} */}
+      {/*   > */}
+      {/*     <RecizeIcon width={24} height={24} /> */}
+      {/*     {!isMobile && ( */}
+      {/*       <div className={`askguru-tooltip ${styles.composeTooltipLeft}`}>{localizations["en-US"].resize}</div> */}
+      {/*     )} */}
+      {/*   </button> */}
+      {/* )} */}
       <form style={{ display: "flex", gap: "8px", width: "100%" }} onSubmit={(event) => onSubmitUserMessage(event)}>
         <input
           type="text"
