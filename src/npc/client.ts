@@ -51,6 +51,12 @@ export class NPC {
           (playerData: UpdatePlayerData) => this.updateAndEmitPlayerData(playerData),
         )
 
+        this.socketManager.emitUpdatePlayerData({
+          npcState: {
+            backstory: this.npcConfig.backstory,
+          },
+        })
+
         logger.info(`(${this.npcConfig.username}) NPC initialized`)
 
         setTimeout(async () => {

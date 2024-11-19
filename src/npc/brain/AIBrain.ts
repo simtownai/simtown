@@ -99,6 +99,12 @@ export class AIBrain {
       // ToDo: calculate diffs of plans, generate new actions for what is not there already,
       // and insert actions from actions queue
 
+      this.getEmitMethods().updatePlayerData({
+        npcState: {
+          plan: newPlanData,
+        },
+      })
+
       this.actionQueue = convertGeneratedPlanToActions(
         newPlanData,
         this.getBrainDump,
@@ -250,6 +256,11 @@ export class AIBrain {
           }
           this.memory.reflections = [new_reflections]
         }
+        this.getEmitMethods().updatePlayerData({
+          npcState: {
+            reflections: this.memory.reflections,
+          },
+        })
 
         await this.generatePlanAndSetActions()
       } else {
