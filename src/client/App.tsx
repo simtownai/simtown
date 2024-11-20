@@ -75,9 +75,19 @@ function App() {
     })
 
     newSocket.on("playerDataChanged", (player: PlayerData) => {
-      setPlayers((prevPlayers) =>
-        new Map(prevPlayers).set(player.username, { ...prevPlayers.get(player.username), ...player }),
-      )
+      setPlayers((prevPlayers) => {
+        const currentPlayer = prevPlayers.get(player.username)
+        if (player.npcState && currentPlayer?.npcState) {
+          player.npcState = {
+            ...currentPlayer.npcState,
+            ...player.npcState,
+          }
+        }
+        return new Map(prevPlayers).set(player.username, {
+          ...currentPlayer,
+          ...player,
+        })
+      })
     })
 
     newSocket.on("playerLeft", (username: string) => {

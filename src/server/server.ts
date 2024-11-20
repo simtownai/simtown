@@ -116,15 +116,15 @@ io.on("connection", (socket) => {
 
     players.set(playerId, newPlayerData)
 
-    // // avoiding sending npcState to other players if it didn't change
-    // if (!playerData.npcState) {
-    //   const { npcState, ...playerDataToSend } = newPlayerData
-    //   socket.broadcast.emit("playerDataChanged", playerDataToSend)
-    // } else {
-    //   socket.broadcast.emit("playerDataChanged", newPlayerData)
-    // }
+    // avoiding sending npcState to other players if it didn't change
+    if (!playerData.npcState) {
+      const { npcState, ...playerDataToSend } = newPlayerData
+      socket.broadcast.emit("playerDataChanged", playerDataToSend)
+    } else {
+      socket.broadcast.emit("playerDataChanged", newPlayerData)
+    }
 
-    socket.broadcast.emit("playerDataChanged", newPlayerData)
+    // socket.broadcast.emit("playerDataChanged", newPlayerData)
   })
 
   socket.on("endConversation", (message: ChatMessage) => {
