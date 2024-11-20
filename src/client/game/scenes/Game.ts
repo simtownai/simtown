@@ -451,6 +451,7 @@ export class Game extends Phaser.Scene {
         otherPlayer.sprite.destroy()
         otherPlayer.speechBubble.destroy()
         otherPlayer.actionEmoji.destroy()
+        otherPlayer.nameText.destroy()
         this.otherPlayers.delete(username)
       }
     })
