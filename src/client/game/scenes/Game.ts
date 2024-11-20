@@ -43,6 +43,7 @@ interface OtherPlayerData {
   speechBubble: Phaser.GameObjects.Sprite
   playerData: PlayerData
   actionEmoji: Phaser.GameObjects.Text
+  nameText: Phaser.GameObjects.Text
 }
 
 export class Game extends Phaser.Scene {
@@ -321,22 +322,34 @@ export class Game extends Phaser.Scene {
       .setOrigin(0, 0.5) // Set origin to left-center instead of center
       .setScale(0.33)
       .setVisible(playerInfo.action !== undefined)
-
     actionEmoji.setScrollFactor(1)
     actionEmoji.setPipeline("TextureTintPipeline")
+
+    const nameText = this.add
+      .text(0, 0, playerInfo.username, {
+        fontSize: "14px",
+        fontFamily: "Arial",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setScale(0.33)
 
     this.add.existing(otherPlayerSprite)
     this.add.existing(speechBubble)
     this.add.existing(actionEmoji)
+    this.add.existing(nameText)
 
     this.otherPlayers.set(playerInfo.username, {
       sprite: otherPlayerSprite,
       speechBubble,
       playerData: playerInfo,
       actionEmoji,
+      nameText,
     })
 
-    this.uiCamera.ignore([otherPlayerSprite, speechBubble, actionEmoji])
+    this.uiCamera.ignore([otherPlayerSprite, speechBubble, actionEmoji, nameText])
     this.updateSpriteDepth(otherPlayerSprite)
   }
 
@@ -561,6 +574,9 @@ export class Game extends Phaser.Scene {
         otherPlayerSprite.y - CONFIG.SPRITE_HEIGHT - 5,
       )
       actionEmoji.setDepth(LAYER_DEPTHS.PLAYER.ADDONS + otherPlayerSprite.depth)
+
+      otherPlayerData.nameText.setPosition(otherPlayerData.sprite.x, otherPlayerData.sprite.y - CONFIG.SPRITE_HEIGHT)
+      otherPlayerData.nameText.setDepth(LAYER_DEPTHS.PLAYER.ADDONS + otherPlayerData.sprite.depth)
 
       const distance = Phaser.Math.Distance.Between(
         this.playerSprite.x,
