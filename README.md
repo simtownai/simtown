@@ -1,5 +1,12 @@
 # ToDo
 
+- rooms
+  - local/global room
+  - voting room
+  - NPCs belong to the room
+  - prompts belong to the room
+  - action subset (special room type)
+  - app.simttown.ai/scavenger?roomid=uuid
 - observer interface
   - add past actions
   - add characters icons
@@ -8,7 +15,6 @@
   - eat
   - rest (idle idle)
 - fix broadcast announcements in rooms
-- add character names above their heads
 
 - (Szymon) hunt down TalkAction bugs
   - NPCs are far from each other when start talking
