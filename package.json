@@ -22,6 +22,7 @@
     "openai": "^4.67.3",
     "phaser": "^3.85.2",
     "phaser3-rex-plugins": "^1.80.8",
+    "posthog-js": "^1.187.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "socket.io": "^4.4.1",
