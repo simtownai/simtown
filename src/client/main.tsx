@@ -1,16 +1,18 @@
+/// <reference types="vite/client" />
 import App from "./App"
 import "./style.css"
-import posthog from "posthog-js"
+import { PostHogProvider } from "posthog-js/react"
 import React from "react"
 import ReactDOM from "react-dom/client"
 
-posthog.init("phc_zsXZZdjyYnsaJHkTLE66nFDoaYVR5OEfVivZ20WCpsQ", {
-  api_host: "https://us.i.posthog.com",
-  person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
-})
+const options = {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <PostHogProvider apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY} options={options}>
+      <App />
+    </PostHogProvider>
   </React.StrictMode>,
 )
