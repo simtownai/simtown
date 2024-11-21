@@ -30,7 +30,8 @@ jobs:
         run: bun run format:check
 
       - name: Build Docker image
-        run: docker build --build-arg NODE_ENV=production -t simtown:latest .
+        run: docker build --build-arg NODE_ENV=production --build-arg VITE_PUBLIC_POSTHOG_KEY=${{ secrets.VITE_PUBLIC_POSTHOG_KEY }} --build-arg VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }} -t simtown:latest .
+
 
       - name: Copy client build artifacts from Docker image
         run: |
