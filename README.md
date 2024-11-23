@@ -1,5 +1,6 @@
 # ToDo
 
+- talk on click
 - rooms
   - local/global room
   - voting room
