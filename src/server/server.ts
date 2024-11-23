@@ -1,17 +1,10 @@
 import { CONFIG } from "../shared/config"
-import {
-  calculateDistance,
-  getDaysRemaining,
-  getGameTime,
-  gridToWorld,
-  isInZone,
-  worldToGrid,
-} from "../shared/functions"
+import { calculateDistance, getDaysRemaining, getGameTime, isInZone } from "../shared/functions"
 import logger from "../shared/logger"
 import {
+  AvailableGames,
   BroadcastMessage,
   ChatMessage,
-  GridPosition,
   NewsItem,
   PlayerData,
   PlayerSpriteDefinition,
@@ -19,10 +12,12 @@ import {
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
+import { ElectionRoom, Room, ScavengerHuntRoom } from "./rooms"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
 import { Server } from "socket.io"
+import { v4 as uuidv4 } from "uuid"
 
 const app = express()
 app.use(cors())
@@ -35,70 +30,87 @@ const io = new Server(server, {
   },
 })
 
-const players: Map<string, PlayerData> = new Map()
-const newsPaper: NewsItem[] = []
-
-const places = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
-
-const spawnArea = places.find((obj) => obj.name === CONFIG.SPAWN_PLACE_NAME)!
-
-const voteResults: Map<string, VoteCandidate>[] = [new Map()]
-
-function isCellBlocked(cell: GridPosition): boolean {
-  for (const player of players.values()) {
-    const playerGridPos = worldToGrid(player.x, player.y)
-    if (playerGridPos.gridX === cell.gridX && playerGridPos.gridY === cell.gridY) {
-      return true
-    }
-  }
-  return false
-}
-
-function findValidPosition(): { x: number; y: number } {
-  const availablePositions: GridPosition[] = []
-
-  const minGridPos = worldToGrid(spawnArea.x + 1, spawnArea.y + 1)
-  const maxGridPos = worldToGrid(spawnArea.x + spawnArea.width, spawnArea.y + spawnArea.height)
-
-  for (let y = minGridPos.gridY; y <= maxGridPos.gridY; y++) {
-    for (let x = minGridPos.gridX; x <= maxGridPos.gridX; x++) {
-      const gridPos: GridPosition = { gridX: x, gridY: y }
-
-      if (!isCellBlocked(gridPos)) {
-        availablePositions.push(gridPos)
-      }
-    }
-  }
-
-  const randomGridPos = availablePositions[Math.floor(Math.random() * availablePositions.length)]
-  return gridToWorld(randomGridPos)
-}
+const rooms: Map<string, Room> = new Map()
 
 io.on("connection", (socket) => {
   const playerId = socket.id
-  socket.on("joinGame", (isNPC: boolean, username: string, spriteDefinition: PlayerSpriteDefinition) => {
-    const spawnPosition = findValidPosition()
-    let playerData: PlayerData = {
-      id: playerId,
-      isNPC: isNPC,
-      username: username,
-      spriteDefinition: spriteDefinition,
-      x: spawnPosition.x,
-      y: spawnPosition.y,
-      animation: `${username}-idle-down`,
+  let currentRoom: Room | null = null
+
+  socket.on("createRoom", (gameName: AvailableGames, callback: (roomId: string | null) => void) => {
+    if (gameName === "electiontown") {
+      // For shared room, return the same roomId
+      const roomName = "electiontown"
+      let room = Array.from(rooms.values()).find((r) => r.getName() === roomName && r.getInstanceType() === "shared")
+      if (!room) {
+        const roomId = uuidv4() as string
+        room = new ElectionRoom(roomId, roomName, "shared")
+        rooms.set(roomId, room)
+        room.initialize()
+        initializeVotingNotifications(room)
+      }
+      callback(room.getId())
+    } else if (gameName === "scavengerhunt") {
+      // For private rooms, create a new room each time
+      const roomId = uuidv4()
+      const roomName = "scavengerhunt"
+      const room = new ScavengerHuntRoom(roomId, roomName, "private")
+      room.initialize()
+      rooms.set(roomId, room)
+      callback(roomId)
+    } else {
+      callback(null)
     }
-
-    players.set(playerId, playerData)
-
-    logger.info(`User '${username}' connected. Number of players: ${players.size}`)
-
-    socket.emit("existingPlayers", Array.from(players.values()))
-    socket.emit("news", newsPaper)
-    socket.broadcast.emit("playerJoined", playerData)
   })
 
+  socket.on("getAvailableRooms", (callback: (rooms: string[]) => void) => {
+    const availableRooms = Array.from(rooms.values()).map((room) => room.getId())
+    callback(availableRooms)
+  })
+
+  socket.on(
+    "joinRoom",
+    (roomId: string, isNPC: boolean, username: string, spriteDefinition: PlayerSpriteDefinition) => {
+      const room = rooms.get(roomId)
+      if (!room) {
+        logger.error(
+          `Room not found: ${roomId}. User ${username} failed to join. Available rooms: ${Array.from(rooms.keys())}`,
+        )
+        socket.emit("joinError", "Room not found")
+        return
+      }
+
+      if (currentRoom) {
+        leaveCurrentRoom()
+      }
+
+      currentRoom = room
+      socket.join(room.getId())
+
+      const spawnPosition = currentRoom.findValidPosition()
+      let playerData: PlayerData = {
+        id: playerId,
+        isNPC: isNPC,
+        username: username,
+        spriteDefinition: spriteDefinition,
+        x: spawnPosition.x,
+        y: spawnPosition.y,
+        animation: `${username}-idle-down`,
+      }
+
+      currentRoom.addPlayer(playerId, isNPC, username, spriteDefinition, spawnPosition)
+
+      logger.info(`User '${username}' connected. Number of players: ${currentRoom.getPlayerCount()}`)
+
+      socket.emit("existingPlayers", Array.from(currentRoom.getPlayers().values()))
+      socket.emit("news", currentRoom.getNewsPaper())
+      socket.to(roomId).emit("playerJoined", playerData)
+    },
+  )
+
   socket.on("updatePlayerData", (playerData: UpdatePlayerData) => {
-    const currentPlayerData = players.get(playerId)
+    if (!currentRoom) return
+
+    const currentPlayerData = currentRoom.getPlayer(playerId)
     if (!currentPlayerData) return
 
     if (playerData.npcState) {
@@ -114,28 +126,30 @@ io.on("connection", (socket) => {
       ...playerData,
     }
 
-    players.set(playerId, newPlayerData)
+    currentRoom.updatePlayerData(playerId, newPlayerData)
 
     // avoiding sending npcState to other players if it didn't change
     if (!playerData.npcState) {
       const { npcState, ...playerDataToSend } = newPlayerData
-      socket.broadcast.emit("playerDataChanged", playerDataToSend)
+      socket.to(currentRoom.getId()).emit("playerDataChanged", playerDataToSend)
     } else {
-      socket.broadcast.emit("playerDataChanged", newPlayerData)
+      socket.to(currentRoom.getId()).emit("playerDataChanged", newPlayerData)
     }
 
     // socket.broadcast.emit("playerDataChanged", newPlayerData)
   })
 
   socket.on("endConversation", (message: ChatMessage) => {
+    if (!currentRoom) return
+
     logger.info(`endConversation receied from ${message.from}: ${message.message}`)
-    players.forEach((player) => {
+    currentRoom.getPlayers().forEach((player) => {
       if (player.username === message.to) {
         const recipientSocket = io.sockets.sockets.get(player.id)
         if (recipientSocket) {
           recipientSocket.emit("endConversation", message)
-          const sender = players.get(playerId)!
-          emitOverhear(players, sender, player, message)
+          const sender = currentRoom?.getPlayer(playerId)!
+          emitOverhear(currentRoom!.getPlayers(), sender, player, message)
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
         }
@@ -144,10 +158,12 @@ io.on("connection", (socket) => {
   })
 
   socket.on("broadcast", (message: BroadcastMessage) => {
-    const broadcastPlace = message.place
-    const zoneObject = places.find((obj) => obj.name === broadcastPlace)!
+    if (!currentRoom) return
 
-    players.forEach((player) => {
+    const broadcastPlace = message.place
+    const zoneObject = currentRoom.getPlaces()!.find((obj) => obj.name === broadcastPlace)!
+
+    currentRoom.getPlayers().forEach((player) => {
       const isInBroadcastZone = isInZone(
         player.x,
         player.y,
@@ -169,19 +185,21 @@ io.on("connection", (socket) => {
   })
 
   socket.on("sendMessage", (message: ChatMessage) => {
+    if (!currentRoom) return
     // logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
+
     if (message.to === "all") {
       io.emit("newMessage", message)
     } else {
-      players.forEach((player) => {
+      currentRoom.getPlayers().forEach((player) => {
         if (player.username === message.to) {
           const recipientSocket = io.sockets.sockets.get(player.id)
           if (recipientSocket) {
             recipientSocket.emit("newMessage", message)
 
             // Overhear logic
-            const sender = players.get(playerId)!
-            emitOverhear(players, sender, player, message)
+            const sender = currentRoom?.getPlayer(playerId)!
+            emitOverhear(currentRoom?.getPlayers()!, sender, player, message)
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
@@ -217,16 +235,18 @@ io.on("connection", (socket) => {
   }
 
   socket.on("sendNews", (newsItem: NewsItem) => {
-    newsPaper.push(newsItem)
-    io.emit("news", newsItem)
+    if (!currentRoom) return
+    currentRoom.addNewsItem(newsItem)
+    io.to(currentRoom.getId()).emit("news", newsItem)
   })
 
   socket.on("vote", (candidate: VoteCandidate) => {
-    const player = players.get(playerId)!
+    if (!currentRoom) return
+    const player = currentRoom.getPlayer(playerId)
 
     if (!player) {
       logger.error(
-        `User ${playerId} not found. Available players: ${Array.from(players.keys())} (${players.size} total)`,
+        `User ${playerId} not found. Available players: ${Array.from(currentRoom.getPlayers().keys())} (${currentRoom.getPlayerCount()} total)`,
       )
       return
     }
@@ -236,17 +256,17 @@ io.on("connection", (socket) => {
       return
     }
 
-    const currentVoteResults = voteResults[voteResults.length - 1]
+    const currentVoteResults = currentRoom.getVoteResults()[currentRoom.getVoteResults().length - 1]
     currentVoteResults.set(player.username, candidate)
 
     logger.info(`User ${player.username} voted for ${candidate}`)
 
     const totalNPCVotes = Array.from(currentVoteResults.entries()).filter(([username]) => {
-      const playerData = Array.from(players.values()).find((p) => p.username === username)
+      const playerData = Array.from(currentRoom!.getPlayers().values()).find((p) => p.username === username)
       return playerData?.isNPC && !availableVoteCandidates.includes(username as VoteCandidate)
     }).length
 
-    const totalEligibleNPCs = Array.from(players.values()).filter(
+    const totalEligibleNPCs = Array.from(currentRoom.getPlayers().values()).filter(
       (p) => p.isNPC && !availableVoteCandidates.includes(p.username as VoteCandidate),
     ).length
 
@@ -300,35 +320,54 @@ io.on("connection", (socket) => {
         date: getGameTime().toISOString(),
         message: formattedResults,
       }
-      newsPaper.push(newsItem)
-      io.emit("news", newsItem)
+      currentRoom.addNewsItem(newsItem)
+      io.to(currentRoom.getId()).emit("news", newsItem)
 
-      voteResults.push(new Map())
+      currentRoom.finishVoting()
     }
+  })
+
+  function leaveCurrentRoom() {
+    if (!currentRoom) return
+
+    const player = currentRoom.removePlayer(playerId)
+    if (player) {
+      socket.to(currentRoom.getId()).emit("playerLeft", player.username)
+      logger.info(
+        `User ${player.username} left room ${currentRoom.getId()}. Real players in room: ${currentRoom.getRealPlayerCount()}`,
+      )
+    }
+
+    socket.leave(currentRoom.getId())
+
+    if (!player?.isNPC && currentRoom.getRealPlayerCount() === 0) {
+      currentRoom.cleanup()
+      rooms.delete(currentRoom.getId())
+      // io.emit("roomList", getRoomInfo())
+    }
+  }
+
+  socket.on("leaveRoom", () => {
+    leaveCurrentRoom()
+    currentRoom = null
   })
 
   socket.on("disconnect", () => {
-    const player = players.get(playerId)
-    if (player) {
-      const { username } = player
-      players.delete(playerId)
-      io.emit("playerLeft", username)
-      logger.info(`User ${username} disconnected. Number of players: ${players.size}`)
-    }
+    leaveCurrentRoom()
   })
 })
 
-function sendVotingReminder() {
+function sendVotingReminder(room: Room) {
   const newsItem: NewsItem = {
     date: getGameTime().toISOString(),
     message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader! Only ${getDaysRemaining()} game days left.`,
     place: CONFIG.VOTING_PLACE_NAME,
   }
-  newsPaper.push(newsItem)
-  io.emit("news", newsItem)
+  room.addNewsItem(newsItem)
+  io.to(room.getId()).emit("news", newsItem)
 }
 
-function initializeVotingNotifications() {
+function initializeVotingNotifications(room: Room) {
   let lastNotificationGameTime = new Date(getGameTime().setDate(getGameTime().getDate() - 1))
   setInterval(() => {
     const currentGameTime = getGameTime()
@@ -337,7 +376,7 @@ function initializeVotingNotifications() {
       (currentGameTime.getTime() - lastNotificationGameTime.getTime()) / 1000 / 60 / 60
 
     if (gameHoursSinceLastNotification >= CONFIG.VOTE_EVERY_N_HOURS) {
-      sendVotingReminder()
+      sendVotingReminder(room)
       lastNotificationGameTime = currentGameTime
     }
   }, 10000)
@@ -345,5 +384,4 @@ function initializeVotingNotifications() {
 
 server.listen(CONFIG.SERVER_PORT, () => {
   logger.info(`Server is running on ${CONFIG.SERVER_URL}`)
-  initializeVotingNotifications()
 })
