@@ -21,6 +21,7 @@ export type EmitInterface = {
 }
 
 export type SocketManagerConfig = {
+  roomId: string
   username: string
   spriteDefinition: PlayerSpriteDefinition
   onPlayerDataChanged: (player: PlayerData) => void
@@ -36,6 +37,7 @@ export type SocketManagerConfig = {
 
 export class SocketManager {
   private socket: Socket
+  private roomId: string
   private onEndConversation: (message: ChatMessage) => void
   private onPlayerDataChanged: (player: PlayerData) => void
   private onPlayerJoined: (player: PlayerData) => void
@@ -47,6 +49,7 @@ export class SocketManager {
   private adjustDirectionPlace: (place: string) => void
   constructor(args: SocketManagerConfig) {
     this.socket = io("http://localhost:3000", { autoConnect: false })
+    this.roomId = args.roomId
     this.setupPlayers = args.setupPlayers
     this.onPlayerJoined = args.onPlayerJoined
     this.onEndConversation = args.onEndConversation
@@ -59,7 +62,8 @@ export class SocketManager {
     setTimeout(() => {
       this.setupSocketEvents()
       this.socket.connect()
-      this.socket.emit("joinGame", true, args.username, args.spriteDefinition)
+      // this.socket.emit("joinGame", true, args.username, args.spriteDefinition)
+      this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition)
     }, 7000)
   }
 
@@ -135,6 +139,12 @@ export class SocketManager {
       updatePlayerData: (data: UpdatePlayerData) => this.emitUpdatePlayerData(data),
       setListener: (event: string, listener: (...args: any[]) => void) => this.setListener(event, listener),
       removeListener: (event: string, listener: (...args: any[]) => void) => this.removeListener(event, listener),
+    }
+  }
+
+  disconnect() {
+    if (this.socket.connected) {
+      this.socket.disconnect()
     }
   }
 }
