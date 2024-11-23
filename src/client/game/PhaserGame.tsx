@@ -11,6 +11,7 @@ export interface IRefPhaserGame {
 
 interface IProps {
   socket: Socket
+  roomId: string
   username: string
   spriteDefinition: PlayerSpriteDefinition
   currentActiveScene?: (scene_instance: Phaser.Scene) => void
@@ -27,6 +28,7 @@ interface IProps {
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame(
   {
     socket,
+    roomId,
     username,
     spriteDefinition,
     currentActiveScene,
@@ -45,7 +47,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
   useLayoutEffect(() => {
     if (game.current === null) {
-      game.current = StartGame("game-container", socket, username, spriteDefinition)
+      game.current = StartGame("game-container", socket, username, spriteDefinition, roomId)
 
       if (typeof ref === "function") {
         ref({ game: game.current, scene: null })

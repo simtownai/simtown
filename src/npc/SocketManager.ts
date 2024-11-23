@@ -21,6 +21,7 @@ export type EmitInterface = {
 }
 
 export type SocketManagerConfig = {
+  roomId: string
   username: string
   spriteDefinition: PlayerSpriteDefinition
   onPlayerDataChanged: (player: PlayerData) => void

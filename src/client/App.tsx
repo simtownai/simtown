@@ -33,6 +33,8 @@ function App() {
   const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
   const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
+  const [roomName, setRoomName] = useState<string | null>(null)
+  const [roomId, setRoomId] = useState<string | null>(null)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -54,6 +56,57 @@ function App() {
   }
 
   useEffect(() => {
+    let gameName = window.location.pathname
+    const params = new URLSearchParams(window.location.search)
+    let initialRoomId = params.get("roomid") || ""
+
+    if (gameName === "/" || gameName === "") {
+      window.location.replace("/electiontown")
+      return
+    } else {
+      if (gameName.startsWith("/")) {
+        gameName = gameName.substring(1)
+      }
+
+      if (gameName !== "electiontown" && gameName !== "scavengerhunt") {
+        window.location.replace("/electiontown")
+        return
+      }
+    }
+
+    setRoomName(gameName)
+
+    const tempSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
+
+    tempSocket.on("connect", () => {
+      console.log(`Connected to server with id: ${tempSocket.id}`)
+
+      tempSocket.emit("getAvailableRooms", (rooms: string[]) => {
+        console.log(`Available rooms: ${rooms}`)
+
+        if (!rooms.includes(initialRoomId)) {
+          tempSocket.emit("createRoom", gameName, (newRoomId: string) => {
+            console.log(`Created new room with id: ${newRoomId}`)
+            const newParams = new URLSearchParams(window.location.search)
+            newParams.set("roomid", newRoomId)
+            window.history.replaceState({}, "", `${window.location.pathname}?${newParams.toString()}`)
+            setRoomId(newRoomId)
+            tempSocket.disconnect()
+          })
+        } else {
+          setRoomId(initialRoomId)
+          tempSocket.disconnect()
+        }
+      })
+    })
+
+    tempSocket.connect()
+    // }
+  }, [])
+
+  useEffect(() => {
+    if (!roomName || !roomId) return
+
     // We will be connecting in a Game Scene after
     // initializing listening methods
     const newSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
@@ -172,7 +225,7 @@ function App() {
       newSocket.off("newMessage")
       newSocket.disconnect()
     }
-  }, [])
+  }, [roomName, roomId])
 
   function handleResize() {
     setIsMobile(window.innerWidth < mobileWindowWidthThreshold)
@@ -247,6 +300,10 @@ function App() {
     return <div>Connecting to server...</div>
   }
 
+  if (!roomId) {
+    return <div>Getting room id...</div>
+  }
+
   return (
     <>
       <PhaserGame
@@ -254,6 +311,7 @@ function App() {
         username={username}
         spriteDefinition={spriteDefinition}
         socket={socket}
+        roomId={roomId}
         currentActiveScene={currentScene}
         isChatContainerCollapsed={isChatsContainerCollapsed}
         setIsChatContainerCollapsed={setIsChatsContainerCollapsed}

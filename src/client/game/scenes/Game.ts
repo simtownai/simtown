@@ -84,11 +84,14 @@ export class Game extends Phaser.Scene {
 
   private audioManager: AudioManager
 
-  constructor(socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition) {
+  private roomId: string
+
+  constructor(socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition, roomId: string) {
     super({ key: "Game" })
     this.socket = socket
     this.username = username
     this.spriteDefinition = spriteDefinition
+    this.roomId = roomId
   }
 
   create() {
@@ -105,7 +108,8 @@ export class Game extends Phaser.Scene {
     this.setupInput()
     this.audioManager.startBackgroundMusic()
 
-    this.socket.emit("joinGame", false, this.username, this.spriteDefinition)
+    // this.socket.emit("joinGame", false, this.username, this.spriteDefinition)
+    this.socket.emit("joinRoom", this.roomId, false, this.username, this.spriteDefinition)
 
     EventBus.emit("current-scene-ready", this)
   }

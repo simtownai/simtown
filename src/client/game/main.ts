@@ -30,11 +30,17 @@ const config: Phaser.Types.Core.GameConfig = {
   backgroundColor: "#6c4a2b",
 }
 
-const StartGame = (parent: string, socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition) => {
+const StartGame = (
+  parent: string,
+  socket: Socket,
+  username: string,
+  spriteDefinition: PlayerSpriteDefinition,
+  roomId: string,
+) => {
   const gameConfig = {
     ...config,
     parent,
-    scene: [new LoadingScene(), new Game(socket, username, spriteDefinition)],
+    scene: [new LoadingScene(), new Game(socket, username, spriteDefinition, roomId)],
   }
   return new Phaser.Game(gameConfig)
 }
