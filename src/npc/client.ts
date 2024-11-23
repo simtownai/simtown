@@ -19,14 +19,21 @@ export class NPC {
   private lastUpdateTime: number
   private places: Map<string, { x: number; y: number }>
   private socketManager: SocketManager
+  private roomId: string
+  private updateLoopInterval: NodeJS.Timeout | null = null
 
-  constructor(private npcConfig: NpcConfig) {
+  constructor(
+    private npcConfig: NpcConfig,
+    roomId: string,
+  ) {
+    this.roomId = roomId
     this.otherPlayers = new Map<string, PlayerData>()
     this.newsPaper = []
     this.broadcastAnnouncements = new Set<string>()
     this.lastUpdateTime = Date.now()
     this.setupPlaces()
     this.socketManager = new SocketManager({
+      roomId: this.roomId,
       username: this.npcConfig.username,
       spriteDefinition: this.npcConfig.spriteDefinition,
       setupPlayers: this.setupPlayers.bind(this),
@@ -272,7 +279,7 @@ export class NPC {
   }
 
   private startUpdateLoop() {
-    setInterval(async () => {
+    this.updateLoopInterval = setInterval(async () => {
       if (!this.playerData) return
 
       const now = Date.now()
@@ -282,8 +289,15 @@ export class NPC {
       await this.aiBrain.update(deltaTime)
     }, 1000 / 30)
   }
-}
 
-for (const config of npcConfig) {
-  new NPC(config)
+  private stopUpdateLoop() {
+    if (this.updateLoopInterval) {
+      clearInterval(this.updateLoopInterval)
+      this.updateLoopInterval = null
+    }
+  }
+  cleanup() {
+    this.stopUpdateLoop()
+    this.socketManager.disconnect()
+  }
 }
