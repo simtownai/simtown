@@ -2,12 +2,14 @@
 
 - talk on click
 - rooms
-  - local/global room
-  - voting room
-  - NPCs belong to the room
-  - prompts belong to the room
   - action subset (special room type)
-  - app.simttown.ai/scavenger?roomid=uuid
+  - room config
+- scavenger hunt
+- 2d character ai
+- uncensored models (try gpt jailbreak)
+- tutorial cookie on onboard
+- add characters from tg
+- add character ai room
 - observer interface
   - add past actions
   - add characters icons
