@@ -2,7 +2,7 @@ import { getBroadcastAnnouncementsKey } from "../../shared/functions"
 import { ActionPlanSchema, GeneratedActionPlan } from "../../shared/types"
 import { BrainDump, StringifiedBrainDump } from "../brain/AIBrain"
 import { generateJson } from "../openai/generateJson"
-import { planning_prompt } from "../prompts"
+import { PromptSystem } from "../prompts"
 import { z } from "zod"
 
 function ifBroadcastAnnouncedAtPlace(broadcastAnnouncementsCache: Set<string>, targetPlace: string): boolean {
@@ -117,8 +117,9 @@ const validateActions =
 export const generatePlanForTheday = async (
   getBrainDump: () => BrainDump,
   stringifiedBrainDump: StringifiedBrainDump,
+  promptSystem: PromptSystem,
 ): Promise<GeneratedActionPlan> => {
-  const prompt = planning_prompt(stringifiedBrainDump)
+  const prompt = promptSystem.planning(stringifiedBrainDump)
 
   // console.log("prompt", prompt)
 

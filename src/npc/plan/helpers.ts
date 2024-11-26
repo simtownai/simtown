@@ -12,6 +12,7 @@ import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
 import { BrainDump } from "../brain/AIBrain"
+import { PromptSystem } from "../prompts"
 
 export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
   if (action instanceof MoveAction) {
@@ -62,6 +63,7 @@ export const convertGeneratedPlanToActions = (
   getEmitMethods: () => EmitInterface,
   movementController: MovementController,
   adjustDirection: (username: string) => void,
+  promptSystem: PromptSystem,
 ): Action[] => {
   // Define a type for all possible action combinations
   type ActionResult = Action | Action[]
@@ -99,7 +101,15 @@ export const convertGeneratedPlanToActions = (
         )
         return [
           moveAction,
-          new TalkAction(getBrainDump, getEmitMethods, "", actionData.name, { type: "new" }, movementController),
+          new TalkAction(
+            getBrainDump,
+            getEmitMethods,
+            "",
+            actionData.name,
+            { type: "new" },
+            movementController,
+            promptSystem,
+          ),
         ]
 
       case "broadcast":
@@ -114,14 +124,21 @@ export const convertGeneratedPlanToActions = (
         )
         return [
           moveAction,
-          new BroadcastAction(getBrainDump, getEmitMethods, actionData.targetPlace, "", () => {
-            logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
-            getEmitMethods().emitNewsItem({
-              date: getGameTime().toISOString(),
-              message: `📢 ${getBrainDump().playerData.username} has finished broadcasting`,
-              place: actionData.targetPlace,
-            } as NewsItem)
-          }),
+          new BroadcastAction(
+            getBrainDump,
+            getEmitMethods,
+            actionData.targetPlace,
+            "",
+            () => {
+              logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
+              getEmitMethods().emitNewsItem({
+                date: getGameTime().toISOString(),
+                message: `📢 ${getBrainDump().playerData.username} has finished broadcasting`,
+                place: actionData.targetPlace,
+              } as NewsItem)
+            },
+            promptSystem,
+          ),
         ]
 
       case "listen":
@@ -144,7 +161,7 @@ export const convertGeneratedPlanToActions = (
           `Moving before voting`,
           false,
         )
-        return [moveAction, new VoteAction(getBrainDump, getEmitMethods, "")]
+        return [moveAction, new VoteAction(getBrainDump, getEmitMethods, "", promptSystem)]
 
       default:
         throw new Error(`Unknown action type: ${(actionData as any).type}`)

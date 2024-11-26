@@ -1,5 +1,6 @@
 import { NPC } from "../npc/client"
 import { npcConfig } from "../npc/npcConfig"
+import { scavengerhuntPromptSystem, simtownPromptSystem } from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
@@ -162,7 +163,7 @@ export abstract class Room {
 export class ElectionRoom extends Room {
   initialize(): void {
     npcConfig.forEach((config) => {
-      const npc = new NPC(config, this.id)
+      const npc = new NPC(config, this.id, simtownPromptSystem)
       this.npcs.push(npc)
     })
     logger.info(`Initialized ElectionRoom: ${this.name} (${this.id})`)
@@ -178,7 +179,7 @@ export class ScavengerHuntRoom extends Room {
   initialize(): void {
     // init only first 2
     npcConfig.slice(0, 2).forEach((config) => {
-      const npc = new NPC(config, this.id)
+      const npc = new NPC(config, this.id, scavengerhuntPromptSystem)
       this.npcs.push(npc)
     })
     logger.info(`Initialized ScavengerHuntRoom: ${this.name} (${this.id})`)

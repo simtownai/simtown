@@ -8,6 +8,7 @@ import { BroadcastAction } from "./actions/BroadcastAction"
 import { TIMEOUT_MESSAGE, TalkAction } from "./actions/TalkAction"
 import { AIBrain } from "./brain/AIBrain"
 import { NpcConfig, npcConfig } from "./npcConfig"
+import { PromptSystem } from "./prompts"
 
 export class NPC {
   movementController: MovementController
@@ -19,12 +20,12 @@ export class NPC {
   private lastUpdateTime: number
   private places: Map<string, { x: number; y: number }>
   private socketManager: SocketManager
-  private roomId: string
   private updateLoopInterval: NodeJS.Timeout | null = null
 
   constructor(
     private npcConfig: NpcConfig,
-    roomId: string,
+    private roomId: string,
+    private promptSystem: PromptSystem,
   ) {
     this.roomId = roomId
     this.otherPlayers = new Map<string, PlayerData>()
@@ -76,6 +77,7 @@ export class NPC {
               getNewsPaper: () => this.newsPaper,
               getBroadcastAnnouncements: () => this.broadcastAnnouncements,
               getMovementController: () => this.movementController,
+              getPromptSystem: () => this.promptSystem,
               places: Array.from(this.places.keys()),
               getEmitMethods: () => this.socketManager.getEmitMethods(),
               adjustDirection: (username: string) => this.adjustDirection(username),
@@ -204,6 +206,7 @@ export class NPC {
             message: message,
           },
           this.movementController,
+          this.promptSystem,
         )
         const refusalMessage: ChatMessage = {
           to: message.from,
@@ -233,6 +236,7 @@ export class NPC {
             message: message,
           },
           this.movementController,
+          this.promptSystem,
         )
         this.aiBrain.interruptCurrentActionAndExecuteNew(action)
       }
@@ -264,6 +268,7 @@ export class NPC {
         message: get_move_message(blockingPlayer.username),
       },
       this.movementController,
+      this.promptSystem,
     )
     this.aiBrain.interruptCurrentActionAndExecuteNew(talkAction)
   }

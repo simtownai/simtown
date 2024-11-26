@@ -6,7 +6,7 @@ import { BrainDump } from "../brain/AIBrain"
 import { mapChatMessagesToAIMessages } from "../brain/memory/ConversationMemory"
 import { log_threads } from "../loghelpers"
 import { FunctionSchema, functionToSchema } from "../openai/aihelper"
-import { continue_conversation, start_conversation } from "../prompts"
+import { PromptSystem } from "../prompts"
 import { Action } from "./Action"
 import { TalkAIResponse, createChatMessage, generateAssistantResponse } from "./generateMessage"
 import { z } from "zod"
@@ -60,6 +60,7 @@ export class TalkAction extends Action {
     private targetPlayerUsername: string,
     private conversationType: ConversationType,
     private movementController: MovementController,
+    private promptSystem: PromptSystem,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.tools = [this.endConversationTool]
@@ -90,7 +91,7 @@ export class TalkAction extends Action {
 
   private async generateResponse(): Promise<TalkAIResponse> {
     const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
-    const system_message = continue_conversation(aiBrainSummary, this.targetPlayerUsername)
+    const system_message = this.promptSystem.continueConversation(aiBrainSummary, this.targetPlayerUsername)
 
     const response = await generateAssistantResponse(
       system_message,
@@ -250,7 +251,7 @@ export class TalkAction extends Action {
         }
       } else {
         const aiBrainSummary = this.getBrainDump().getStringifiedBrainDump()
-        const system_message = start_conversation(aiBrainSummary, this.targetPlayerUsername)
+        const system_message = this.promptSystem.startConversation(aiBrainSummary, this.targetPlayerUsername)
         response = await generateAssistantResponse(system_message, [])
       }
 

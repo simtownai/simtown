@@ -8,15 +8,10 @@ import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
 import { IdleActionDuration } from "../npcConfig"
 import client from "../openai/openai"
-import {
-  summarize_broadcast_prompt,
-  summarize_conversation_prompt,
-  summarize_reflections_prompt,
-  summarize_speech_prompt,
-} from "../prompts"
+import { PromptSystem } from "../prompts"
 import { StringifiedBrainDump } from "./AIBrain"
 
-export const reflect = async (action: Action) => {
+export const reflect = async (action: Action, promptSystem: PromptSystem) => {
   const isInterrupted = action.isInterrupted
   // for now we are only reflecting on completed actions
   const actionType = action.constructor.name
@@ -57,19 +52,19 @@ export const reflect = async (action: Action) => {
         return `${item.from} said: ${item.message}`
       }
     })
-    const result = await summarizeConversation(reflections, content.join("\n"))
+    const result = await summarizeConversation(reflections, content.join("\n"), promptSystem)
     return isInterrupted
       ? `I was talking to ${lastTalkedPlayerName} but got interrupted. Summary of the conversation: ${result}`
       : `I talked with ${lastTalkedPlayerName}, summary of the conversation: ${result}`
   } else if (actionType === "BroadcastAction") {
     const broadcastAction = action as BroadcastAction
-    const summary = await summarizeBroadcast(reflections, broadcastAction.broadcastContent)
+    const summary = await summarizeBroadcast(reflections, broadcastAction.broadcastContent, promptSystem)
     return isInterrupted
       ? `I was giving a speech but got interrupted. I managed to broadcast: ${summary}`
       : `I gave a speech, talked about: ${summary}`
   } else if (actionType === "ListenAction") {
     const listenAction = action as ListenAction
-    const summary = await summarizeSpeech(reflections, listenAction.accumulatedBroadcast)
+    const summary = await summarizeSpeech(reflections, listenAction.accumulatedBroadcast, promptSystem)
     return isInterrupted
       ? `I was listening to a a speech. Summary of what I heard: ${summary}`
       : `I listen to the speech, quick summary:: ${summary}`
@@ -80,21 +75,25 @@ export const reflect = async (action: Action) => {
   throw new Error(`Could not reflect for action: ${actionType}`)
 }
 
-export const summarizeReflections = async (braindump: StringifiedBrainDump) => {
+export const summarizeReflections = async (braindump: StringifiedBrainDump, promptSystem: PromptSystem) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "system", content: summarize_reflections_prompt(braindump) }],
+    messages: [{ role: "system", content: promptSystem.summarizeReflections(braindump) }],
   })
   return completion.choices[0].message.content
 }
 
-const summarizeConversation = async (reflections: StringifiedBrainDump, content: string) => {
+const summarizeConversation = async (
+  reflections: StringifiedBrainDump,
+  content: string,
+  promptSystem: PromptSystem,
+) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
-        content: summarize_conversation_prompt(reflections),
+        content: promptSystem.summarizeConversation(reflections),
       },
       { role: "user", content },
     ],
@@ -102,18 +101,26 @@ const summarizeConversation = async (reflections: StringifiedBrainDump, content:
   return completion.choices[0].message.content
 }
 
-const summarizeBroadcast = async (reflections: StringifiedBrainDump, broadcastContent: string) => {
+const summarizeBroadcast = async (
+  reflections: StringifiedBrainDump,
+  broadcastContent: string,
+  promptSystem: PromptSystem,
+) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "system", content: summarize_broadcast_prompt(reflections, broadcastContent) }],
+    messages: [{ role: "system", content: promptSystem.summarizeBroadcast(reflections, broadcastContent) }],
   })
   return completion.choices[0].message.content
 }
 
-const summarizeSpeech = async (reflections: StringifiedBrainDump, speechContent: string) => {
+const summarizeSpeech = async (
+  reflections: StringifiedBrainDump,
+  speechContent: string,
+  promptSystem: PromptSystem,
+) => {
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "system", content: summarize_speech_prompt(reflections, speechContent) }],
+    messages: [{ role: "system", content: promptSystem.summarizeSpeech(reflections, speechContent) }],
   })
   return completion.choices[0].message.content
 }

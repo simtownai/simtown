@@ -3,7 +3,7 @@ import { BroadcastMessage } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
 import client from "../openai/openai"
-import { broadcast_prompt } from "../prompts"
+import { PromptSystem } from "../prompts"
 import { Action } from "./Action"
 
 export class BroadcastAction extends Action {
@@ -19,6 +19,7 @@ export class BroadcastAction extends Action {
     targetPlace: string,
     reason: string = "",
     private onEnd: () => void,
+    private promptSystem: PromptSystem,
   ) {
     super(getBrainDump, getEmitMethods, reason)
     this.targetPlace = targetPlace
@@ -32,7 +33,7 @@ export class BroadcastAction extends Action {
 
   private async generateBroadcast(): Promise<void> {
     try {
-      const system_message = broadcast_prompt(this.getBrainDump().getStringifiedBrainDump())
+      const system_message = this.promptSystem.broadcast(this.getBrainDump().getStringifiedBrainDump())
       const completion = await client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "system", content: system_message }],

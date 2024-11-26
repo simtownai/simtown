@@ -19,6 +19,7 @@ import {
   convertActionsToGeneratedPlan,
   convertGeneratedPlanToActions,
 } from "../plan/helpers"
+import { PromptSystem } from "../prompts"
 import { ConversationMemory, Thread } from "./memory/ConversationMemory"
 import { Memory } from "./memory/Memory"
 import { reflect, summarizeReflections } from "./reflect"
@@ -58,6 +59,7 @@ type AIBrainInterface = {
   getNewsPaper: () => NewsItem[]
   getBroadcastAnnouncements: () => Set<string>
   getMovementController: () => MovementController
+  getPromptSystem: () => PromptSystem
   places: string[]
   getEmitMethods: () => EmitInterface
   adjustDirection: (username: string) => void
@@ -76,6 +78,7 @@ export class AIBrain {
   private getBroadcastAnnouncements: () => Set<string>
   private getMovementController: () => MovementController
   private getEmitMethods: () => EmitInterface
+  private getPromptSystem: () => PromptSystem
   private adjustDirection: (username: string) => void
 
   constructor(args: AIBrainInterface) {
@@ -88,13 +91,18 @@ export class AIBrain {
     this.getNewsPaper = args.getNewsPaper
     this.getBroadcastAnnouncements = args.getBroadcastAnnouncements
     this.getMovementController = args.getMovementController
+    this.getPromptSystem = args.getPromptSystem
     this.adjustDirection = args.adjustDirection
   }
 
   async generatePlanAndSetActions() {
     try {
       const currentPlanData = convertActionsToGeneratedPlan(this.actionQueue)
-      const newPlanData = await generatePlanForTheday(this.getBrainDump, this.getStringifiedBrainDump())
+      const newPlanData = await generatePlanForTheday(
+        this.getBrainDump,
+        this.getStringifiedBrainDump(),
+        this.getPromptSystem(),
+      )
       // ToDo: calculate diffs of plans, generate new actions for what is not there already,
       // and insert actions from actions queue
 
@@ -110,6 +118,7 @@ export class AIBrain {
         this.getEmitMethods,
         this.getMovementController(),
         this.adjustDirection,
+        this.getPromptSystem(),
       )
     } catch (error) {
       logger.error(`(${this.getPlayerData().username}) Error generating new plan:`, error)
@@ -241,7 +250,7 @@ export class AIBrain {
 
     try {
       if (this.currentAction.shouldReflect) {
-        const reflections = await reflect(this.currentAction)
+        const reflections = await reflect(this.currentAction, this.getPromptSystem())
         if (!reflections) {
           throw new Error(`Could not reflect for completed action: ${this.currentAction.constructor.name}`)
         }
@@ -249,7 +258,7 @@ export class AIBrain {
         this.memory.reflections.push(reflections)
 
         if (this.memory.reflections.length > 10) {
-          const new_reflections = await summarizeReflections(this.getStringifiedBrainDump())
+          const new_reflections = await summarizeReflections(this.getStringifiedBrainDump(), this.getPromptSystem())
           if (!new_reflections) {
             throw new Error("Could not summarize reflections")
           }
@@ -282,7 +291,7 @@ export class AIBrain {
     if (this.currentAction) {
       this.currentAction.interrupt()
       if (this.currentAction.shouldReflect) {
-        const reflections = await reflect(this.currentAction)
+        const reflections = await reflect(this.currentAction, this.getPromptSystem())
         if (!reflections) {
           throw new Error(`Could not reflect for interrupted action: ${this.currentAction.constructor.name}`)
         }
