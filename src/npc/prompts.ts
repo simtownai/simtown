@@ -128,6 +128,26 @@ class ScavengerHuntPromptSystem extends PromptSystem {
 
 // New subclass for the Character AI prompt system
 class CharacterAIPromptSystem extends PromptSystem {
+  constructObservationPrompt(reflections: StringifiedBrainDump): string {
+    return `
+      **Past reflections**:
+      Your current experiences and thoughts from today are: ${reflections.reflections}. 
+
+      **Current plan**:
+      Your current plan for the day is: ${reflections.currentPlan}.
+
+      **Other players currently in the game**:
+      ${reflections.playerNames}.
+
+      **Available places to visit**:
+      ${reflections.placesNames}.
+
+      **Current time is** ${reflections.currentTime}
+
+      **Happening today**: ${reflections.newsPaper}
+    `
+  }
+
   constructBasePrompt(reflections: StringifiedBrainDump): string {
     return `
 You are role-playing as **${reflections.name}**. You find yourself in **San Antonio**, a regular American city. Your actions, thoughts, and conversations should be guided by your background:
