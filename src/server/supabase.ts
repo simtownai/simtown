@@ -1,3 +1,4 @@
+import logger from "../shared/logger"
 import type { Database } from "../shared/supabase-types"
 import { ChatMessage } from "../shared/types"
 import { createClient } from "@supabase/supabase-js"
@@ -23,19 +24,17 @@ export const insertMessage = async (message: ChatMessage, chat_id: string, curre
     chat_id,
     created_at: new Date().toISOString(),
   }
-  console.log("Formatted message", formattedMessage)
 
   const { data, error } = await client.from("messages").insert(formattedMessage)
   if (error) {
-    console.error("Error inserting messages", error)
+    logger.error("Error inserting messages", error)
+    console.error(error)
   }
-  console.log("Messages inserted", data)
 }
 
 const prefix = "supabase-chat-"
 
 export const clearLocalStorage = () => {
-  console.log("Cleaning local storage from supabase chat")
   threadsMap.clear()
 }
 
@@ -45,20 +44,16 @@ export const saveMessageToSupabase = async (message: ChatMessage, currentUser: s
 
     const existingChatId = threadsMap.get(`${prefix}${characteName}`)
 
-    console.log("Chat cookie is", characteName)
-
     if (!existingChatId) {
-      console.log("We don't have a chat id for this user, creating new chat")
       const newChatId = await createNewChat(characteName)
-      console.log("New chat id is", newChatId)
       threadsMap.set(`${prefix}${characteName}`, newChatId)
       await insertMessage(message, newChatId, currentUser)
     } else {
-      console.log("We have a chat id for this user, inserting message", message)
       await insertMessage(message, existingChatId, currentUser)
     }
   } catch (error) {
-    console.error("Error saving message to supabase", error)
+    logger.error("Error saving message to supabase")
+    console.error(error)
   }
 }
 
