@@ -1,6 +1,6 @@
 import { NPC } from "../npc/client"
 import { murderDronesNpcs, npcConfig, npcConfigCharacterAI } from "../npc/npcConfig"
-import { scavengerhuntPromptSystem, simtownPromptSystem } from "../npc/prompts"
+import { characterAIPromptSystem, scavengerhuntPromptSystem, simtownPromptSystem } from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
@@ -194,7 +194,7 @@ export class ScavengerHuntRoom extends Room {
 export class CharacterAIRoom extends Room {
   initialize(): void {
     npcConfigCharacterAI.forEach((config) => {
-      const npc = new NPC(config, this.id, simtownPromptSystem)
+      const npc = new NPC(config, this.id, characterAIPromptSystem)
       this.npcs.push(npc)
     })
     logger.info(`Initialized CharacterAIRoom: ${this.name} (${this.id})`)
@@ -209,7 +209,7 @@ export class CharacterAIRoom extends Room {
 export class MurderDronesRoom extends Room {
   initialize(): void {
     murderDronesNpcs.forEach((config) => {
-      const npc = new NPC(config, this.id, simtownPromptSystem)
+      const npc = new NPC(config, this.id, characterAIPromptSystem)
       this.npcs.push(npc)
     })
     logger.info(`Initialized murderDronesNpcs: ${this.name} (${this.id})`)
