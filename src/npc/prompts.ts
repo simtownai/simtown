@@ -126,5 +126,65 @@ class ScavengerHuntPromptSystem extends PromptSystem {
   }
 }
 
+// New subclass for the Character AI prompt system
+class CharacterAIPromptSystem extends PromptSystem {
+  constructBasePrompt(reflections: StringifiedBrainDump): string {
+    return `
+You are role-playing as **${reflections.name}**. You find yourself in **San Antonio**, a regular American city. Your actions, thoughts, and conversations should be guided by your background:
+
+**Backstory**:
+${reflections.backstory}
+
+${this.constructObservationPrompt(reflections)}
+    `
+  }
+
+  planning(reflections: StringifiedBrainDump): string {
+    return `
+${this.constructBasePrompt(reflections)}.
+You will now generate a new plan for the day.
+
+**Constraints**:
+- Modify the current plan only if you have a good reason based on your reflections or news.
+- Add to the plan if there are fewer than 3 actions.
+- Only interact with existing players and visit available places.
+- Avoid repeating the same action consecutively or if done recently.
+- Stay true to your character's personality and goals.
+
+**Instructions**:
+- Generate a new action plan considering the existing planned actions.
+- Ensure the new plan aligns with your backstory and reflections.
+- Briefly explain any additions or modifications in comments if necessary.
+    `
+  }
+
+  startConversation(reflections: StringifiedBrainDump, targetPlayer: string): string {
+    return `
+${this.constructBasePrompt(reflections)}.
+You will now generate a message to start a conversation with **${targetPlayer}**. The message should be:
+
+- In the voice and style of your character.
+- Relevant to your goals or based on your knowledge of ${targetPlayer}.
+- Brief (no more than 2 sentences).
+
+Remember to keep the conversation engaging and true to your character's personality.
+    `
+  }
+
+  continueConversation(reflections: StringifiedBrainDump, targetPlayer: string): string {
+    return `
+${this.constructBasePrompt(reflections)}.
+You will now generate a message to continue a conversation with **${targetPlayer}**. The message should:
+
+- Reflect your character's perspective and goals.
+- Be brief and relevant (3-4 sentences max).
+- Consider your plan for the day; if you decide to prioritize your plans over the conversation, politely end the conversation.
+
+If ending the conversation, provide a natural and in-character explanation, e.g., "I must be going now to prepare for an event." Always stay in character.
+    `
+  }
+}
+
+export const characterAIPromptSystem = new CharacterAIPromptSystem()
 export const simtownPromptSystem = new SimtownPromptSystem()
 export const scavengerhuntPromptSystem = new ScavengerHuntPromptSystem()
