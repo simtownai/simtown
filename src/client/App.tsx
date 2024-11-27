@@ -1,6 +1,14 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { BroadcastMessage, ChatMessage, NewsItem, PlayerData, PlayerSpriteDefinition } from "../shared/types"
+import {
+  AvailableGames,
+  BroadcastMessage,
+  ChatMessage,
+  NewsItem,
+  PlayerData,
+  PlayerSpriteDefinition,
+  availableGames,
+} from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import ChatsContainer from "./ui/ChatsContainer"
 import NewsContainer from "./ui/NewsContainer"
@@ -33,7 +41,7 @@ function App() {
   const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
   const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
-  const [roomName, setRoomName] = useState<string | null>(null)
+  const [roomName, setRoomName] = useState<AvailableGames | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
@@ -56,25 +64,20 @@ function App() {
   }
 
   useEffect(() => {
-    let gameName = window.location.pathname
-    const params = new URLSearchParams(window.location.search)
-    let initialRoomId = params.get("roomid") || ""
-
-    if (gameName === "/" || gameName === "") {
-      window.location.replace("/electiontown")
+    const path = window.location.pathname
+    let gameName = (
+      path === "/" || path === "" ? "" : path.startsWith("/") ? path.substring(1) : path
+    ) as AvailableGames
+    if (!availableGames.includes(gameName)) {
+      gameName = CONFIG.DEFAULT_GAME as AvailableGames
+      window.location.replace(`/${gameName}`)
       return
-    } else {
-      if (gameName.startsWith("/")) {
-        gameName = gameName.substring(1)
-      }
-
-      if (gameName !== "electiontown" && gameName !== "scavengerhunt") {
-        window.location.replace("/electiontown")
-        return
-      }
     }
 
     setRoomName(gameName)
+
+    const params = new URLSearchParams(window.location.search)
+    let initialRoomId = params.get("roomid") || ""
 
     const tempSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
 

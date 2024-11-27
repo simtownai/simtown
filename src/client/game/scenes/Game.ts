@@ -312,8 +312,11 @@ export class Game extends Phaser.Scene {
     otherPlayerSprite.setInteractive({ cursor: "pointer" })
     otherPlayerSprite.on("pointerdown", () => {
       if (playerInfo.isNPC) {
-        EventBus.emit("observe-collapse", false)
-        EventBus.emit("observed-npc", playerInfo.username)
+        // EventBus.emit("observe-collapse", false)
+        // EventBus.emit("observed-npc", playerInfo.username)
+        console.log(`Opening chat with player ID: ${playerInfo.username}`)
+        EventBus.emit("chat-collapse", false)
+        EventBus.emit("set-chatmate", playerInfo.username)
       }
     })
 

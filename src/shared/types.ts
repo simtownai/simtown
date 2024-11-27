@@ -1,6 +1,7 @@
 import { z } from "zod"
 
-export type AvailableGames = "electiontown" | "scavengerhunt"
+export const availableGames = ["electiontown", "scavengerhunt", "characterai"] as const
+export type AvailableGames = (typeof availableGames)[number]
 
 export type PlayerSpriteDefinition = {
   body: "Body_01" | "Body_02" | "Body_03" | "Body_04" | "Body_05" | "Body_06" | "Body_07" | "Body_08" | "Body_09"

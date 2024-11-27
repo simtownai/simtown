@@ -20,4 +20,5 @@ export const CONFIG = {
   PLACES_LAYER_NAME: "PLACES",
   SPAWN_PLACE_NAME: "CityCenter",
   VOTING_PLACE_NAME: "LibertySquare",
+  DEFAULT_GAME: "electiontown",
 }
