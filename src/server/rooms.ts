@@ -1,5 +1,5 @@
 import { NPC } from "../npc/client"
-import { npcConfig } from "../npc/npcConfig"
+import { npcConfig, npcConfigCharacterAI } from "../npc/npcConfig"
 import { scavengerhuntPromptSystem, simtownPromptSystem } from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
@@ -188,5 +188,20 @@ export class ScavengerHuntRoom extends Room {
   cleanup(): void {
     this.npcs.forEach((npc) => npc.cleanup())
     logger.info(`Cleaned up ScavengerHuntRoom: ${this.name} (${this.id})`)
+  }
+}
+
+export class CharacterAIRoom extends Room {
+  initialize(): void {
+    npcConfigCharacterAI.forEach((config) => {
+      const npc = new NPC(config, this.id, simtownPromptSystem)
+      this.npcs.push(npc)
+    })
+    logger.info(`Initialized CharacterAIRoom: ${this.name} (${this.id})`)
+  }
+
+  cleanup(): void {
+    this.npcs.forEach((npc) => npc.cleanup())
+    logger.info(`Cleaned up CharacterAIRoom: ${this.name} (${this.id})`)
   }
 }

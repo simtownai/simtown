@@ -12,7 +12,7 @@ import {
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
-import { ElectionRoom, Room, ScavengerHuntRoom } from "./rooms"
+import { CharacterAIRoom, ElectionRoom, Room, ScavengerHuntRoom } from "./rooms"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -39,11 +39,10 @@ io.on("connection", (socket) => {
   socket.on("createRoom", (gameName: AvailableGames, callback: (roomId: string | null) => void) => {
     if (gameName === "electiontown") {
       // For shared room, return the same roomId
-      const roomName = "electiontown"
-      let room = Array.from(rooms.values()).find((r) => r.getName() === roomName && r.getInstanceType() === "shared")
+      let room = Array.from(rooms.values()).find((r) => r.getName() === gameName && r.getInstanceType() === "shared")
       if (!room) {
         const roomId = uuidv4() as string
-        room = new ElectionRoom(roomId, roomName, "shared")
+        room = new ElectionRoom(roomId, gameName, "shared")
         rooms.set(roomId, room)
         room.initialize()
         initializeVotingNotifications(room)
@@ -52,8 +51,14 @@ io.on("connection", (socket) => {
     } else if (gameName === "scavengerhunt") {
       // For private rooms, create a new room each time
       const roomId = uuidv4()
-      const roomName = "scavengerhunt"
-      const room = new ScavengerHuntRoom(roomId, roomName, "private")
+      const room = new ScavengerHuntRoom(roomId, gameName, "private")
+      room.initialize()
+      rooms.set(roomId, room)
+      callback(roomId)
+    } else if (gameName === "characterai") {
+      // For private rooms, create a new room each time
+      const roomId = uuidv4()
+      const room = new CharacterAIRoom(roomId, gameName, "private")
       room.initialize()
       rooms.set(roomId, room)
       callback(roomId)
