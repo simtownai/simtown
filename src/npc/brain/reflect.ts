@@ -1,3 +1,4 @@
+import { CONFIG } from "../../shared/config"
 import logger from "../../shared/logger"
 import { Action } from "../actions/Action"
 import { BroadcastAction } from "../actions/BroadcastAction"
@@ -77,7 +78,7 @@ export const reflect = async (action: Action, promptSystem: PromptSystem) => {
 
 export const summarizeReflections = async (braindump: StringifiedBrainDump, promptSystem: PromptSystem) => {
   const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: CONFIG.MODEL_NAME,
     messages: [{ role: "system", content: promptSystem.summarizeReflections(braindump) }],
   })
   return completion.choices[0].message.content
@@ -89,7 +90,7 @@ const summarizeConversation = async (
   promptSystem: PromptSystem,
 ) => {
   const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: CONFIG.MODEL_NAME,
     messages: [
       {
         role: "system",
@@ -107,7 +108,7 @@ const summarizeBroadcast = async (
   promptSystem: PromptSystem,
 ) => {
   const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: CONFIG.MODEL_NAME,
     messages: [{ role: "system", content: promptSystem.summarizeBroadcast(reflections, broadcastContent) }],
   })
   return completion.choices[0].message.content
@@ -119,7 +120,7 @@ const summarizeSpeech = async (
   promptSystem: PromptSystem,
 ) => {
   const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: CONFIG.MODEL_NAME,
     messages: [{ role: "system", content: promptSystem.summarizeSpeech(reflections, speechContent) }],
   })
   return completion.choices[0].message.content

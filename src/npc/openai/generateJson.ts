@@ -1,3 +1,4 @@
+import { CONFIG } from "../../shared/config"
 import logger from "../../shared/logger"
 import client from "../openai/openai"
 import { zodResponseFormat } from "openai/helpers/zod.mjs"
@@ -10,7 +11,7 @@ export async function generateJson<T>(
   prompt: string,
   responseSchema: z.ZodSchema<T>,
   validate: ValidateFunction<T>,
-  model: string = "gpt-4o-mini",
+  model: string = CONFIG.MODEL_NAME,
   maxAttempts: number = 5,
   temperature: number = 1.1,
 ): Promise<T> {
