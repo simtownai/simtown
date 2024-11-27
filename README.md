@@ -1,23 +1,17 @@
 # ToDo
 
-- talk on click
 - rooms
   - action subset (special room type)
-  - room config
 - scavenger hunt
-- 2d character ai
 - uncensored models (try gpt jailbreak)
 - tutorial cookie on onboard
-- add characters from tg
-- add character ai room
 - observer interface
   - add past actions
   - add characters icons
-- minimap
 - idlining like in generative agents
   - eat
   - rest (idle idle)
-- fix broadcast announcements in rooms
+- minimap
 
 - (Szymon) hunt down TalkAction bugs
   - NPCs are far from each other when start talking
@@ -34,12 +28,11 @@
 
 - enter username + save in local storage
 - add discord
-- (Alex) player rotations
+- (Alex) player rotations (on client)
   - rotate to whom you are sending messages
   - rotate to incoming messages if idle
 - (Alex) player can only write to NPC if within range
 
-- `broadcastAnnouncementsCache` is shared among each NPC; update it from the news for each individual npc
 - Freeze on movement
   - probably because no actions left
 - Generate first message with the talk action

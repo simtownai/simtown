@@ -1,3 +1,4 @@
+import { CONFIG } from "../../shared/config"
 import logger from "../../shared/logger"
 import { BroadcastMessage } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
@@ -35,7 +36,7 @@ export class BroadcastAction extends Action {
     try {
       const system_message = this.promptSystem.broadcast(this.getBrainDump().getStringifiedBrainDump())
       const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: CONFIG.MODEL_NAME,
         messages: [{ role: "system", content: system_message }],
       })
 

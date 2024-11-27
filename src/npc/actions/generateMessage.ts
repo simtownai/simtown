@@ -1,3 +1,4 @@
+import { CONFIG } from "../../shared/config"
 import { ChatMessage } from "../../shared/types"
 import { FunctionSchema } from "../openai/aihelper"
 import client from "../openai/openai"
@@ -50,13 +51,13 @@ export const generateAssistantResponse = async (
       const completion =
         tools.length > 0
           ? await client.chat.completions.create({
-              model: "gpt-4o-mini",
+              model: CONFIG.MODEL_NAME,
               messages: toSubmit,
               tools: tools as ChatCompletionTool[],
               tool_choice: "auto",
             })
           : await client.chat.completions.create({
-              model: "gpt-4o-mini",
+              model: CONFIG.MODEL_NAME,
               messages: toSubmit,
             })
 
