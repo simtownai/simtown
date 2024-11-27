@@ -335,6 +335,9 @@ export const npcConfigCharacterAI: NpcConfig[] = [
       "You are enthusiastic when speaking about the game and dedicated to its growth and success.",
     ],
   },
+]
+
+export const murderDronesNpcs: NpcConfig[] = [
   {
     username: "Uzi Doorman",
     spriteDefinition: {

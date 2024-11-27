@@ -12,7 +12,8 @@ import {
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
-import { CharacterAIRoom, ElectionRoom, Room, ScavengerHuntRoom } from "./rooms"
+import { CharacterAIRoom, ElectionRoom, MurderDronesRoom, Room, ScavengerHuntRoom } from "./rooms"
+import { saveMessageToSupabase } from "./supabase"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -59,6 +60,13 @@ io.on("connection", (socket) => {
       // For private rooms, create a new room each time
       const roomId = uuidv4()
       const room = new CharacterAIRoom(roomId, gameName, "private")
+      room.initialize()
+      rooms.set(roomId, room)
+      callback(roomId)
+    } else if (gameName === "murderdrones") {
+      // For private rooms, create a new room each time
+      const roomId = uuidv4()
+      const room = new MurderDronesRoom(roomId, gameName, "private")
       room.initialize()
       rooms.set(roomId, room)
       callback(roomId)
@@ -148,13 +156,16 @@ io.on("connection", (socket) => {
     if (!currentRoom) return
 
     logger.info(`endConversation receied from ${message.from}: ${message.message}`)
-    currentRoom.getPlayers().forEach((player) => {
+    currentRoom.getPlayers().forEach(async (player) => {
       if (player.username === message.to) {
         const recipientSocket = io.sockets.sockets.get(player.id)
         if (recipientSocket) {
           recipientSocket.emit("endConversation", message)
           const sender = currentRoom?.getPlayer(playerId)!
           emitOverhear(currentRoom!.getPlayers(), sender, player, message)
+          if (!player.isNPC || !sender.isNPC) {
+            await saveMessageToSupabase(message, player.username)
+          }
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
         }
@@ -191,12 +202,13 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", (message: ChatMessage) => {
     if (!currentRoom) return
+
     // logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
 
     if (message.to === "all") {
       io.emit("newMessage", message)
     } else {
-      currentRoom.getPlayers().forEach((player) => {
+      currentRoom.getPlayers().forEach(async (player) => {
         if (player.username === message.to) {
           const recipientSocket = io.sockets.sockets.get(player.id)
           if (recipientSocket) {
@@ -205,6 +217,10 @@ io.on("connection", (socket) => {
             // Overhear logic
             const sender = currentRoom?.getPlayer(playerId)!
             emitOverhear(currentRoom?.getPlayers()!, sender, player, message)
+            if (!player.isNPC || !sender.isNPC) {
+              const supabaseUserName = player.isNPC ? sender.username : player.username
+              await saveMessageToSupabase(message, supabaseUserName)
+            }
           } else {
             socket.emit("messageError", { error: "Recipient not found" })
           }
