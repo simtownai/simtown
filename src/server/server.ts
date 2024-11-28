@@ -33,45 +33,51 @@ const io = new Server(server, {
 
 const rooms: Map<string, Room> = new Map()
 
+const createGameRoom = (gameName: AvailableGames, roomId: string = uuidv4()): Room | null => {
+  const RoomTypes = {
+    electiontown: (id: string) => new ElectionRoom(id, gameName, "shared"),
+    scavengerhunt: (id: string) => new ScavengerHuntRoom(id, gameName, "private"),
+    characterai: (id: string) => new CharacterAIRoom(id, gameName, "private"),
+    murderdrones: (id: string) => new MurderDronesRoom(id, gameName, "private"),
+  }
+
+  const roomCreator = RoomTypes[gameName]
+  if (!roomCreator) return null
+
+  const room = roomCreator(roomId)
+  room.initialize()
+
+  setTimeout(() => {
+    if (room.getRealPlayerCount() === 0) {
+      room.cleanup()
+      rooms.delete(room.getId())
+    }
+  }, CONFIG.ROOM_CLEANUP_TIMEOUT)
+
+  return room
+}
+
 io.on("connection", (socket) => {
   const playerId = socket.id
   let currentRoom: Room | null = null
 
   socket.on("createRoom", (gameName: AvailableGames, callback: (roomId: string | null) => void) => {
     if (gameName === "electiontown") {
-      // For shared room, return the same roomId
       let room = Array.from(rooms.values()).find((r) => r.getName() === gameName && r.getInstanceType() === "shared")
       if (!room) {
-        const roomId = uuidv4() as string
-        room = new ElectionRoom(roomId, gameName, "shared")
-        rooms.set(roomId, room)
-        room.initialize()
+        room = createGameRoom(gameName)!
+        rooms.set(room.getId(), room)
         initializeVotingNotifications(room)
       }
       callback(room.getId())
-    } else if (gameName === "scavengerhunt") {
-      // For private rooms, create a new room each time
-      const roomId = uuidv4()
-      const room = new ScavengerHuntRoom(roomId, gameName, "private")
-      room.initialize()
-      rooms.set(roomId, room)
-      callback(roomId)
-    } else if (gameName === "characterai") {
-      // For private rooms, create a new room each time
-      const roomId = uuidv4()
-      const room = new CharacterAIRoom(roomId, gameName, "private")
-      room.initialize()
-      rooms.set(roomId, room)
-      callback(roomId)
-    } else if (gameName === "murderdrones") {
-      // For private rooms, create a new room each time
-      const roomId = uuidv4()
-      const room = new MurderDronesRoom(roomId, gameName, "private")
-      room.initialize()
-      rooms.set(roomId, room)
-      callback(roomId)
     } else {
-      callback(null)
+      const room = createGameRoom(gameName)
+      if (!room) {
+        callback(null)
+        return
+      }
+      rooms.set(room.getId(), room)
+      callback(room.getId())
     }
   })
 
