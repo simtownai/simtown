@@ -108,7 +108,7 @@ export function getBroadcastAnnouncementsKey(targetPlace: string, username: stri
   return `${targetPlace}-${username}`
 }
 
-export function getTextFromAction(action: GeneratedActionWithPerson | undefined): string {
+export function getTextFromAction(action: GeneratedActionWithPerson | undefined, verbose: boolean = true): string {
   if (!action) return ""
   switch (action.type) {
     case "move":
@@ -123,21 +123,19 @@ export function getTextFromAction(action: GeneratedActionWithPerson | undefined)
         return emoji
       }
     case "talk":
-      return `💬${action.name}`
+      return `💬${verbose ? action.name : ""}`
     case "idle":
       if (action.activityType === "read") {
-        return `📖📖📖`
+        return `📖`
         // } else if (action.activityType === "phone") {
         //   return `📱📱📱`
       } else {
-        return `😴😴😴`
+        return `😴`
       }
     case "broadcast":
-      return `📢${action.targetPlace}`
-    // return `📢`
+      return `📢${verbose ? action.targetPlace : ""}`
     case "listen":
-      return `👂${action.targetPlace}`
-    // return `👂`
+      return `👂${verbose ? action.targetPlace : ""}`
     case "vote":
       return `🗳️`
     default:

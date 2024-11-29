@@ -321,7 +321,7 @@ export class Game extends Phaser.Scene {
     })
 
     const actionEmoji = this.add
-      .text(0, 0, getTextFromAction(playerInfo.action), {
+      .text(0, 0, getTextFromAction(playerInfo.action, false), {
         fontSize: "24px",
         fontFamily: "Roboto",
         color: "#ffffff",
@@ -433,7 +433,7 @@ export class Game extends Phaser.Scene {
           player.y - CONFIG.SPRITE_HEIGHT - 5, // Adjust to be above sprite
         )
         if (player.action && JSON.stringify(player.action) !== JSON.stringify(otherPlayerData.playerData.action)) {
-          const emoji = getTextFromAction(player.action)
+          const emoji = getTextFromAction(player.action, false)
           if (emoji) {
             otherPlayerData.actionEmoji!.setText(emoji)
             otherPlayerData.actionEmoji!.setVisible(true)
