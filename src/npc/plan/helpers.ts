@@ -1,7 +1,7 @@
 import { CONFIG } from "../../shared/config"
 import { getBroadcastAnnouncementsKey, getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
-import { GeneratedAction, GeneratedActionPlan, GeneratedActionWithPerson, NewsItem } from "../../shared/types"
+import { AIAction, AIActionPlan, FullAction, NewsItem } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -14,7 +14,7 @@ import { VoteAction } from "../actions/VoteAction"
 import { BrainDump } from "../brain/AIBrain"
 import { PromptSystem } from "../prompts"
 
-export const convertActionToGeneratedAction = (action: Action): GeneratedActionWithPerson => {
+export const convertActionToGeneratedAction = (action: Action): FullAction => {
   if (action instanceof MoveAction) {
     return { type: "move", target: action.moveTarget }
   } else if (action instanceof IdleAction) {
@@ -33,8 +33,8 @@ export const convertActionToGeneratedAction = (action: Action): GeneratedActionW
 }
 
 // Function to serialize Actions into ActionPlan data
-export const convertActionsToGeneratedPlan = (actions: Action[]): GeneratedActionPlan => {
-  function isGeneratedAction(action: unknown): action is GeneratedAction {
+export const convertActionsToGeneratedPlan = (actions: Action[]): AIActionPlan => {
+  function isGeneratedAction(action: unknown): action is AIAction {
     return (
       action !== null && typeof action === "object" && "type" in action
       // Add more specific checks based on your GeneratedAction type
@@ -58,7 +58,7 @@ export const convertActionsToGeneratedPlan = (actions: Action[]): GeneratedActio
 }
 
 export const convertGeneratedPlanToActions = (
-  planData: GeneratedActionPlan,
+  planData: AIActionPlan,
   getBrainDump: () => BrainDump,
   getEmitMethods: () => EmitInterface,
   movementController: MovementController,
@@ -80,7 +80,7 @@ export const convertGeneratedPlanToActions = (
     }
   }
 
-  const actions: ActionResult[] = planData.map((actionData: GeneratedAction): ActionResult => {
+  const actions: ActionResult[] = planData.map((actionData: AIAction): ActionResult => {
     let moveAction: MoveAction
 
     switch (actionData.type) {

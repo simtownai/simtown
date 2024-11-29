@@ -1,5 +1,5 @@
 import { getBroadcastAnnouncementsKey } from "../../shared/functions"
-import { ActionPlanSchema, GeneratedActionPlan } from "../../shared/types"
+import { AIActionPlan, AIActionPlanSchema } from "../../shared/types"
 import { BrainDump, StringifiedBrainDump } from "../brain/AIBrain"
 import { generateJson } from "../openai/generateJson"
 import { PromptSystem } from "../prompts"
@@ -22,7 +22,7 @@ function getBroadcastAnnouncementPlace(broadcastAnnouncementsCache: Set<string>,
 }
 
 const ResponseSchema = z.object({
-  plan: ActionPlanSchema,
+  plan: AIActionPlanSchema,
 })
 
 const validateActions =
@@ -118,7 +118,7 @@ export const generatePlanForTheday = async (
   getBrainDump: () => BrainDump,
   stringifiedBrainDump: StringifiedBrainDump,
   promptSystem: PromptSystem,
-): Promise<GeneratedActionPlan> => {
+): Promise<AIActionPlan> => {
   const prompt = promptSystem.planning(stringifiedBrainDump)
 
   // console.log("prompt", prompt)

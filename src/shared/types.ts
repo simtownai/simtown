@@ -16,7 +16,7 @@ export type PlayerSpriteDefinition = {
 export interface NPCState {
   backstory: string[]
   reflections: string[]
-  plan: GeneratedActionPlan
+  plan: AIActionPlan
 }
 
 export interface PlayerData {
@@ -27,7 +27,7 @@ export interface PlayerData {
   x: number
   y: number
   animation: string
-  action?: GeneratedAction
+  action?: AIAction
   npcState?: Partial<NPCState>
 }
 
@@ -35,7 +35,7 @@ export interface UpdatePlayerData {
   x?: number
   y?: number
   animation?: string
-  action?: GeneratedAction
+  action?: AIAction
   npcState?: Partial<NPCState>
 }
 
@@ -130,7 +130,7 @@ const VoteSchema = z.object({
   type: z.literal("vote"),
 })
 
-const ActionSchema = z.discriminatedUnion("type", [
+const AIActionSchema = z.discriminatedUnion("type", [
   MoveSchema,
   TalkSchema,
   IdleSchema,
@@ -138,8 +138,11 @@ const ActionSchema = z.discriminatedUnion("type", [
   ListenSchema,
   VoteSchema,
 ])
+export const AIActionPlanSchema = z.array(AIActionSchema)
+export type AIAction = z.infer<typeof AIActionSchema>
+export type AIActionPlan = z.infer<typeof AIActionPlanSchema>
 
-const ActionSchemaWithPerson = z.discriminatedUnion("type", [
+const FullActionSchema = z.discriminatedUnion("type", [
   MoveSchemaWithPerson,
   TalkSchema,
   IdleSchema,
@@ -147,12 +150,4 @@ const ActionSchemaWithPerson = z.discriminatedUnion("type", [
   ListenSchema,
   VoteSchema,
 ])
-
-export type GeneratedAction = z.infer<typeof ActionSchema>
-
-export type GeneratedActionWithPerson = z.infer<typeof ActionSchemaWithPerson>
-
-export const ActionPlanSchema = z.array(ActionSchema)
-export const ActionPlanSchemaWithPerson = z.array(ActionSchemaWithPerson)
-export type GeneratedActionPlan = z.infer<typeof ActionPlanSchema>
-export type GeneratedActionPlanWithPerson = z.infer<typeof ActionPlanSchemaWithPerson>
+export type FullAction = z.infer<typeof FullActionSchema>
