@@ -3,8 +3,22 @@ import { Game } from "./scenes/Game"
 import { LoadingScene } from "./scenes/LoadingScene"
 import { Socket } from "socket.io-client"
 
+function getRenderer(): number {
+  try {
+    const canvas = document.createElement("canvas")
+    const gl = canvas.getContext("webgl")
+    if (!gl) return Phaser.CANVAS
+
+    const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+    console.log("WebGL Max Texture Size:", maxTextureSize)
+    return maxTextureSize >= 6000 ? Phaser.AUTO : Phaser.CANVAS
+  } catch {
+    return Phaser.CANVAS
+  }
+}
+
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
+  type: getRenderer(),
   parent: "game-container",
   width: "100%",
   height: "100%",
