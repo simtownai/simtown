@@ -28,8 +28,6 @@ export default function NPCData({
     setIsExpanded(!isExpanded)
   }
 
-  console.log(observedNPCData)
-
   return (
     <div className={styles.chat}>
       <Header
