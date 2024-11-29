@@ -24,7 +24,6 @@ const ChatsList: React.FC<ChatsListProps> = ({
   setIsChatsContainerCollapsed,
 }) => {
   const chatmatesWithLastMessage = useMemo(() => {
-    console.log(messages)
     return Array.from(messages.entries())
       .map(([name, msgs]) => {
         const lastChatmateMessage = [...msgs].reverse().find((msg) => msg.from !== username)

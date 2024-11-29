@@ -402,7 +402,6 @@ export class Game extends Phaser.Scene {
     this.socket.on("existingPlayers", (players: PlayerData[]) => {
       console.log("Received existing players:", players)
       players.forEach((player) => {
-        console.log("Player:", player)
         if (player.username === this.username) {
           this.setupPlayer(player)
         } else {
