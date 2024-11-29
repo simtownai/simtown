@@ -52,7 +52,7 @@ export class MovementController {
     this.currentMoveTarget = moveTarget
 
     if (this.ifMoveTargetReached(moveTarget)) {
-      logger.debug(`(${this.getPlayerData().username}) is already at the target position ${JSON.stringify(moveTarget)}`)
+      // logger.debug(`(${this.getPlayerData().username}) is already at the target position ${JSON.stringify(moveTarget)}`)
       this.handleMovementCompleted()
       return
     }
