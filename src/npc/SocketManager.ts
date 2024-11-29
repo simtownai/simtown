@@ -59,12 +59,10 @@ export class SocketManager {
     this.onNews = args.onNews
     this.adjustDirection = args.adjustDirection
     this.adjustDirectionPlace = args.adjustDirectionPlace
-    setTimeout(() => {
-      this.setupSocketEvents()
-      this.socket.connect()
-      // this.socket.emit("joinGame", true, args.username, args.spriteDefinition)
-      this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition)
-    }, 7000)
+    this.setupSocketEvents()
+    this.socket.connect()
+    // this.socket.emit("joinGame", true, args.username, args.spriteDefinition)
+    this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition)
   }
 
   private setupSocketEvents() {

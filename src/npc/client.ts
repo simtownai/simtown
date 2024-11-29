@@ -68,28 +68,26 @@ export class NPC {
 
         logger.info(`(${this.npcConfig.username}) NPC initialized`)
 
-        setTimeout(async () => {
-          try {
-            this.aiBrain = new AIBrain({
-              config: this.npcConfig,
-              getOtherPlayers: () => this.otherPlayers,
-              getPlayerData: () => this.playerData,
-              getNewsPaper: () => this.newsPaper,
-              getBroadcastAnnouncements: () => this.broadcastAnnouncements,
-              getMovementController: () => this.movementController,
-              getPromptSystem: () => this.promptSystem,
-              places: Array.from(this.places.keys()),
-              getEmitMethods: () => this.socketManager.getEmitMethods(),
-              adjustDirection: (username: string) => this.adjustDirection(username),
-            })
+        try {
+          this.aiBrain = new AIBrain({
+            config: this.npcConfig,
+            getOtherPlayers: () => this.otherPlayers,
+            getPlayerData: () => this.playerData,
+            getNewsPaper: () => this.newsPaper,
+            getBroadcastAnnouncements: () => this.broadcastAnnouncements,
+            getMovementController: () => this.movementController,
+            getPromptSystem: () => this.promptSystem,
+            places: Array.from(this.places.keys()),
+            getEmitMethods: () => this.socketManager.getEmitMethods(),
+            adjustDirection: (username: string) => this.adjustDirection(username),
+          })
 
-            this.aiBrain.generatePlanAndSetActions()
-            this.startUpdateLoop()
-          } catch (error) {
-            logger.error(`(${this.npcConfig.username}) Error initializing NPC`)
-            console.error(error)
-          }
-        }, 5000)
+          this.aiBrain.generatePlanAndSetActions()
+          this.startUpdateLoop()
+        } catch (error) {
+          logger.error(`(${this.npcConfig.username}) Error initializing NPC`)
+          console.error(error)
+        }
       } else {
         this.otherPlayers.set(player.username, player)
       }
