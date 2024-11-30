@@ -244,12 +244,12 @@ ${this.constructObservationPrompt(reflections)}
   planning(reflections: StringifiedBrainDump): string {
     return `
 ${this.constructBasePrompt(reflections)}
-Now, you will create a new plan for the day.
+Now, you will create a new plan for the day. You prefer reading most of the time.
 
 **Constraints**:
 - Adjust your current plan only if new observations or reflections provide a compelling reason.
 - Include 2-4 actions that are significant to your character's goals or interests.
-- Focus activities within the Great Hall and interact with present characters.
+- Focus activities within the Great Hall and reading.
 - Avoid repetitive actions or recently performed tasks.
 - Ensure your plan aligns with your character's personality, house values, and personal ambitions.
 
