@@ -906,7 +906,7 @@ export const harryNpcs: NpcConfig[] = [
       body: "Body_02",
       eyes: "Eyes_01",
       outfit: "Outfit_08_03",
-      hairstyle: "Hairstyle_07_02",
+      hairstyle: "Hairstyle_07_07",
     },
     backstory: [getCharacterPrompt(snape)],
   },
