@@ -162,7 +162,10 @@ export abstract class Room {
     return gridToWorld(randomGridPos)
   }
 
-  abstract cleanup(): void
+  cleanup(): void {
+    this.npcs.forEach((npc) => npc.cleanup())
+    logger.info(`Cleaned up ${this.constructor.name}: ${this.name} (${this.id})`)
+  }
 }
 
 export class ElectionRoom extends Room {
@@ -173,26 +176,15 @@ export class ElectionRoom extends Room {
     })
     logger.info(`Initialized ElectionRoom: ${this.name} (${this.id})`)
   }
-
-  cleanup(): void {
-    this.npcs.forEach((npc) => npc.cleanup())
-    logger.info(`Cleaned up ElectionRoom: ${this.name} (${this.id})`)
-  }
 }
 
 export class ScavengerHuntRoom extends Room {
   initialize(): void {
-    // init only first 2
     npcConfig.slice(0, 2).forEach((config) => {
       const npc = new NPC(config, this.id, scavengerhuntPromptSystem)
       this.npcs.push(npc)
     })
     logger.info(`Initialized ScavengerHuntRoom: ${this.name} (${this.id})`)
-  }
-
-  cleanup(): void {
-    this.npcs.forEach((npc) => npc.cleanup())
-    logger.info(`Cleaned up ScavengerHuntRoom: ${this.name} (${this.id})`)
   }
 }
 
@@ -204,11 +196,6 @@ export class CharacterAIRoom extends Room {
     })
     logger.info(`Initialized CharacterAIRoom: ${this.name} (${this.id})`)
   }
-
-  cleanup(): void {
-    this.npcs.forEach((npc) => npc.cleanup())
-    logger.info(`Cleaned up CharacterAIRoom: ${this.name} (${this.id})`)
-  }
 }
 
 export class MurderDronesRoom extends Room {
@@ -219,11 +206,6 @@ export class MurderDronesRoom extends Room {
     })
     logger.info(`Initialized murderDronesNpcs: ${this.name} (${this.id})`)
   }
-
-  cleanup(): void {
-    this.npcs.forEach((npc) => npc.cleanup())
-    logger.info(`Cleaned up CharacterAIRoom: ${this.name} (${this.id})`)
-  }
 }
 
 export class HarryRoom extends Room {
@@ -233,9 +215,5 @@ export class HarryRoom extends Room {
       this.npcs.push(npc)
     })
     logger.info(`Initialized HarryRoom: ${this.name} (${this.id})`)
-  }
-
-  cleanup(): void {
-    logger.info(`Cleaned up HarryRoom: ${this.name} (${this.id})`)
   }
 }
