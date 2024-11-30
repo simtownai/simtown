@@ -12,7 +12,7 @@ import {
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
-import { CharacterAIRoom, ElectionRoom, MurderDronesRoom, Room, ScavengerHuntRoom } from "./rooms"
+import { CharacterAIRoom, ElectionRoom, HarryRoom, MurderDronesRoom, Room, ScavengerHuntRoom } from "./rooms"
 import { saveMessageToSupabase } from "./supabase"
 import cors from "cors"
 import express from "express"
@@ -39,6 +39,7 @@ const createGameRoom = (gameName: AvailableGames, roomId: string = uuidv4()): Ro
     scavengerhunt: (id: string) => new ScavengerHuntRoom(id, gameName, "private"),
     characterai: (id: string) => new CharacterAIRoom(id, gameName, "private"),
     murderdrones: (id: string) => new MurderDronesRoom(id, gameName, "private"),
+    harry: (id: string) => new HarryRoom(id, gameName, "private"),
   }
 
   const roomCreator = RoomTypes[gameName]

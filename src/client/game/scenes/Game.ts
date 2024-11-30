@@ -118,7 +118,7 @@ export class Game extends Phaser.Scene {
     this.uiContainer = this.add.container(0, 0)
 
     this.map = this.make.tilemap({ key: "map" })
-    const tileset = this.map.addTilesetImage("Modern_Exteriors_Complete_Tileset", "tiles")!
+    const tileset = this.map.addTilesetImage("great_hall", "harrypotter")!
 
     LAYER_CONFIG.map(({ name, depth }) => {
       const layer = this.map.createLayer(name, tileset)!

@@ -1,6 +1,11 @@
 import { NPC } from "../npc/client"
-import { murderDronesNpcs, npcConfig, npcConfigCharacterAI } from "../npc/npcConfig"
-import { characterAIPromptSystem, scavengerhuntPromptSystem, simtownPromptSystem } from "../npc/prompts"
+import { harryNpcs, murderDronesNpcs, npcConfig, npcConfigCharacterAI } from "../npc/npcConfig"
+import {
+  characterAIPromptSystem,
+  harryPromptSystem,
+  scavengerhuntPromptSystem,
+  simtownPromptSystem,
+} from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
@@ -218,5 +223,19 @@ export class MurderDronesRoom extends Room {
   cleanup(): void {
     this.npcs.forEach((npc) => npc.cleanup())
     logger.info(`Cleaned up CharacterAIRoom: ${this.name} (${this.id})`)
+  }
+}
+
+export class HarryRoom extends Room {
+  initialize(): void {
+    harryNpcs.forEach((config) => {
+      const npc = new NPC(config, this.id, harryPromptSystem)
+      this.npcs.push(npc)
+    })
+    logger.info(`Initialized HarryRoom: ${this.name} (${this.id})`)
+  }
+
+  cleanup(): void {
+    logger.info(`Cleaned up HarryRoom: ${this.name} (${this.id})`)
   }
 }

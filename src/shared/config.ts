@@ -1,4 +1,4 @@
-import mapData from "../../public/assets/maps/elections.json"
+import mapData from "../../public/assets/maps/hogwart.json"
 
 export const isDevelopment = process.env.NODE_ENV !== "production"
 
@@ -20,7 +20,7 @@ export const CONFIG = {
   COLLISION_LAYER_NAME: "COLLISIONS",
   ROADS_LAYER_NAME: "PREFERABLE PATHS",
   PLACES_LAYER_NAME: "PLACES",
-  SPAWN_PLACE_NAME: "CityCenter",
+  SPAWN_PLACE_NAME: "center",
   VOTING_PLACE_NAME: "LibertySquare",
-  DEFAULT_GAME: "characterai",
+  DEFAULT_GAME: "harry",
 }

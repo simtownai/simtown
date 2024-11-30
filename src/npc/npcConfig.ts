@@ -1,6 +1,16 @@
 import { createRandomSpriteDefinition } from "../shared/functions"
 import { PlayerSpriteDefinition } from "../shared/types"
-import { getCharacterPrompt, jackHughes, ralphMachio, robLowe, uzi } from "./backstoriesConfig"
+import {
+  dumbledore,
+  getCharacterPrompt,
+  harry,
+  jackHughes,
+  malfoy,
+  ralphMachio,
+  robLowe,
+  snape,
+  uzi,
+} from "./backstoriesConfig"
 
 export const ConversationTimeoutThreshold = 50000
 export const IdleActionDuration = 10000
@@ -873,6 +883,29 @@ export const npcConfigCharacterAI: NpcConfig[] = [
       "You are aware of your role as a physical presence on the ice and take pride in fulfilling it.",
       "You are driven to prove yourself as a reliable and impactful player at the NHL level.",
     ],
+  },
+]
+
+export const harryNpcs: NpcConfig[] = [
+  {
+    username: dumbledore.name,
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: [getCharacterPrompt(dumbledore)],
+  },
+  {
+    username: harry.name,
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: [getCharacterPrompt(harry)],
+  },
+  {
+    username: snape.name,
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: [getCharacterPrompt(snape)],
+  },
+  {
+    username: malfoy.name,
+    spriteDefinition: createRandomSpriteDefinition(),
+    backstory: [getCharacterPrompt(malfoy)],
   },
 ]
 

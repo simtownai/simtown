@@ -106,11 +106,8 @@ export class LoadingScene extends Scene {
       })
     })
 
-    this.load.tilemapTiledJSON("map", "assets/maps/elections.json")
-    this.load.image(
-      "tiles",
-      "assets/tiles/modernexteriors/Modern_Exteriors_16x16/Modern_Exteriors_Complete_Tileset.png",
-    )
+    this.load.tilemapTiledJSON("map", "assets/maps/hogwart.json")
+    this.load.image("harrypotter", "assets/tiles/great_hall.png")
     this.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
       frameWidth: 11,
       frameHeight: 11,

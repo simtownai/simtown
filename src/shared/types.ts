@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const availableGames = ["electiontown", "scavengerhunt", "characterai", "murderdrones"] as const
+export const availableGames = ["electiontown", "scavengerhunt", "characterai", "murderdrones", "harry"] as const
 
 export type AvailableGames = (typeof availableGames)[number]
 
