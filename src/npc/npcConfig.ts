@@ -880,22 +880,44 @@ export const npcConfigCharacterAI: NpcConfig[] = [
 export const harryNpcs: NpcConfig[] = [
   {
     username: dumbledore.name,
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_02",
+      eyes: "Eyes_07",
+      outfit: "Outfit_15_01",
+      hairstyle: "Hairstyle_23_05",
+      accessory: "Accessory_13_Beard_04",
+    },
     backstory: [getCharacterPrompt(dumbledore)],
   },
   {
     username: harry.name,
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_02",
+      eyes: "Eyes_07",
+      outfit: "Outfit_06_01",
+      hairstyle: "Hairstyle_01_04",
+      accessory: "Accessory_15_Glasses_06",
+    },
     backstory: [getCharacterPrompt(harry)],
   },
   {
     username: snape.name,
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_02",
+      eyes: "Eyes_01",
+      outfit: "Outfit_08_03",
+      hairstyle: "Hairstyle_07_02",
+    },
     backstory: [getCharacterPrompt(snape)],
   },
   {
     username: malfoy.name,
-    spriteDefinition: createRandomSpriteDefinition(),
+    spriteDefinition: {
+      body: "Body_02",
+      eyes: "Eyes_04",
+      outfit: "Outfit_06_03",
+      hairstyle: "Hairstyle_18_02",
+    },
     backstory: [getCharacterPrompt(malfoy)],
   },
 ]
