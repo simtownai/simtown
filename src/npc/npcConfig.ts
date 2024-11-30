@@ -14,7 +14,7 @@ import {
 } from "./backstoriesConfig"
 
 export const ConversationTimeoutThreshold = 50000
-export const IdleActionDuration = 10000
+export const IdleActionDuration = 30000
 
 export type NpcConfig = {
   backstory: string[]
@@ -886,6 +886,7 @@ export const harryNpcs: NpcConfig[] = [
       outfit: "Outfit_15_01",
       hairstyle: "Hairstyle_23_05",
       accessory: "Accessory_13_Beard_04",
+      book: "Book_01",
     },
     backstory: [getCharacterPrompt(dumbledore)],
   },
@@ -897,6 +898,7 @@ export const harryNpcs: NpcConfig[] = [
       outfit: "Outfit_06_01",
       hairstyle: "Hairstyle_01_04",
       accessory: "Accessory_15_Glasses_06",
+      book: "Book_02",
     },
     backstory: [getCharacterPrompt(harry)],
   },
@@ -907,6 +909,7 @@ export const harryNpcs: NpcConfig[] = [
       eyes: "Eyes_01",
       outfit: "Outfit_08_03",
       hairstyle: "Hairstyle_07_07",
+      book: "Book_05",
     },
     backstory: [getCharacterPrompt(snape)],
   },
@@ -917,6 +920,7 @@ export const harryNpcs: NpcConfig[] = [
       eyes: "Eyes_04",
       outfit: "Outfit_06_03",
       hairstyle: "Hairstyle_18_02",
+      book: "Book_03",
     },
     backstory: [getCharacterPrompt(malfoy)],
   },
