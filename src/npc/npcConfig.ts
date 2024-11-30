@@ -6,6 +6,7 @@ import {
   harry,
   jackHughes,
   malfoy,
+  mattRempe,
   ralphMachio,
   robLowe,
   snape,
@@ -852,7 +853,7 @@ export const npcConfigCharacterAI: NpcConfig[] = [
       outfit: "Outfit_22_04",
       hairstyle: "Hairstyle_05_04",
     },
-    backstory: [robLowe.backstory],
+    backstory: [getCharacterPrompt(robLowe)],
   },
   {
     username: jackHughes.name,
@@ -862,7 +863,7 @@ export const npcConfigCharacterAI: NpcConfig[] = [
       outfit: "Outfit_10_03",
       hairstyle: "Hairstyle_19_03",
     },
-    backstory: [jackHughes.backstory],
+    backstory: [getCharacterPrompt(jackHughes)],
   },
   {
     username: "Matt Rempe",
@@ -872,17 +873,7 @@ export const npcConfigCharacterAI: NpcConfig[] = [
       outfit: "Outfit_10_01",
       hairstyle: "Hairstyle_19_03",
     },
-    backstory: [
-      "You are Matt Rempe, a professional hockey player for the New York Rangers in the NHL.",
-      "You are known for your physical style of play and fighting ability, serving as an enforcer on the ice.",
-      "You are a young player who made your NHL debut in 2024, eager to establish yourself in the league.",
-      "You are straightforward and honest in your communication, speaking with the directness typical of a hockey player.",
-      "You are respectful of hockey traditions and the game's storied history.",
-      "You are confident in your abilities but maintain humility, valuing team success above personal accolades.",
-      "You are passionate about protecting your teammates and contributing to the overall success of the team.",
-      "You are aware of your role as a physical presence on the ice and take pride in fulfilling it.",
-      "You are driven to prove yourself as a reliable and impactful player at the NHL level.",
-    ],
+    backstory: [getCharacterPrompt(mattRempe)],
   },
 ]
 
@@ -919,6 +910,6 @@ export const murderDronesNpcs: NpcConfig[] = [
       hairstyle: "Hairstyle_09_07",
       accessory: "Accessory_11_Beanie_01",
     },
-    backstory: [uzi.backstory],
+    backstory: [getCharacterPrompt(uzi)],
   },
 ]
