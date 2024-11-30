@@ -134,9 +134,9 @@ const AIActionSchema = z.discriminatedUnion("type", [
   MoveSchema,
   TalkSchema,
   IdleSchema,
-  BroadcastSchema,
-  ListenSchema,
-  VoteSchema,
+  // BroadcastSchema,
+  // ListenSchema,
+  // VoteSchema,
 ])
 export const AIActionPlanSchema = z.array(AIActionSchema)
 export type AIAction = z.infer<typeof AIActionSchema>
