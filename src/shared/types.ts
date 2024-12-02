@@ -1,6 +1,16 @@
 import { PromptSystem } from "../npc/prompts"
 import { z } from "zod"
 
+export type MapConfig = {
+  mapJSONFilename: string
+  tilesetPNGFilename: string
+  collisionLayerName: string
+  roadsLayerName: string
+  placesLayerName: string
+  spawnPlaceName: string
+  votingPlaceName: string
+}
+
 export type NPCConfig = {
   username: string
   backstory: string[]
@@ -14,6 +24,7 @@ export type RoomConfig = {
   instanceType: RoomInstanceType
   NPCConfigs: NPCConfig[]
   promptSystem: PromptSystem
+  mapConfig: MapConfig
 }
 
 export const availableGames = ["electiontown", "characterai", "murderdrones", "harry"] as const
@@ -166,3 +177,67 @@ const FullActionSchema = z.discriminatedUnion("type", [
   VoteSchema,
 ])
 export type FullAction = z.infer<typeof FullActionSchema>
+
+export type MapData = {
+  compressionlevel: number
+  height: number
+  infinite: boolean
+  layers: Layer[]
+  nextlayerid: number
+  nextobjectid: number
+  orientation: string
+  renderorder: string
+  tiledversion: string
+  tileheight: number
+  tilesets: Tileset[]
+  tilewidth: number
+  type: string
+  version: string
+  width: number
+}
+
+export type Layer = {
+  data?: number[]
+  height?: number
+  id: number
+  name: string
+  opacity: number
+  type: Type
+  visible: boolean
+  width?: number
+  x: number
+  y: number
+  draworder?: string
+  objects?: Object[]
+}
+
+export type Object = {
+  height: number
+  id: number
+  name: string
+  rotation: number
+  type: string
+  visible: boolean
+  width: number
+  x: number
+  y: number
+}
+
+enum Type {
+  Objectgroup = "objectgroup",
+  Tilelayer = "tilelayer",
+}
+
+type Tileset = {
+  columns: number
+  firstgid: number
+  image: string
+  imageheight: number
+  imagewidth: number
+  margin: number
+  name: string
+  spacing: number
+  tilecount: number
+  tileheight: number
+  tilewidth: number
+}

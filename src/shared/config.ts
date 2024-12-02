@@ -1,5 +1,3 @@
-import mapData from "../../public/assets/maps/hogwart.json"
-
 export const isDevelopment = process.env.NODE_ENV !== "production"
 
 export const CONFIG = {
@@ -16,11 +14,5 @@ export const CONFIG = {
   VOTE_EVERY_N_HOURS: 24,
   ROOM_CLEANUP_TIMEOUT: 2 * 60 * 1000, // 2 minutes
   TARGET_DATE: new Date("2024-12-06T00:00:00Z"),
-  MAP_DATA: mapData,
-  COLLISION_LAYER_NAME: "COLLISIONS",
-  ROADS_LAYER_NAME: "PREFERABLE PATHS",
-  PLACES_LAYER_NAME: "PLACES",
-  SPAWN_PLACE_NAME: "Hall center",
-  VOTING_PLACE_NAME: "LibertySquare",
   DEFAULT_GAME: "harry",
 }
