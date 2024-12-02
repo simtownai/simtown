@@ -5,17 +5,23 @@ import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
 import {
   GridPosition,
+  MapConfig,
+  MapData,
   NPCConfig,
   NewsItem,
+  Object,
   PlayerData,
   PlayerSpriteDefinition,
   UpdatePlayerData,
   VoteCandidate,
 } from "../shared/types"
+import * as fs from "fs"
 
 export class Room {
   protected id: string
   protected name: string
+  protected mapConfig: MapConfig
+  protected mapData: MapData
   protected players: Map<string, PlayerData>
   protected NPCConfigs: NPCConfig[]
   protected npcs: NPC[]
@@ -23,12 +29,13 @@ export class Room {
   protected created: Date
   protected newsPaper: NewsItem[]
   protected voteResults: Map<string, VoteCandidate>[]
-  protected places: (typeof CONFIG.MAP_DATA.layers)[0]["objects"]
-  protected spawnArea: NonNullable<NonNullable<(typeof CONFIG.MAP_DATA.layers)[0]["objects"]>[0]>
+  protected places: Object[]
+  protected spawnArea: Object
 
-  constructor(id: string, name: string, NPCConfigs: NPCConfig[], promptSystem: PromptSystem) {
+  constructor(id: string, name: string, mapConfig: MapConfig, NPCConfigs: NPCConfig[], promptSystem: PromptSystem) {
     this.id = id
     this.name = name
+    this.mapConfig = mapConfig
     this.NPCConfigs = NPCConfigs
     this.promptSystem = promptSystem
     this.players = new Map()
@@ -36,16 +43,24 @@ export class Room {
     this.created = new Date()
     this.newsPaper = []
     this.voteResults = [new Map()]
-    this.places = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
-    this.spawnArea = this.places.find((obj) => obj.name === CONFIG.SPAWN_PLACE_NAME)!
+
+    // ToDo: maybe add cache for json files and load them from cache
+    this.mapData = JSON.parse(fs.readFileSync(`./public/assets/maps/${this.mapConfig.mapJSONFilename}.json`, "utf8"))
+
+    this.places = this.mapData.layers.find((layer) => layer.name === this.mapConfig.placesLayerName)!.objects!
+    this.spawnArea = this.places.find((obj) => obj.name === this.mapConfig.spawnPlaceName)!
   }
 
   initialize(): void {
     this.NPCConfigs.forEach((config) => {
-      const npc = new NPC(config, this.id, this.promptSystem)
+      const npc = new NPC(config, this.id, this.promptSystem, this.mapConfig, this.mapData)
       this.npcs.push(npc)
     })
     logger.info(`Initialized '${this.constructor.name}' with name '${this.name}' and id '${this.id}'`)
+  }
+
+  getMapConfig(): MapConfig {
+    return this.mapConfig
   }
 
   getId(): string {
@@ -68,7 +83,7 @@ export class Room {
     return this.players
   }
 
-  getPlaces(): (typeof CONFIG.MAP_DATA.layers)[0]["objects"] {
+  getPlaces(): Object[] {
     return this.places
   }
 

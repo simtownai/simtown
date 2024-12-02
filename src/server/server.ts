@@ -1,8 +1,8 @@
 import { CONFIG } from "../shared/config"
 import { calculateDistance, getDaysRemaining, getGameTime, isInZone } from "../shared/functions"
 import logger from "../shared/logger"
+import { roomsConfig } from "../shared/roomConfig"
 import {
-  AvailableGames,
   BroadcastMessage,
   ChatMessage,
   NewsItem,
@@ -13,7 +13,6 @@ import {
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
-import { roomsConfig } from "./roomConfig"
 import { Room } from "./rooms"
 import { saveMessageToSupabase } from "./supabase"
 import cors from "cors"
@@ -36,7 +35,7 @@ const io = new Server(server, {
 const rooms: Map<string, Room> = new Map()
 
 const createGameRoom = (roomConfig: RoomConfig, roomId: string = uuidv4()): Room | null => {
-  const room = new Room(roomId, roomConfig.path, roomConfig.NPCConfigs, roomConfig.promptSystem)
+  const room = new Room(roomId, roomConfig.path, roomConfig.mapConfig, roomConfig.NPCConfigs, roomConfig.promptSystem)
   room.initialize()
 
   if (roomConfig.path === "electiontown") {
@@ -389,7 +388,7 @@ function sendVotingReminder(room: Room) {
   const newsItem: NewsItem = {
     date: getGameTime().toISOString(),
     message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader! Only ${getDaysRemaining()} game days left.`,
-    place: CONFIG.VOTING_PLACE_NAME,
+    place: room.getMapConfig().votingPlaceName,
   }
   room.addNewsItem(newsItem)
   io.to(room.getId()).emit("news", newsItem)
