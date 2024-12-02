@@ -1,8 +1,9 @@
 # ToDo
 
-- rooms
-  - action subset (special room type)
-- scavenger hunt
+- finish thread when end conversation or disconnect + fix history logging
+- action subset (special room type); to elimiated broadcasting and voting
+- custom map + characters for the community
+- idling
 - uncensored models (try gpt jailbreak)
 - tutorial cookie on onboard
 - observer interface
@@ -12,6 +13,7 @@
   - eat
   - rest (idle idle)
 - minimap
+- creating NPCs
 
 - (Szymon) hunt down TalkAction bugs
   - NPCs are far from each other when start talking
@@ -33,6 +35,11 @@
   - rotate to incoming messages if idle
 - (Alex) player can only write to NPC if within range
 
+- laggy on weak devices
+  - on android mobile, there is a black background instead of a map when using WebGL renderer
+  - `WARNING: texture bound to texture unit 0 is not renderable. It might be non-power-of-2 or have incompatible texture filtering (maybe)?`
+  - This happens because tileset image `assets/tiles/modernexteriors/Modern_Exteriors_16x16/Modern_Exteriors_Complete_Tileset.png` is 2816x6304 which is bigger than 4096
+  - so weak devices now use canvas instead of webgl, but canvas is inefficient
 - Freeze on movement
   - probably because no actions left
 - Generate first message with the talk action
