@@ -2,12 +2,12 @@ import { CONFIG } from "../shared/config"
 import { getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
 import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
+import { NPCConfig } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
 import { TIMEOUT_MESSAGE, TalkAction } from "./actions/TalkAction"
 import { AIBrain } from "./brain/AIBrain"
-import { NpcConfig, npcConfig } from "./npcConfig"
 import { PromptSystem } from "./prompts"
 
 export class NPC {
@@ -23,7 +23,7 @@ export class NPC {
   private updateLoopInterval: NodeJS.Timeout | null = null
 
   constructor(
-    private npcConfig: NpcConfig,
+    private npcConfig: NPCConfig,
     private roomId: string,
     private promptSystem: PromptSystem,
   ) {

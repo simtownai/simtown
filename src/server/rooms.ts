@@ -1,16 +1,11 @@
 import { NPC } from "../npc/client"
-import { harryNpcs, murderDronesNpcs, npcConfig, npcConfigCharacterAI } from "../npc/npcConfig"
-import {
-  characterAIPromptSystem,
-  harryPromptSystem,
-  scavengerhuntPromptSystem,
-  simtownPromptSystem,
-} from "../npc/prompts"
+import { PromptSystem } from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
 import {
   GridPosition,
+  NPCConfig,
   NewsItem,
   PlayerData,
   PlayerSpriteDefinition,
@@ -18,22 +13,24 @@ import {
   VoteCandidate,
 } from "../shared/types"
 
-export abstract class Room {
+export class Room {
   protected id: string
   protected name: string
-  protected instanceType: "shared" | "private"
   protected players: Map<string, PlayerData>
+  protected NPCConfigs: NPCConfig[]
   protected npcs: NPC[]
+  protected promptSystem: PromptSystem
   protected created: Date
   protected newsPaper: NewsItem[]
   protected voteResults: Map<string, VoteCandidate>[]
   protected places: (typeof CONFIG.MAP_DATA.layers)[0]["objects"]
   protected spawnArea: NonNullable<NonNullable<(typeof CONFIG.MAP_DATA.layers)[0]["objects"]>[0]>
 
-  constructor(id: string, name: string, instanceType: "shared" | "private") {
+  constructor(id: string, name: string, NPCConfigs: NPCConfig[], promptSystem: PromptSystem) {
     this.id = id
     this.name = name
-    this.instanceType = instanceType
+    this.NPCConfigs = NPCConfigs
+    this.promptSystem = promptSystem
     this.players = new Map()
     this.npcs = []
     this.created = new Date()
@@ -43,10 +40,12 @@ export abstract class Room {
     this.spawnArea = this.places.find((obj) => obj.name === CONFIG.SPAWN_PLACE_NAME)!
   }
 
-  abstract initialize(): void
-
-  getInstanceType(): "shared" | "private" {
-    return this.instanceType
+  initialize(): void {
+    this.NPCConfigs.forEach((config) => {
+      const npc = new NPC(config, this.id, this.promptSystem)
+      this.npcs.push(npc)
+    })
+    logger.info(`Initialized '${this.constructor.name}' with name '${this.name}' and id '${this.id}'`)
   }
 
   getId(): string {
@@ -165,55 +164,5 @@ export abstract class Room {
   cleanup(): void {
     this.npcs.forEach((npc) => npc.cleanup())
     logger.info(`Cleaned up ${this.constructor.name}: ${this.name} (${this.id})`)
-  }
-}
-
-export class ElectionRoom extends Room {
-  initialize(): void {
-    npcConfig.forEach((config) => {
-      const npc = new NPC(config, this.id, simtownPromptSystem)
-      this.npcs.push(npc)
-    })
-    logger.info(`Initialized ElectionRoom: ${this.name} (${this.id})`)
-  }
-}
-
-export class ScavengerHuntRoom extends Room {
-  initialize(): void {
-    npcConfig.slice(0, 2).forEach((config) => {
-      const npc = new NPC(config, this.id, scavengerhuntPromptSystem)
-      this.npcs.push(npc)
-    })
-    logger.info(`Initialized ScavengerHuntRoom: ${this.name} (${this.id})`)
-  }
-}
-
-export class CharacterAIRoom extends Room {
-  initialize(): void {
-    npcConfigCharacterAI.forEach((config) => {
-      const npc = new NPC(config, this.id, characterAIPromptSystem)
-      this.npcs.push(npc)
-    })
-    logger.info(`Initialized CharacterAIRoom: ${this.name} (${this.id})`)
-  }
-}
-
-export class MurderDronesRoom extends Room {
-  initialize(): void {
-    murderDronesNpcs.forEach((config) => {
-      const npc = new NPC(config, this.id, characterAIPromptSystem)
-      this.npcs.push(npc)
-    })
-    logger.info(`Initialized murderDronesNpcs: ${this.name} (${this.id})`)
-  }
-}
-
-export class HarryRoom extends Room {
-  initialize(): void {
-    harryNpcs.forEach((config) => {
-      const npc = new NPC(config, this.id, harryPromptSystem)
-      this.npcs.push(npc)
-    })
-    logger.info(`Initialized HarryRoom: ${this.name} (${this.id})`)
   }
 }

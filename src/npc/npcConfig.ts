@@ -1,5 +1,5 @@
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { PlayerSpriteDefinition } from "../shared/types"
+import { NPCConfig } from "../shared/types"
 import {
   dumbledore,
   getCharacterPrompt,
@@ -15,12 +15,6 @@ import {
 
 export const ConversationTimeoutThreshold = 50000
 export const IdleActionDuration = 30000
-
-export type NpcConfig = {
-  backstory: string[]
-  username: string
-  spriteDefinition: PlayerSpriteDefinition
-}
 
 export interface SuggestedAction {
   title: string
@@ -565,9 +559,7 @@ Remember that as Uzi, you should maintain your core personality traits while all
   },
 ]
 
-export const DEFAULT_CHARACTER = characters[0]
-
-export const npcConfig: NpcConfig[] = [
+export const electiontownNPCConfigs: NPCConfig[] = [
   {
     username: "Donald",
     spriteDefinition: {
@@ -834,7 +826,7 @@ export const npcConfig: NpcConfig[] = [
   },
 ]
 
-export const npcConfigCharacterAI: NpcConfig[] = [
+export const characteraiNPCConfigs: NPCConfig[] = [
   {
     username: ralphMachio.name,
     spriteDefinition: {
@@ -877,7 +869,7 @@ export const npcConfigCharacterAI: NpcConfig[] = [
   },
 ]
 
-export const harryNpcs: NpcConfig[] = [
+export const harryNPCConfigs: NPCConfig[] = [
   {
     username: dumbledore.name,
     spriteDefinition: {
@@ -926,7 +918,7 @@ export const harryNpcs: NpcConfig[] = [
   },
 ]
 
-export const murderDronesNpcs: NpcConfig[] = [
+export const murderdronesNPCConfigs: NPCConfig[] = [
   {
     username: uzi.name,
     spriteDefinition: {

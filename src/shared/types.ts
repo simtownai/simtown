@@ -1,7 +1,22 @@
+import { PromptSystem } from "../npc/prompts"
 import { z } from "zod"
 
-export const availableGames = ["electiontown", "scavengerhunt", "characterai", "murderdrones", "harry"] as const
+export type NPCConfig = {
+  username: string
+  backstory: string[]
+  spriteDefinition: PlayerSpriteDefinition
+}
 
+export type RoomInstanceType = "shared" | "private"
+
+export type RoomConfig = {
+  path: AvailableGames
+  instanceType: RoomInstanceType
+  NPCConfigs: NPCConfig[]
+  promptSystem: PromptSystem
+}
+
+export const availableGames = ["electiontown", "characterai", "murderdrones", "harry"] as const
 export type AvailableGames = (typeof availableGames)[number]
 
 export type PlayerSpriteDefinition = {

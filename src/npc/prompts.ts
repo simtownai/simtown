@@ -113,20 +113,8 @@ export class PromptSystem {
   }
 }
 
-class SimtownPromptSystem extends PromptSystem {}
+class ElectiontownPromptSystem extends PromptSystem {}
 
-// Subclass for the scavenger hunt prompt system
-class ScavengerHuntPromptSystem extends PromptSystem {
-  constructBasePrompt(reflections: StringifiedBrainDump): string {
-    return `
-      You are playing a role of ${reflections.name} in a scavenger hunt game. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
-
-      ${this.constructObservationPrompt(reflections)}
-    `
-  }
-}
-
-// New subclass for the Character AI prompt system
 class CharacterAIPromptSystem extends PromptSystem {
   constructObservationPrompt(reflections: StringifiedBrainDump): string {
     return `
@@ -289,7 +277,6 @@ If ending the conversation, provide a character-consistent reason, such as needi
   }
 }
 
-export const harryPromptSystem = new HarryPromptSystem()
+export const electiontownPromptSystem = new ElectiontownPromptSystem()
 export const characterAIPromptSystem = new CharacterAIPromptSystem()
-export const simtownPromptSystem = new SimtownPromptSystem()
-export const scavengerhuntPromptSystem = new ScavengerHuntPromptSystem()
+export const harryPromptSystem = new HarryPromptSystem()

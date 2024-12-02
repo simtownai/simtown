@@ -8,11 +8,13 @@ import {
   NewsItem,
   PlayerData,
   PlayerSpriteDefinition,
+  RoomConfig,
   UpdatePlayerData,
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
-import { CharacterAIRoom, ElectionRoom, HarryRoom, MurderDronesRoom, Room, ScavengerHuntRoom } from "./rooms"
+import { roomsConfig } from "./roomConfig"
+import { Room } from "./rooms"
 import { saveMessageToSupabase } from "./supabase"
 import cors from "cors"
 import express from "express"
@@ -33,20 +35,13 @@ const io = new Server(server, {
 
 const rooms: Map<string, Room> = new Map()
 
-const createGameRoom = (gameName: AvailableGames, roomId: string = uuidv4()): Room | null => {
-  const RoomTypes = {
-    electiontown: (id: string) => new ElectionRoom(id, gameName, "shared"),
-    scavengerhunt: (id: string) => new ScavengerHuntRoom(id, gameName, "private"),
-    characterai: (id: string) => new CharacterAIRoom(id, gameName, "private"),
-    murderdrones: (id: string) => new MurderDronesRoom(id, gameName, "private"),
-    harry: (id: string) => new HarryRoom(id, gameName, "private"),
-  }
-
-  const roomCreator = RoomTypes[gameName]
-  if (!roomCreator) return null
-
-  const room = roomCreator(roomId)
+const createGameRoom = (roomConfig: RoomConfig, roomId: string = uuidv4()): Room | null => {
+  const room = new Room(roomId, roomConfig.path, roomConfig.NPCConfigs, roomConfig.promptSystem)
   room.initialize()
+
+  if (roomConfig.path === "electiontown") {
+    initializeVotingNotifications(room)
+  }
 
   setTimeout(() => {
     if (room.getRealPlayerCount() === 0) {
@@ -62,17 +57,22 @@ io.on("connection", (socket) => {
   const playerId = socket.id
   let currentRoom: Room | null = null
 
-  socket.on("createRoom", (gameName: AvailableGames, callback: (roomId: string | null) => void) => {
-    if (gameName === "electiontown") {
-      let room = Array.from(rooms.values()).find((r) => r.getName() === gameName && r.getInstanceType() === "shared")
+  socket.on("createRoom", (gameName: string, callback: (roomId: string | null) => void) => {
+    const roomConfig = roomsConfig.find((config) => config.path === gameName)
+    if (!roomConfig) {
+      callback(null)
+      return
+    }
+
+    if (roomConfig.instanceType === "shared") {
+      let room = Array.from(rooms.values()).find((r) => r.getName() === gameName)
       if (!room) {
-        room = createGameRoom(gameName)!
+        room = createGameRoom(roomConfig)!
         rooms.set(room.getId(), room)
-        initializeVotingNotifications(room)
       }
       callback(room.getId())
     } else {
-      const room = createGameRoom(gameName)
+      const room = createGameRoom(roomConfig)
       if (!room) {
         callback(null)
         return
