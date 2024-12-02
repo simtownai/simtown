@@ -83,6 +83,7 @@ export class NPC {
             places: Array.from(this.places.keys()),
             getEmitMethods: () => this.socketManager.getEmitMethods(),
             adjustDirection: (username: string) => this.adjustDirection(username),
+            mapConfig: this.mapConfig,
           })
 
           this.aiBrain.generatePlanAndSetActions()

@@ -1,5 +1,4 @@
-// Brain.ts
-import { NpcConfig } from "../../npcConfig"
+import { NPCConfig } from "../../../shared/types"
 import { ConversationMemory } from "./ConversationMemory"
 
 class Memory {
@@ -7,7 +6,7 @@ class Memory {
   conversations: ConversationMemory
   reflections: string[]
 
-  constructor(npcConfig: NpcConfig) {
+  constructor(npcConfig: NPCConfig) {
     this.backstory = npcConfig.backstory.join("/n")
     this.reflections = []
     this.conversations = new ConversationMemory()

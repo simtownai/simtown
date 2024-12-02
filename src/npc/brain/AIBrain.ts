@@ -2,17 +2,18 @@ import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
 import {
   ChatMessage,
+  MapConfig,
   NewsItem,
   PlayerData,
   UpdatePlayerData,
   VoteCandidate,
   availableVoteCandidates,
 } from "../../shared/types"
+import { NPCConfig } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
 import { MoveAction } from "../actions/MoveAction"
-import { NpcConfig } from "../npcConfig"
 import { generatePlanForTheday } from "../plan/generatePlan"
 import {
   convertActionToGeneratedAction,
@@ -54,7 +55,7 @@ export type BrainDump = {
 
 type AIBrainInterface = {
   getPlayerData: () => PlayerData
-  config: NpcConfig
+  config: NPCConfig
   getOtherPlayers: () => Map<string, PlayerData>
   getNewsPaper: () => NewsItem[]
   getBroadcastAnnouncements: () => Set<string>
@@ -63,11 +64,12 @@ type AIBrainInterface = {
   places: string[]
   getEmitMethods: () => EmitInterface
   adjustDirection: (username: string) => void
+  mapConfig: MapConfig
 }
 
 export class AIBrain {
   private memory: Memory
-  private npcConfig: NpcConfig
+  private npcConfig: NPCConfig
   private actionQueue: Action[] = []
   private currentAction: Action | null = null
   private isProcessingAction: boolean = false
@@ -80,6 +82,7 @@ export class AIBrain {
   private getEmitMethods: () => EmitInterface
   private getPromptSystem: () => PromptSystem
   private adjustDirection: (username: string) => void
+  private mapConfig: MapConfig
 
   constructor(args: AIBrainInterface) {
     this.getEmitMethods = args.getEmitMethods
@@ -93,6 +96,7 @@ export class AIBrain {
     this.getMovementController = args.getMovementController
     this.getPromptSystem = args.getPromptSystem
     this.adjustDirection = args.adjustDirection
+    this.mapConfig = args.mapConfig
   }
 
   async generatePlanAndSetActions() {
@@ -119,6 +123,7 @@ export class AIBrain {
         this.getMovementController(),
         this.adjustDirection,
         this.getPromptSystem(),
+        this.mapConfig,
       )
     } catch (error) {
       logger.error(`(${this.getPlayerData().username}) Error generating new plan:`, error)

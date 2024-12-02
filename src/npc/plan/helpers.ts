@@ -1,7 +1,6 @@
-import { CONFIG } from "../../shared/config"
 import { getBroadcastAnnouncementsKey, getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
-import { AIAction, AIActionPlan, FullAction, NewsItem } from "../../shared/types"
+import { AIAction, AIActionPlan, FullAction, MapConfig, NewsItem } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -64,6 +63,7 @@ export const convertGeneratedPlanToActions = (
   movementController: MovementController,
   adjustDirection: (username: string) => void,
   promptSystem: PromptSystem,
+  mapConfig: MapConfig,
 ): Action[] => {
   // Define a type for all possible action combinations
   type ActionResult = Action | Action[]
@@ -80,7 +80,7 @@ export const convertGeneratedPlanToActions = (
     }
   }
 
-  const actions: ActionResult[] = planData.map((actionData: AIAction): ActionResult => {
+  const actions: ActionResult[] = planData.map((actionData: FullAction): ActionResult => {
     let moveAction: MoveAction
 
     switch (actionData.type) {
@@ -157,7 +157,7 @@ export const convertGeneratedPlanToActions = (
           getBrainDump,
           getEmitMethods,
           movementController,
-          { targetType: "place", name: CONFIG.VOTING_PLACE_NAME },
+          { targetType: "place", name: mapConfig.votingPlaceName },
           `Moving before voting`,
           false,
         )
