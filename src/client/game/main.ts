@@ -1,4 +1,4 @@
-import { PlayerSpriteDefinition } from "../../shared/types"
+import { MapConfig, PlayerSpriteDefinition } from "../../shared/types"
 import { Game } from "./scenes/Game"
 import { LoadingScene } from "./scenes/LoadingScene"
 import { Socket } from "socket.io-client"
@@ -47,6 +47,7 @@ const config: Phaser.Types.Core.GameConfig = {
 const StartGame = (
   parent: string,
   socket: Socket,
+  mapConfig: MapConfig,
   username: string,
   spriteDefinition: PlayerSpriteDefinition,
   roomId: string,
@@ -54,7 +55,7 @@ const StartGame = (
   const gameConfig = {
     ...config,
     parent,
-    scene: [new LoadingScene(), new Game(socket, username, spriteDefinition, roomId)],
+    scene: [new LoadingScene(mapConfig), new Game(socket, mapConfig, username, spriteDefinition, roomId)],
   }
   return new Phaser.Game(gameConfig)
 }

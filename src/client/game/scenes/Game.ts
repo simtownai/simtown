@@ -1,6 +1,6 @@
 import { CONFIG } from "../../../shared/config"
 import { getTextFromAction } from "../../../shared/functions"
-import { PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { MapConfig, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { AudioManager } from "./AudioManager"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
@@ -48,6 +48,7 @@ interface OtherPlayerData {
 
 export class Game extends Phaser.Scene {
   private socket: Socket
+  private mapConfig: MapConfig
   private map!: Phaser.Tilemaps.Tilemap
   private collisionLayer!: Phaser.Tilemaps.TilemapLayer
   private playerSprite!: Phaser.Physics.Arcade.Sprite
@@ -86,9 +87,16 @@ export class Game extends Phaser.Scene {
 
   private roomId: string
 
-  constructor(socket: Socket, username: string, spriteDefinition: PlayerSpriteDefinition, roomId: string) {
+  constructor(
+    socket: Socket,
+    mapConfig: MapConfig,
+    username: string,
+    spriteDefinition: PlayerSpriteDefinition,
+    roomId: string,
+  ) {
     super({ key: "Game" })
     this.socket = socket
+    this.mapConfig = mapConfig
     this.username = username
     this.spriteDefinition = spriteDefinition
     this.roomId = roomId
@@ -118,12 +126,12 @@ export class Game extends Phaser.Scene {
     this.uiContainer = this.add.container(0, 0)
 
     this.map = this.make.tilemap({ key: "map" })
-    const tileset = this.map.addTilesetImage("great_hall", "harrypotter")!
+    const tileset = this.map.addTilesetImage(this.mapConfig.tilesetPNGFilename, "tileset")!
 
     LAYER_CONFIG.map(({ name, depth }) => {
       const layer = this.map.createLayer(name, tileset)!
       layer.setDepth(depth)
-      if (name === CONFIG.COLLISION_LAYER_NAME) {
+      if (name === this.mapConfig.collisionLayerName) {
         this.collisionLayer = layer
         this.collisionLayer.setCollisionByExclusion([-1])
         this.collisionLayer.setVisible(false)

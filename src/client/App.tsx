@@ -1,9 +1,11 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
+import { roomsConfig } from "../shared/roomConfig"
 import {
   AvailableGames,
   BroadcastMessage,
   ChatMessage,
+  MapConfig,
   NewsItem,
   PlayerData,
   PlayerSpriteDefinition,
@@ -43,6 +45,8 @@ function App() {
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
   const [roomName, setRoomName] = useState<AvailableGames | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
+
+  const [mapConfig, setMapConfig] = useState<MapConfig | null>(null)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -100,6 +104,8 @@ function App() {
           setRoomId(initialRoomId)
           tempSocket.disconnect()
         }
+
+        setMapConfig(roomsConfig.find((room) => room.path === gameName)!.mapConfig)
       })
     })
 
@@ -307,10 +313,15 @@ function App() {
     return <div>Getting room id...</div>
   }
 
+  if (!mapConfig) {
+    return <div>Map config is not set yet...</div>
+  }
+
   return (
     <>
       <PhaserGame
         ref={phaserRef}
+        mapConfig={mapConfig}
         username={username}
         spriteDefinition={spriteDefinition}
         socket={socket}

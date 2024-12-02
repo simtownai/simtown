@@ -1,4 +1,5 @@
 import { CONFIG } from "../../../shared/config"
+import { MapConfig } from "../../../shared/types"
 import { Scene } from "phaser"
 
 export class LoadingScene extends Scene {
@@ -8,7 +9,7 @@ export class LoadingScene extends Scene {
   private percentText!: Phaser.GameObjects.Text
   private assetText!: Phaser.GameObjects.Text
 
-  constructor() {
+  constructor(private mapConfig: MapConfig) {
     super({ key: "LoadingScene" })
   }
 
@@ -106,8 +107,8 @@ export class LoadingScene extends Scene {
       })
     })
 
-    this.load.tilemapTiledJSON("map", "assets/maps/hogwart.json")
-    this.load.image("harrypotter", "assets/tiles/great_hall.png")
+    this.load.tilemapTiledJSON("map", `assets/maps/${this.mapConfig.mapJSONFilename}.json`)
+    this.load.image("tileset", `assets/tiles/${this.mapConfig.tilesetPNGFilename}.png`)
     this.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
       frameWidth: 11,
       frameHeight: 11,
