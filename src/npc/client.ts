@@ -1,7 +1,7 @@
 import { CONFIG } from "../shared/config"
 import { getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
-import { ChatMessage, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
+import { ChatMessage, MapConfig, MapData, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
 import { NPCConfig } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
@@ -26,8 +26,9 @@ export class NPC {
     private npcConfig: NPCConfig,
     private roomId: string,
     private promptSystem: PromptSystem,
+    private mapConfig: MapConfig,
+    private mapData: MapData,
   ) {
-    this.roomId = roomId
     this.otherPlayers = new Map<string, PlayerData>()
     this.newsPaper = []
     this.broadcastAnnouncements = new Set<string>()
@@ -54,6 +55,8 @@ export class NPC {
       if (player.id === playerId) {
         this.playerData = player
         this.movementController = new MovementController(
+          this.mapConfig,
+          this.mapData,
           () => this.playerData,
           () => this.otherPlayers,
           this.sendMoveMessage.bind(this),
@@ -272,7 +275,7 @@ export class NPC {
   }
 
   setupPlaces() {
-    const places = CONFIG.MAP_DATA.layers.find((layer) => layer.name === CONFIG.PLACES_LAYER_NAME)!.objects!
+    const places = this.mapData.layers.find((layer) => layer.name === this.mapConfig.placesLayerName)!.objects!
 
     this.places = new Map(
       places
