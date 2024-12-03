@@ -26,8 +26,9 @@ const ResponseSchema = z.object({
 })
 
 const validateActions =
-  (places: string, playerNames: string, getBrainDump: () => BrainDump) =>
+  (places: string, getBrainDump: () => BrainDump) =>
   (response: z.infer<typeof ResponseSchema>): { isValid: boolean; error?: string } => {
+    const playerNames = Array.from(getBrainDump().otherPlayers.values()).map((player) => player.username)
     const plan = response.plan
     for (const action of plan) {
       if (action.type === "broadcast") {
@@ -126,7 +127,7 @@ export const generatePlanForTheday = async (
   const response = await generateJson(
     prompt,
     ResponseSchema,
-    validateActions(stringifiedBrainDump.placesNames, stringifiedBrainDump.playerNames, getBrainDump),
+    validateActions(stringifiedBrainDump.placesNames, getBrainDump),
   )
 
   return response.plan
