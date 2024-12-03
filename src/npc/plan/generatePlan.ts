@@ -1,5 +1,5 @@
 import { getBroadcastAnnouncementsKey } from "../../shared/functions"
-import { AIActionPlan, AIActionPlanSchema } from "../../shared/types"
+import { AIActionPlan, AvailableActionSchema } from "../../shared/types"
 import { BrainDump, StringifiedBrainDump } from "../brain/AIBrain"
 import { generateJson } from "../openai/generateJson"
 import { PromptSystem } from "../prompts"
@@ -21,13 +21,21 @@ function getBroadcastAnnouncementPlace(broadcastAnnouncementsCache: Set<string>,
   )
 }
 
-const ResponseSchema = z.object({
-  plan: AIActionPlanSchema,
-})
+function getResponseSchema(availableActions: AvailableActionSchema[]) {
+  if (availableActions.length === 0) {
+    throw new Error("availableActions must contain at least one action schema.")
+  }
+
+  return z.object({
+    plan: z.array(
+      z.discriminatedUnion("type", availableActions as [(typeof availableActions)[0], ...typeof availableActions]),
+    ),
+  })
+}
 
 const validateActions =
   (places: string, getBrainDump: () => BrainDump) =>
-  (response: z.infer<typeof ResponseSchema>): { isValid: boolean; error?: string } => {
+  (response: { plan: AIActionPlan }): { isValid: boolean; error?: string } => {
     const playerNames = Array.from(getBrainDump().otherPlayers.values()).map((player) => player.username)
     const plan = response.plan
     for (const action of plan) {
@@ -93,7 +101,7 @@ const validateActions =
           }
         }
       }
-      if (action.type === "move" && action.target.targetType !== "coordinates") {
+      if (action.type == "movetoperson" || action.type == "movetoplace") {
         if (action.target.targetType === "place" && !places.includes(action.target.name)) {
           return {
             isValid: false,
@@ -126,7 +134,7 @@ export const generatePlanForTheday = async (
 
   const response = await generateJson(
     prompt,
-    ResponseSchema,
+    getResponseSchema(getBrainDump().availableActions),
     validateActions(stringifiedBrainDump.placesNames, getBrainDump),
   )
 

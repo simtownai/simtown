@@ -15,6 +15,7 @@ export type NPCConfig = {
   username: string
   backstory: string[]
   spriteDefinition: PlayerSpriteDefinition
+  availableActions: AvailableActionSchema[]
 }
 
 export type RoomInstanceType = "shared" | "private"
@@ -89,61 +90,59 @@ export type NewsItem = {
   isRead?: boolean
 }
 
-const MoveToCoordinatesTargetSchema = z.object({
-  targetType: z.literal("coordinates"),
-  x: z.number(),
-  y: z.number(),
-})
-const MoveToPersonTargetSchema = z.object({
-  targetType: z.literal("person"),
-  name: z.string(),
-})
-const MoveToPlaceTargetSchema = z.object({
-  targetType: z.literal("place"),
-  name: z.string(),
-})
-export type MoveTargetPlace = z.infer<typeof MoveToPlaceTargetSchema>
+/*
+ *
+ * Actions
+ *
+ */
 
-const MoveTargetWithPerson = z.discriminatedUnion("targetType", [
-  MoveToCoordinatesTargetSchema,
-  MoveToPersonTargetSchema,
-  MoveToPlaceTargetSchema,
+export const MoveToCoordinatesSchema = z.object({
+  type: z.literal("movetocoordinates"),
+  target: z.object({
+    targetType: z.literal("coordinates"),
+    x: z.number(),
+    y: z.number(),
+  }),
+})
+export const MoveToPersonSchema = z.object({
+  type: z.literal("movetoperson"),
+  target: z.object({
+    targetType: z.literal("person"),
+    name: z.string(),
+  }),
+})
+export const MoveToPlaceSchema = z.object({
+  type: z.literal("movetoplace"),
+  target: z.object({
+    targetType: z.literal("place"),
+    name: z.string(),
+  }),
+})
+const MoveTarget = z.discriminatedUnion("targetType", [
+  MoveToCoordinatesSchema.shape.target,
+  MoveToPersonSchema.shape.target,
+  MoveToPlaceSchema.shape.target,
 ])
-export type MoveTarget = z.infer<typeof MoveTargetWithPerson>
+export type MoveTarget = z.infer<typeof MoveTarget>
 
-const MoveTargetSchemaNoPerson = z.discriminatedUnion("targetType", [
-  MoveToCoordinatesTargetSchema,
-  MoveToPlaceTargetSchema,
-])
-
-const MoveSchema = z.object({
-  type: z.literal("move"),
-  target: MoveTargetSchemaNoPerson,
-})
-
-const MoveSchemaWithPerson = z.object({
-  type: z.literal("move"),
-  target: MoveTargetWithPerson,
-})
-
-const TalkSchema = z.object({
+export const TalkSchema = z.object({
   type: z.literal("talk"),
   name: z.string(),
 })
 
 const IdleActivityTypeSchema = z.enum(["idle", "read"])
 export type IdleActivityType = z.infer<typeof IdleActivityTypeSchema>
-
-const IdleSchema = z.object({
+export const IdleSchema = z.object({
   type: z.literal("idle"),
   activityType: IdleActivityTypeSchema,
 })
-const BroadcastSchema = z.object({
+
+export const BroadcastSchema = z.object({
   type: z.literal("broadcast"),
   targetPlace: z.string(),
 })
 
-const ListenSchema = z.object({
+export const ListenSchema = z.object({
   type: z.literal("listen"),
   targetPlace: z.string(),
 })
@@ -151,32 +150,39 @@ const ListenSchema = z.object({
 export const availableVoteCandidates = ["Donald", "Kamala"] as const
 export const VoteCandidateSchema = z.enum(availableVoteCandidates)
 export type VoteCandidate = z.infer<typeof VoteCandidateSchema>
-
-const VoteSchema = z.object({
+export const VoteSchema = z.object({
   type: z.literal("vote"),
 })
 
-const AIActionSchema = z.discriminatedUnion("type", [
-  MoveSchema,
-  TalkSchema,
-  IdleSchema,
-  // BroadcastSchema,
-  // ListenSchema,
-  // VoteSchema,
-])
-export const AIActionPlanSchema = z.array(AIActionSchema)
-export type AIAction = z.infer<typeof AIActionSchema>
-export type AIActionPlan = z.infer<typeof AIActionPlanSchema>
+export type AvailableActionSchema =
+  | typeof MoveToCoordinatesSchema
+  | typeof MoveToPersonSchema
+  | typeof MoveToPlaceSchema
+  | typeof TalkSchema
+  | typeof IdleSchema
+  | typeof BroadcastSchema
+  | typeof ListenSchema
+  | typeof VoteSchema
 
-const FullActionSchema = z.discriminatedUnion("type", [
-  MoveSchemaWithPerson,
+const AIActionSchema = z.discriminatedUnion("type", [
+  MoveToCoordinatesSchema,
+  MoveToPlaceSchema,
+  MoveToPersonSchema,
   TalkSchema,
   IdleSchema,
   BroadcastSchema,
   ListenSchema,
   VoteSchema,
 ])
-export type FullAction = z.infer<typeof FullActionSchema>
+export const AIActionPlanSchema = z.array(AIActionSchema)
+export type AIAction = z.infer<typeof AIActionSchema>
+export type AIActionPlan = z.infer<typeof AIActionPlanSchema>
+
+/*
+ *
+ * Map
+ *
+ */
 
 export type MapData = {
   compressionlevel: number

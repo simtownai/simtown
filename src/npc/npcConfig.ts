@@ -1,5 +1,13 @@
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { NPCConfig } from "../shared/types"
+import {
+  BroadcastSchema,
+  IdleSchema,
+  ListenSchema,
+  MoveToPlaceSchema,
+  NPCConfig,
+  TalkSchema,
+  VoteSchema,
+} from "../shared/types"
 import {
   dumbledore,
   getCharacterPrompt,
@@ -580,6 +588,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You love to broadcast your thoughts on Stadium and FountainSquare",
       "You love talking to people and convincing them to vote for you",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema, BroadcastSchema],
   },
   {
     username: "Kamala",
@@ -599,6 +608,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You love to broadcast your thoughts on CityHallSquare and PicnicPlace",
       "You love talking to people and convincing them to vote for you",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema, BroadcastSchema],
   },
   {
     username: "Dave",
@@ -638,6 +648,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "Your outfit is practical and durable - perfect for construction work",
       "The same rugged workwear style runs in your family - your dad and grandpa wore similar clothes on the job",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Sarah",
@@ -675,6 +686,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You wear a white top with blue pants",
       "You wear a white medical mask",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Mike",
@@ -695,6 +707,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You have two kids",
       "Kids are senior and freshman in high school and you are trying to figure out how to pay for their college",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Connor",
@@ -716,6 +729,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You recently stop receiving food stamps",
       "You are based in social housing in Allentown, Pennsylvania",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Anna",
@@ -735,6 +749,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "Your husband is an accountant and you go vacation to Florida every year",
       "Your marriage is quite happy and you live with 1 teenage daughter at green suburbs of Philadelphia",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
 
   {
@@ -759,6 +774,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You wish life was just a bit easier as you have been hit recent increses in supply costs and had to increase prices of your pizzas",
       "You live in Trenton, Pennsylvania",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Joe",
@@ -780,6 +796,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You are worried about Lisa's future as she was not doing well in school and recently been caught partying with alcohol",
       "You live just outside of Pittsburgh",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Peter",
@@ -802,6 +819,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "You have not made up your mind who to vote for in upcoming elections.",
       "You are open to both Kamala and Donald and primarly care about goverment spending and deficit",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
   {
     username: "Maya",
@@ -823,6 +841,7 @@ export const electiontownNPCConfigs: NPCConfig[] = [
       "This is the first time you are voting in a presidential election",
       "You just moved to a new apartment in Center City, Philadelphia and are planning on finish your intership there and then moving to New York",
     ],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema, ListenSchema, VoteSchema],
   },
 ]
 
@@ -836,6 +855,7 @@ export const characteraiNPCConfigs: NPCConfig[] = [
       hairstyle: "Hairstyle_01_04",
     },
     backstory: [getCharacterPrompt(ralphMachio)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
   {
     username: robLowe.name,
@@ -846,6 +866,7 @@ export const characteraiNPCConfigs: NPCConfig[] = [
       hairstyle: "Hairstyle_05_04",
     },
     backstory: [getCharacterPrompt(robLowe)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
   {
     username: jackHughes.name,
@@ -856,6 +877,7 @@ export const characteraiNPCConfigs: NPCConfig[] = [
       hairstyle: "Hairstyle_19_03",
     },
     backstory: [getCharacterPrompt(jackHughes)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
   {
     username: "Matt Rempe",
@@ -866,6 +888,7 @@ export const characteraiNPCConfigs: NPCConfig[] = [
       hairstyle: "Hairstyle_19_03",
     },
     backstory: [getCharacterPrompt(mattRempe)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
 ]
 
@@ -881,6 +904,7 @@ export const harryNPCConfigs: NPCConfig[] = [
       book: "Book_01",
     },
     backstory: [getCharacterPrompt(dumbledore)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
   {
     username: harry.name,
@@ -893,6 +917,7 @@ export const harryNPCConfigs: NPCConfig[] = [
       book: "Book_02",
     },
     backstory: [getCharacterPrompt(harry)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
   {
     username: snape.name,
@@ -904,6 +929,7 @@ export const harryNPCConfigs: NPCConfig[] = [
       book: "Book_05",
     },
     backstory: [getCharacterPrompt(snape)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
   {
     username: malfoy.name,
@@ -915,6 +941,7 @@ export const harryNPCConfigs: NPCConfig[] = [
       book: "Book_03",
     },
     backstory: [getCharacterPrompt(malfoy)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
 ]
 
@@ -929,5 +956,6 @@ export const murderdronesNPCConfigs: NPCConfig[] = [
       accessory: "Accessory_11_Beanie_01",
     },
     backstory: [getCharacterPrompt(uzi)],
+    availableActions: [MoveToPlaceSchema, TalkSchema, IdleSchema],
   },
 ]

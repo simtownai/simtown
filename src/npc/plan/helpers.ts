@@ -1,6 +1,6 @@
 import { getBroadcastAnnouncementsKey, getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
-import { AIAction, AIActionPlan, FullAction, MapConfig, NewsItem } from "../../shared/types"
+import { AIAction, AIActionPlan, MapConfig, NewsItem } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -13,9 +13,11 @@ import { VoteAction } from "../actions/VoteAction"
 import { BrainDump } from "../brain/AIBrain"
 import { PromptSystem } from "../prompts"
 
-export const convertActionToGeneratedAction = (action: Action): FullAction => {
+export const convertActionToGeneratedAction = (action: Action): AIAction => {
   if (action instanceof MoveAction) {
-    return { type: "move", target: action.moveTarget }
+    if (action.moveTarget.targetType === "person") return { type: "movetoperson", target: action.moveTarget }
+    else if (action.moveTarget.targetType === "place") return { type: "movetoplace", target: action.moveTarget }
+    else return { type: "movetocoordinates", target: action.moveTarget }
   } else if (action instanceof IdleAction) {
     return { type: "idle", activityType: action.activityType }
   } else if (action instanceof TalkAction) {
@@ -80,14 +82,16 @@ export const convertGeneratedPlanToActions = (
     }
   }
 
-  const actions: ActionResult[] = planData.map((actionData: FullAction): ActionResult => {
+  const actions: ActionResult[] = planData.map((actionData: AIAction): ActionResult => {
     let moveAction: MoveAction
 
     switch (actionData.type) {
       case "idle":
         return new IdleAction(getBrainDump, getEmitMethods, actionData.activityType)
 
-      case "move":
+      case "movetocoordinates":
+      case "movetoperson":
+      case "movetoplace":
         return new MoveAction(getBrainDump, getEmitMethods, movementController, actionData.target, "", false)
 
       case "talk":

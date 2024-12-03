@@ -1,4 +1,3 @@
-import { CONFIG } from "../shared/config"
 import { getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
 import { ChatMessage, MapConfig, MapData, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
@@ -74,6 +73,7 @@ export class NPC {
         try {
           this.aiBrain = new AIBrain({
             config: this.npcConfig,
+            getAvailableActions: () => this.npcConfig.availableActions,
             getOtherPlayers: () => this.otherPlayers,
             getPlayerData: () => this.playerData,
             getNewsPaper: () => this.newsPaper,

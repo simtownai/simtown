@@ -1,6 +1,6 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { GeneratedActionWithPerson, GridPosition, PlayerSpriteDefinition } from "./types"
+import { AIAction, GridPosition, PlayerSpriteDefinition } from "./types"
 
 export const get_move_message = (username: string) => `Hey ${username}, you're blocking my path.`
 
@@ -108,10 +108,12 @@ export function getBroadcastAnnouncementsKey(targetPlace: string, username: stri
   return `${targetPlace}-${username}`
 }
 
-export function getTextFromAction(action: GeneratedActionWithPerson | undefined, verbose: boolean = true): string {
+export function getTextFromAction(action: AIAction | undefined, verbose: boolean = true): string {
   if (!action) return ""
   switch (action.type) {
-    case "move":
+    case "movetocoordinates":
+    case "movetoperson":
+    case "movetoplace":
       let emoji = "🚶"
       if (action.target.targetType === "coordinates") {
         return emoji + `📍${action.target.x},${action.target.y}`

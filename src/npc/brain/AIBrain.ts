@@ -1,6 +1,7 @@
 import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
 import {
+  AvailableActionSchema,
   ChatMessage,
   MapConfig,
   NewsItem,
@@ -39,6 +40,7 @@ export type StringifiedBrainDump = {
 }
 
 export type BrainDump = {
+  availableActions: AvailableActionSchema[]
   conversations: ConversationMemory
   currentAction: Action | null
   playerData: PlayerData
@@ -56,6 +58,7 @@ export type BrainDump = {
 type AIBrainInterface = {
   getPlayerData: () => PlayerData
   config: NPCConfig
+  getAvailableActions: () => AvailableActionSchema[]
   getOtherPlayers: () => Map<string, PlayerData>
   getNewsPaper: () => NewsItem[]
   getBroadcastAnnouncements: () => Set<string>
@@ -74,6 +77,7 @@ export class AIBrain {
   private currentAction: Action | null = null
   private isProcessingAction: boolean = false
   private places: string[]
+  private getAvailableActions: () => AvailableActionSchema[]
   private getOtherPlayers: () => Map<string, PlayerData>
   private getPlayerData: () => PlayerData
   private getNewsPaper: () => NewsItem[]
@@ -89,6 +93,7 @@ export class AIBrain {
     this.npcConfig = args.config
     this.memory = new Memory(args.config)
     this.places = args.places
+    this.getAvailableActions = args.getAvailableActions
     this.getOtherPlayers = args.getOtherPlayers
     this.getPlayerData = args.getPlayerData
     this.getNewsPaper = args.getNewsPaper
@@ -132,6 +137,7 @@ export class AIBrain {
 
   getBrainDump = (): BrainDump => {
     return {
+      availableActions: this.getAvailableActions(),
       conversations: this.memory.conversations,
       closeThread: (targetPlayerName: string) => this.closeThread(targetPlayerName),
       currentAction: this.currentAction,
