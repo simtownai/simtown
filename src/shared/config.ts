@@ -4,7 +4,7 @@ export const CONFIG = {
   SERVER_PORT: 3000,
   SERVER_URL: isDevelopment ? "http://localhost:3000" : "https://api.simtown.ai",
   // this is a debug flag that will make the AI Stop reflecting and get stuck after finishing any move action
-  MODEL_NAME: "gpt-4o",
+  MODEL_NAME: isDevelopment ? "gpt-4o-mini" : "gpt-4o",
   ENABLE_NPC_AUTOMATION: isDevelopment ? true : true,
   TILE_SIZE: 16,
   SPRITE_WIDTH: 16,
