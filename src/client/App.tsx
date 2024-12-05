@@ -72,23 +72,10 @@ function App() {
   }
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession()
-
-      if (error) {
-        console.error("Error fetching session:", error.message)
-      } else {
-        setSupabaseSession(data.session)
-        if (data.session) {
-          setUsername(data.session.user.email ? data.session.user.email.split("@")[0] : data.session.user.id)
-        }
-      }
-    }
-    fetchSession()
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("onAuthStateChange", event, session)
       setSupabaseSession(session)
       if (session) {
         setUsername(session.user.email ? session.user.email.split("@")[0] : session.user.id)
