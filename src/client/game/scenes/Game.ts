@@ -109,14 +109,12 @@ export class Game extends Phaser.Scene {
     this.setupMap()
     this.spriteHandler.createAnimations()
     this.setupSocketListeners()
-    this.socket.connect()
     this.scale.on("resize", this.resize, this)
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
     this.audioManager.startBackgroundMusic()
 
-    // this.socket.emit("joinGame", false, this.username, this.spriteDefinition)
     this.socket.emit("joinRoom", this.roomId, false, this.username, this.spriteDefinition)
 
     EventBus.emit("current-scene-ready", this)

@@ -14,10 +14,11 @@ import {
   availableVoteCandidates,
 } from "../shared/types"
 import { Room } from "./rooms"
-import { saveMessageToSupabase } from "./supabase"
+import { SupabaseClient, createClient } from "@supabase/supabase-js"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
+import { DefaultEventsMap } from "socket.io"
 import { Server } from "socket.io"
 import { v4 as uuidv4 } from "uuid"
 
@@ -25,7 +26,12 @@ const app = express()
 app.use(cors())
 
 const server = createServer(app)
-const io = new Server(server, {
+
+interface SocketData {
+  playerSupabaseClient?: SupabaseClient
+}
+
+const io = new Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -55,6 +61,30 @@ const createGameRoom = (roomConfig: RoomConfig, roomId: string = uuidv4()): Room
 io.on("connection", (socket) => {
   const playerId = socket.id
   let currentRoom: Room | null = null
+
+  socket.on("authorizeSupabase", (access_token: string) => {
+    socket.data.playerSupabaseClient = createClient(
+      process.env.VITE_SUPABASE_URL!,
+      process.env.VITE_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        },
+      },
+    )
+
+    socket.data.playerSupabaseClient.auth.getUser().then(({ data, error }) => {
+      if (error) {
+        logger.error("Error authorizing Supabase:")
+        console.error(error)
+        return
+      } else {
+        logger.info(`Supabase client authorized for player ${data?.user.email}`)
+      }
+    })
+  })
 
   socket.on("createRoom", (gameName: string, callback: (roomId: string | null) => void) => {
     const roomConfig = roomsConfig.find((config) => config.path === gameName)
@@ -118,7 +148,9 @@ io.on("connection", (socket) => {
 
       currentRoom.addPlayer(playerId, isNPC, username, spriteDefinition, spawnPosition)
 
-      logger.info(`User '${username}' connected. Number of players: ${currentRoom.getPlayerCount()}`)
+      logger.info(
+        `${isNPC ? "NPC" : "Player"} '${username}' connected. Number of players: ${currentRoom.getPlayerCount()}`,
+      )
 
       socket.emit("existingPlayers", Array.from(currentRoom.getPlayers().values()))
       socket.emit("news", currentRoom.getNewsPaper())
@@ -170,7 +202,7 @@ io.on("connection", (socket) => {
           const sender = currentRoom?.getPlayer(playerId)!
           emitOverhear(currentRoom!.getPlayers(), sender, player, message)
           if (!player.isNPC || !sender.isNPC) {
-            await saveMessageToSupabase(message, player.username)
+            // await saveMessageToSupabase(message, player.username)
           }
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
@@ -224,8 +256,8 @@ io.on("connection", (socket) => {
             const sender = currentRoom?.getPlayer(playerId)!
             emitOverhear(currentRoom?.getPlayers()!, sender, player, message)
             if (!player.isNPC || !sender.isNPC) {
-              const supabaseUserName = player.isNPC ? sender.username : player.username
-              await saveMessageToSupabase(message, supabaseUserName)
+              // const supabaseUserName = player.isNPC ? sender.username : player.username
+              // await saveMessageToSupabase(message, supabaseUserName)
             }
           } else {
             socket.emit("messageError", { error: "Recipient not found" })

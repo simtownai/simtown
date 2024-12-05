@@ -20,13 +20,14 @@ import ObserveContainer from "./ui/ObserveContainer"
 import Overlay from "./ui/Overlay"
 import { Session } from "@supabase/supabase-js"
 import { useEffect, useMemo, useRef, useState } from "react"
-import io, { Socket } from "socket.io-client"
+import io from "socket.io-client"
 
 const mobileWindowWidthThreshold = 450
 
+const socket = io(CONFIG.SERVER_URL)
+
 function App() {
   const [isGameLoaded, setIsGameLoaded] = useState(false)
-  const [socket, setSocket] = useState<Socket | null>(null)
   const [username, setUsername] = useState<string>("Player" + Math.floor(Math.random() * 1000) + 1)
   const [spriteDefinition, setSpriteDefinition] = useState<PlayerSpriteDefinition>(createRandomSpriteDefinition())
   const [chatmate, setChatmate] = useState<string | null>(null)
@@ -72,6 +73,130 @@ function App() {
   }
 
   useEffect(() => {
+    socket.on("connect", () => {
+      console.log(`Connected to server with id: ${socket.id}`)
+    })
+
+    socket.on("playerJoined", (player: PlayerData) => {
+      if (player.username !== username) {
+        setPlayers((prevPlayers) => new Map(prevPlayers).set(player.username, player))
+      }
+    })
+
+    socket.on("existingPlayers", (players: PlayerData[]) => {
+      const playersMap = new Map(players.map((player) => [player.username, player]))
+      setPlayers(playersMap)
+    })
+
+    socket.on("playerDataChanged", (player: PlayerData) => {
+      setPlayers((prevPlayers) => {
+        const currentPlayer = prevPlayers.get(player.username)
+        if (player.npcState && currentPlayer?.npcState) {
+          player.npcState = {
+            ...currentPlayer.npcState,
+            ...player.npcState,
+          }
+        }
+        return new Map(prevPlayers).set(player.username, {
+          ...currentPlayer,
+          ...player,
+        })
+      })
+    })
+
+    socket.on("playerLeft", (username: string) => {
+      setPlayers((prevPlayers) => {
+        const newPlayers = new Map(prevPlayers)
+        newPlayers.delete(username)
+        return newPlayers
+      })
+    })
+
+    socket.on("newMessage", (message: ChatMessage) => {
+      setMessages((prevMessages) => {
+        const oldMessages = prevMessages.get(message.from) || []
+        const newMessage = {
+          ...message,
+          isRead:
+            !isChatsContainerCollapsedRef.current &&
+            !isChatCollapsedRef.current &&
+            chatmateRef.current === message.from,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(message.from, newMessages)
+      })
+    })
+
+    socket.on("overhearMessage", (message: ChatMessage) => {
+      setMessages((prevMessages) => {
+        const [first, second] = [message.from, message.to].sort()
+        const key = `${first}-${second} (overheard)`
+        const oldMessages = prevMessages.get(key) || []
+        const newMessage = {
+          ...message,
+          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(key, newMessages)
+      })
+    })
+
+    socket.on("listenBroadcast", (message: BroadcastMessage) => {
+      setMessages((prevMessages) => {
+        const key = `${message.from} (broadcast)`
+        const oldMessages = prevMessages.get(key) || []
+        const newMessage = {
+          to: username,
+          ...message,
+          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(key, newMessages)
+      })
+    })
+
+    socket.on("endConversation", (message: ChatMessage) => {
+      setMessages((prevMessages) => {
+        const oldMessages = prevMessages.get(message.from) || []
+        const newMessage = {
+          ...message,
+          isRead:
+            !isChatsContainerCollapsedRef.current &&
+            !isChatCollapsedRef.current &&
+            chatmateRef.current === message.from,
+        } as ChatMessage
+        const newMessages = [...oldMessages, newMessage]
+        return new Map(prevMessages).set(message.from, newMessages)
+      })
+    })
+
+    socket.on("news", (news: NewsItem | NewsItem[]) => {
+      const ifNewsInitialization = Array.isArray(news)
+      setNewsPaper((prevNews) => {
+        const newsArray = Array.isArray(news) ? news : [news]
+        const newNews = newsArray.map((newsItem) => ({
+          ...newsItem,
+          isRead: ifNewsInitialization || !isNewsContainerCollapsed,
+        }))
+        return [...prevNews, ...newNews]
+      })
+    })
+
+    return () => {
+      socket.off("connect")
+      socket.off("playerJoined")
+      socket.off("existingPlayers")
+      socket.off("playerDataChanged")
+      socket.off("playerLeft")
+      socket.off("newMessage")
+      socket.off("overhearMessage")
+      socket.off("listenBroadcast")
+      socket.off("endConversation")
+      socket.off("news")
+    }
+  }, [])
+
+  useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -79,6 +204,7 @@ function App() {
       setSupabaseSession(session)
       if (session) {
         setUsername(session.user.email ? session.user.email.split("@")[0] : session.user.id)
+        socket.emit("authorizeSupabase", session.access_token)
       }
     })
 
@@ -130,131 +256,7 @@ function App() {
     })
 
     tempSocket.connect()
-    // }
   }, [])
-
-  useEffect(() => {
-    if (!roomName || !roomId) return
-
-    // We will be connecting in a Game Scene after
-    // initializing listening methods
-    const newSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
-    setSocket(newSocket)
-
-    newSocket.on("connect", () => {
-      console.log(`Connected to server with id: ${newSocket.id}`)
-    })
-
-    newSocket.on("playerJoined", (player: PlayerData) => {
-      if (player.username !== username) {
-        setPlayers((prevPlayers) => new Map(prevPlayers).set(player.username, player))
-      }
-    })
-
-    newSocket.on("existingPlayers", (players: PlayerData[]) => {
-      const playersMap = new Map(players.map((player) => [player.username, player]))
-      setPlayers(playersMap)
-    })
-
-    newSocket.on("playerDataChanged", (player: PlayerData) => {
-      setPlayers((prevPlayers) => {
-        const currentPlayer = prevPlayers.get(player.username)
-        if (player.npcState && currentPlayer?.npcState) {
-          player.npcState = {
-            ...currentPlayer.npcState,
-            ...player.npcState,
-          }
-        }
-        return new Map(prevPlayers).set(player.username, {
-          ...currentPlayer,
-          ...player,
-        })
-      })
-    })
-
-    newSocket.on("playerLeft", (username: string) => {
-      setPlayers((prevPlayers) => {
-        const newPlayers = new Map(prevPlayers)
-        newPlayers.delete(username)
-        return newPlayers
-      })
-    })
-
-    newSocket.on("newMessage", (message: ChatMessage) => {
-      setMessages((prevMessages) => {
-        const oldMessages = prevMessages.get(message.from) || []
-        const newMessage = {
-          ...message,
-          isRead:
-            !isChatsContainerCollapsedRef.current &&
-            !isChatCollapsedRef.current &&
-            chatmateRef.current === message.from,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(message.from, newMessages)
-      })
-    })
-
-    newSocket.on("overhearMessage", (message: ChatMessage) => {
-      setMessages((prevMessages) => {
-        const [first, second] = [message.from, message.to].sort()
-        const key = `${first}-${second} (overheard)`
-        const oldMessages = prevMessages.get(key) || []
-        const newMessage = {
-          ...message,
-          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(key, newMessages)
-      })
-    })
-
-    newSocket.on("listenBroadcast", (message: BroadcastMessage) => {
-      setMessages((prevMessages) => {
-        const key = `${message.from} (broadcast)`
-        const oldMessages = prevMessages.get(key) || []
-        const newMessage = {
-          to: username,
-          ...message,
-          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(key, newMessages)
-      })
-    })
-
-    newSocket.on("endConversation", (message: ChatMessage) => {
-      setMessages((prevMessages) => {
-        const oldMessages = prevMessages.get(message.from) || []
-        const newMessage = {
-          ...message,
-          isRead:
-            !isChatsContainerCollapsedRef.current &&
-            !isChatCollapsedRef.current &&
-            chatmateRef.current === message.from,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(message.from, newMessages)
-      })
-    })
-
-    newSocket.on("news", (news: NewsItem | NewsItem[]) => {
-      const ifNewsInitialization = Array.isArray(news)
-      setNewsPaper((prevNews) => {
-        const newsArray = Array.isArray(news) ? news : [news]
-        const newNews = newsArray.map((newsItem) => ({
-          ...newsItem,
-          isRead: ifNewsInitialization || !isNewsContainerCollapsed,
-        }))
-        return [...prevNews, ...newNews]
-      })
-    })
-
-    return () => {
-      newSocket.off("newMessage")
-      newSocket.disconnect()
-    }
-  }, [roomName, roomId])
 
   function handleResize() {
     setIsMobile(window.innerWidth < mobileWindowWidthThreshold)
@@ -307,7 +309,7 @@ function App() {
         setMessages(new Map(JSON.parse(messagesHistory)))
       }
     }
-  }, [socket])
+  }, [])
 
   const totalUnreadCount = useMemo(() => {
     let count = 0
