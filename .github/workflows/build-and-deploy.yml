@@ -30,7 +30,15 @@ jobs:
         run: bun run format:check
 
       - name: Build Docker image
-        run: docker build --build-arg NODE_ENV=production --build-arg VITE_PUBLIC_POSTHOG_KEY=${{ secrets.VITE_PUBLIC_POSTHOG_KEY }} --build-arg VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }} -t simtown:latest .
+        run: |
+          docker build \
+            --build-arg NODE_ENV=production \
+            --build-arg VITE_PUBLIC_POSTHOG_KEY=${{ secrets.VITE_PUBLIC_POSTHOG_KEY }} \
+            --build-arg VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }} \
+            --build-arg VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }} \
+            --build-arg VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }} \
+            -t simtown:latest \
+            .
 
       - name: Copy client build artifacts from Docker image
         run: |

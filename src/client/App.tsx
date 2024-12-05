@@ -12,10 +12,13 @@ import {
   availableGames,
 } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
+import { supabase } from "./supabase"
+import Authorize from "./ui/Authorize"
 import ChatsContainer from "./ui/ChatsContainer"
 import NewsContainer from "./ui/NewsContainer"
 import ObserveContainer from "./ui/ObserveContainer"
 import Overlay from "./ui/Overlay"
+import { Session } from "@supabase/supabase-js"
 import { useEffect, useMemo, useRef, useState } from "react"
 import io, { Socket } from "socket.io-client"
 
@@ -47,6 +50,7 @@ function App() {
   const [roomId, setRoomId] = useState<string | null>(null)
 
   const [mapConfig, setMapConfig] = useState<MapConfig | null>(null)
+  const [supabaseSession, setSupabaseSession] = useState<Session | null>(null)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -66,6 +70,35 @@ function App() {
   const currentScene = (scene: Phaser.Scene) => {
     console.log(scene)
   }
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error("Error fetching session:", error.message)
+      } else {
+        setSupabaseSession(data.session)
+        if (data.session) {
+          setUsername(data.session.user.email ? data.session.user.email.split("@")[0] : data.session.user.id)
+        }
+      }
+    }
+    fetchSession()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSupabaseSession(session)
+      if (session) {
+        setUsername(session.user.email ? session.user.email.split("@")[0] : session.user.id)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
 
   useEffect(() => {
     const path = window.location.pathname
@@ -303,6 +336,10 @@ function App() {
 
   const handleGameLoaded = () => {
     setIsGameLoaded(true)
+  }
+
+  if (CONFIG.AUTH_ENABLED && !supabaseSession) {
+    return <Authorize redirectTo={window.location.href} />
   }
 
   if (!socket) {

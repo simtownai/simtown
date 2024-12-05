@@ -1,5 +1,11 @@
 # ToDo
 
+- improving login with google with icon and name
+  - add privacy policy and terms of service URLs (https://console.cloud.google.com/auth/branding?authuser=1&inv=1&invt=AbjQXA&project=simtown-443721)
+  - publish and submit app for verification through search console
+- deal with empty action list
+- if you want to save the account
+- change the story of the setup
 - finish thread when end conversation or disconnect + fix history logging
 - action subset (special room type); to elimiated broadcasting and voting
 - custom map + characters for the community

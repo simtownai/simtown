@@ -15,4 +15,5 @@ export const CONFIG = {
   ROOM_CLEANUP_TIMEOUT: 2 * 60 * 1000, // 2 minutes
   TARGET_DATE: new Date("2024-12-06T00:00:00Z"),
   DEFAULT_GAME: "harry",
+  AUTH_ENABLED: false,
 }
