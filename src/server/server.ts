@@ -2,6 +2,7 @@ import { CONFIG } from "../shared/config"
 import { calculateDistance, getDaysRemaining, getGameTime, isInZone } from "../shared/functions"
 import logger from "../shared/logger"
 import { roomsConfig } from "../shared/roomConfig"
+import { Database } from "../shared/supabase-types"
 import {
   BroadcastMessage,
   ChatMessage,
@@ -28,7 +29,7 @@ app.use(cors())
 const server = createServer(app)
 
 interface SocketData {
-  playerSupabaseClient?: SupabaseClient
+  playerSupabaseClient?: SupabaseClient<Database>
 }
 
 const io = new Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>(server, {
@@ -63,7 +64,7 @@ io.on("connection", (socket) => {
   let currentRoom: Room | null = null
 
   socket.on("authorizeSupabase", (access_token: string) => {
-    socket.data.playerSupabaseClient = createClient(
+    socket.data.playerSupabaseClient = createClient<Database>(
       process.env.VITE_SUPABASE_URL!,
       process.env.VITE_SUPABASE_ANON_KEY!,
       {

@@ -1,4 +1,10 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   public: {
@@ -38,90 +44,41 @@ export type Database = {
           },
         ]
       }
-      documents: {
+      map_config: {
         Row: {
-          content: string | null
-          created_at: string
-          id: string
-          title: string
-          user_id: string
+          collision_layer_name: string
+          created_at: string | null
+          id: number
+          map_json_filename: string
+          places_layer_name: string
+          roads_layer_name: string
+          spawn_place_name: string
+          tileset_png_filename: string
+          voting_place_name: string
         }
         Insert: {
-          content?: string | null
-          created_at?: string
-          id?: string
-          title: string
-          user_id: string
+          collision_layer_name: string
+          created_at?: string | null
+          id?: number
+          map_json_filename: string
+          places_layer_name: string
+          roads_layer_name: string
+          spawn_place_name: string
+          tileset_png_filename: string
+          voting_place_name: string
         }
         Update: {
-          content?: string | null
-          created_at?: string
-          id?: string
-          title?: string
-          user_id?: string
+          collision_layer_name?: string
+          created_at?: string | null
+          id?: number
+          map_json_filename?: string
+          places_layer_name?: string
+          roads_layer_name?: string
+          spawn_place_name?: string
+          tileset_png_filename?: string
+          voting_place_name?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "documents_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      file_uploads: {
-        Row: {
-          bucket_id: string
-          chat_id: string
-          content_type: string
-          created_at: string
-          filename: string
-          id: string
-          original_name: string
-          size: number
-          storage_path: string
-          url: string
-          user_id: string
-          version: number
-        }
-        Insert: {
-          bucket_id?: string
-          chat_id: string
-          content_type: string
-          created_at?: string
-          filename: string
-          id?: string
-          original_name: string
-          size: number
-          storage_path: string
-          url: string
-          user_id: string
-          version?: number
-        }
-        Update: {
-          bucket_id?: string
-          chat_id?: string
-          content_type?: string
-          created_at?: string
-          filename?: string
-          id?: string
-          original_name?: string
-          size?: number
-          storage_path?: string
-          url?: string
-          user_id?: string
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "file_uploads_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       messages: {
         Row: {
@@ -158,50 +115,162 @@ export type Database = {
           },
         ]
       }
-      suggestions: {
+      npc: {
         Row: {
-          created_at: string
-          description: string | null
-          document_created_at: string
-          document_id: string
+          available_actions: Database["public"]["Enums"]["npc_action"][]
+          backstory: string
+          created_at: string | null
+          id: number
+          name: string
+          sprite_definition: Json
+        }
+        Insert: {
+          available_actions: Database["public"]["Enums"]["npc_action"][]
+          backstory: string
+          created_at?: string | null
+          id?: number
+          name: string
+          sprite_definition: Json
+        }
+        Update: {
+          available_actions?: Database["public"]["Enums"]["npc_action"][]
+          backstory?: string
+          created_at?: string | null
+          id?: number
+          name?: string
+          sprite_definition?: Json
+        }
+        Relationships: []
+      }
+      npc_instance: {
+        Row: {
+          created_at: string | null
+          id: number
+          last_update: string | null
+          npc_id: number | null
+          position_x: number
+          position_y: number
+          reflections: string[] | null
+          room_instance_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          last_update?: string | null
+          npc_id?: number | null
+          position_x: number
+          position_y: number
+          reflections?: string[] | null
+          room_instance_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          last_update?: string | null
+          npc_id?: number | null
+          position_x?: number
+          position_y?: number
+          reflections?: string[] | null
+          room_instance_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "npc_instance_npc_id_fkey"
+            columns: ["npc_id"]
+            isOneToOne: false
+            referencedRelation: "npc"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "npc_instance_room_instance_id_fkey"
+            columns: ["room_instance_id"]
+            isOneToOne: false
+            referencedRelation: "room_instance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room: {
+        Row: {
+          created_at: string | null
+          id: number
+          map_config_id: number | null
+          scenario: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          map_config_id?: number | null
+          scenario: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          map_config_id?: number | null
+          scenario?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_map_config_id_fkey"
+            columns: ["map_config_id"]
+            isOneToOne: false
+            referencedRelation: "map_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_instance: {
+        Row: {
+          created_at: string | null
           id: string
-          is_resolved: boolean
-          original_text: string
-          suggested_text: string
+          last_update: string | null
+          room_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_update?: string | null
+          room_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_update?: string | null
+          room_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_instance_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "room"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_room_instance: {
+        Row: {
+          room_instance_id: string
           user_id: string
         }
         Insert: {
-          created_at?: string
-          description?: string | null
-          document_created_at: string
-          document_id: string
-          id?: string
-          is_resolved?: boolean
-          original_text: string
-          suggested_text: string
+          room_instance_id: string
           user_id: string
         }
         Update: {
-          created_at?: string
-          description?: string | null
-          document_created_at?: string
-          document_id?: string
-          id?: string
-          is_resolved?: boolean
-          original_text?: string
-          suggested_text?: string
+          room_instance_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "suggestions_document_id_document_created_at_fkey"
-            columns: ["document_id", "document_created_at"]
+            foreignKeyName: "user_room_instance_room_instance_id_fkey"
+            columns: ["room_instance_id"]
             isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id", "created_at"]
+            referencedRelation: "room_instance"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "suggestions_user_id_fkey"
+            foreignKeyName: "user_room_instance_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -342,7 +411,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      npc_action: "move" | "talk" | "vote" | "idle" | "broadcast" | "listen"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -353,7 +422,9 @@ export type Database = {
 type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] & PublicSchema["Views"]) | { schema: keyof Database },
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+    | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
@@ -365,8 +436,10 @@ export type Tables<
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    ? (PublicSchema["Tables"] & PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -374,7 +447,9 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends keyof PublicSchema["Tables"] | { schema: keyof Database },
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
@@ -393,7 +468,9 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends keyof PublicSchema["Tables"] | { schema: keyof Database },
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
+    | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
@@ -412,7 +489,9 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends keyof PublicSchema["Enums"] | { schema: keyof Database },
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
+    | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
@@ -423,7 +502,9 @@ export type Enums<
     : never
 
 export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"] | { schema: keyof Database },
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
   }
