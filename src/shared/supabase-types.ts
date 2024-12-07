@@ -215,21 +215,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: number
-          map_id: number | null
+          map_id: number
           name: string
           scenario: string
         }
         Insert: {
           created_at?: string | null
           id?: number
-          map_id?: number | null
+          map_id: number
           name: string
           scenario: string
         }
         Update: {
           created_at?: string | null
           id?: number
-          map_id?: number | null
+          map_id?: number
           name?: string
           scenario?: string
         }
@@ -450,7 +450,15 @@ export type Database = {
       }
     }
     Enums: {
-      npc_action: "move" | "talk" | "vote" | "idle" | "broadcast" | "listen"
+      npc_action:
+        | "movetocoordinates"
+        | "movetoplace"
+        | "movetoperson"
+        | "talk"
+        | "vote"
+        | "idle"
+        | "broadcast"
+        | "listen"
       room_type: "private" | "shared"
     }
     CompositeTypes: {
