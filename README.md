@@ -1,5 +1,7 @@
 # ToDo
 
+- if deleting room instance check if other players are still connected and if yes then delete only your connection
+- remove user room connection when room deleted
 - improving login with google with icon and name
   - add privacy policy and terms of service URLs (https://console.cloud.google.com/auth/branding?authuser=1&inv=1&invt=AbjQXA&project=simtown-443721)
   - publish and submit app for verification through search console
