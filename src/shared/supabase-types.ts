@@ -44,36 +44,33 @@ export type Database = {
           },
         ]
       }
-      map_config: {
+      map: {
         Row: {
-          collision_layer_name: string
           created_at: string | null
+          description: string | null
           id: number
           map_json_filename: string
-          places_layer_name: string
-          roads_layer_name: string
+          name: string
           spawn_place_name: string
           tileset_png_filename: string
           voting_place_name: string
         }
         Insert: {
-          collision_layer_name: string
           created_at?: string | null
+          description?: string | null
           id?: number
           map_json_filename: string
-          places_layer_name: string
-          roads_layer_name: string
+          name: string
           spawn_place_name: string
           tileset_png_filename: string
           voting_place_name: string
         }
         Update: {
-          collision_layer_name?: string
           created_at?: string | null
+          description?: string | null
           id?: number
           map_json_filename?: string
-          places_layer_name?: string
-          roads_layer_name?: string
+          name?: string
           spawn_place_name?: string
           tileset_png_filename?: string
           voting_place_name?: string
@@ -148,8 +145,8 @@ export type Database = {
           id: number
           last_update: string | null
           npc_id: number | null
-          position_x: number
-          position_y: number
+          position_x: number | null
+          position_y: number | null
           reflections: string[] | null
           room_instance_id: string | null
         }
@@ -158,8 +155,8 @@ export type Database = {
           id?: number
           last_update?: string | null
           npc_id?: number | null
-          position_x: number
-          position_y: number
+          position_x?: number | null
+          position_y?: number | null
           reflections?: string[] | null
           room_instance_id?: string | null
         }
@@ -168,8 +165,8 @@ export type Database = {
           id?: number
           last_update?: string | null
           npc_id?: number | null
-          position_x?: number
-          position_y?: number
+          position_x?: number | null
+          position_y?: number | null
           reflections?: string[] | null
           room_instance_id?: string | null
         }
@@ -190,31 +187,64 @@ export type Database = {
           },
         ]
       }
+      npc_room: {
+        Row: {
+          npc_id: number
+          room_id: number
+        }
+        Insert: {
+          npc_id: number
+          room_id: number
+        }
+        Update: {
+          npc_id?: number
+          room_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "npc_room_npc_id_fkey"
+            columns: ["npc_id"]
+            isOneToOne: false
+            referencedRelation: "npc"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "npc_room_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "room"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room: {
         Row: {
           created_at: string | null
           id: number
-          map_config_id: number | null
+          map_id: number | null
+          name: string
           scenario: string
         }
         Insert: {
           created_at?: string | null
           id?: number
-          map_config_id?: number | null
+          map_id?: number | null
+          name: string
           scenario: string
         }
         Update: {
           created_at?: string | null
           id?: number
-          map_config_id?: number | null
+          map_id?: number | null
+          name?: string
           scenario?: string
         }
         Relationships: [
           {
-            foreignKeyName: "room_map_config_id_fkey"
-            columns: ["map_config_id"]
+            foreignKeyName: "room_map_id_fkey"
+            columns: ["map_id"]
             isOneToOne: false
-            referencedRelation: "map_config"
+            referencedRelation: "map"
             referencedColumns: ["id"]
           },
         ]
@@ -224,19 +254,25 @@ export type Database = {
           created_at: string | null
           id: string
           last_update: string | null
+          newspaper: Json[] | null
           room_id: number | null
+          type: Database["public"]["Enums"]["room_type"]
         }
         Insert: {
           created_at?: string | null
           id?: string
           last_update?: string | null
+          newspaper?: Json[] | null
           room_id?: number | null
+          type?: Database["public"]["Enums"]["room_type"]
         }
         Update: {
           created_at?: string | null
           id?: string
           last_update?: string | null
+          newspaper?: Json[] | null
           room_id?: number | null
+          type?: Database["public"]["Enums"]["room_type"]
         }
         Relationships: [
           {
@@ -337,6 +373,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_room_instance: {
+        Args: {
+          p_id: string
+          p_room_id: number
+          p_npc_ids: number[]
+          p_type?: Database["public"]["Enums"]["room_type"]
+        }
+        Returns: string
+      }
       get_document_latest_version: {
         Args: {
           doc_id: string
@@ -412,6 +457,7 @@ export type Database = {
     }
     Enums: {
       npc_action: "move" | "talk" | "vote" | "idle" | "broadcast" | "listen"
+      room_type: "private" | "shared"
     }
     CompositeTypes: {
       [_ in never]: never
