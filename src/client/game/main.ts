@@ -1,4 +1,5 @@
-import { MapConfig, PlayerSpriteDefinition } from "../../shared/types"
+import { Tables } from "../../shared/supabase-types"
+import { PlayerSpriteDefinition } from "../../shared/types"
 import { Game } from "./scenes/Game"
 import { LoadingScene } from "./scenes/LoadingScene"
 import { Socket } from "socket.io-client"
@@ -47,7 +48,7 @@ const config: Phaser.Types.Core.GameConfig = {
 const StartGame = (
   parent: string,
   socket: Socket,
-  mapConfig: MapConfig,
+  mapConfig: Tables<"map">,
   username: string,
   spriteDefinition: PlayerSpriteDefinition,
   roomId: string,

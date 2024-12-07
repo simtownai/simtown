@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { MapConfig } from "../../../shared/types"
+import { Tables } from "../../../shared/supabase-types"
 import { Scene } from "phaser"
 
 export class LoadingScene extends Scene {
@@ -9,7 +9,7 @@ export class LoadingScene extends Scene {
   private percentText!: Phaser.GameObjects.Text
   private assetText!: Phaser.GameObjects.Text
 
-  constructor(private mapConfig: MapConfig) {
+  constructor(private mapConfig: Tables<"map">) {
     super({ key: "LoadingScene" })
   }
 
@@ -107,8 +107,8 @@ export class LoadingScene extends Scene {
       })
     })
 
-    this.load.tilemapTiledJSON("map", `assets/maps/${this.mapConfig.mapJSONFilename}.json`)
-    this.load.image("tileset", `assets/tiles/${this.mapConfig.tilesetPNGFilename}.png`)
+    this.load.tilemapTiledJSON("map", `assets/maps/${this.mapConfig.map_json_filename}.json`)
+    this.load.image("tileset", `assets/tiles/${this.mapConfig.tileset_png_filename}.png`)
     this.load.spritesheet("speech-bubble", "assets/sprites/speech_bubble_animation-11x11.png", {
       frameWidth: 11,
       frameHeight: 11,

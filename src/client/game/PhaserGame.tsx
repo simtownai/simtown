@@ -1,4 +1,5 @@
-import { MapConfig, PlayerSpriteDefinition } from "../../shared/types"
+import { Tables } from "../../shared/supabase-types"
+import { PlayerSpriteDefinition } from "../../shared/types"
 import { EventBus } from "./EventBus"
 import StartGame from "./main"
 import { forwardRef, useEffect, useLayoutEffect, useRef } from "react"
@@ -13,7 +14,7 @@ interface IProps {
   socket: Socket
   roomId: string
   username: string
-  mapConfig: MapConfig
+  mapConfig: Tables<"map">
   spriteDefinition: PlayerSpriteDefinition
   currentActiveScene?: (scene_instance: Phaser.Scene) => void
   isChatContainerCollapsed: boolean

@@ -1,6 +1,7 @@
 import { CONFIG } from "../../../shared/config"
 import { getTextFromAction } from "../../../shared/functions"
-import { MapConfig, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { Tables } from "../../../shared/supabase-types"
+import { PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { EventBus } from "../EventBus"
 import { AudioManager } from "./AudioManager"
 import { PixelPerfectSprite } from "./pixelPerfectSprite"
@@ -48,7 +49,7 @@ interface OtherPlayerData {
 
 export class Game extends Phaser.Scene {
   private socket: Socket
-  private mapConfig: MapConfig
+  private mapConfig: Tables<"map">
   private map!: Phaser.Tilemaps.Tilemap
   private collisionLayer!: Phaser.Tilemaps.TilemapLayer
   private playerSprite!: Phaser.Physics.Arcade.Sprite
@@ -89,7 +90,7 @@ export class Game extends Phaser.Scene {
 
   constructor(
     socket: Socket,
-    mapConfig: MapConfig,
+    mapConfig: Tables<"map">,
     username: string,
     spriteDefinition: PlayerSpriteDefinition,
     roomId: string,
@@ -124,7 +125,7 @@ export class Game extends Phaser.Scene {
     this.uiContainer = this.add.container(0, 0)
 
     this.map = this.make.tilemap({ key: "map" })
-    const tileset = this.map.addTilesetImage(this.mapConfig.tilesetPNGFilename, "tileset")!
+    const tileset = this.map.addTilesetImage(this.mapConfig.tileset_png_filename, "tileset")!
 
     LAYER_CONFIG.map(({ name, depth }) => {
       const layer = this.map.createLayer(name, tileset)!

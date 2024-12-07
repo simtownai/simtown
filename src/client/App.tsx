@@ -1,16 +1,7 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { roomsConfig } from "../shared/roomConfig"
-import {
-  AvailableGames,
-  BroadcastMessage,
-  ChatMessage,
-  MapConfig,
-  NewsItem,
-  PlayerData,
-  PlayerSpriteDefinition,
-  availableGames,
-} from "../shared/types"
+import { Tables } from "../shared/supabase-types"
+import { BroadcastMessage, ChatMessage, NewsItem, PlayerData, PlayerSpriteDefinition } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import { supabase } from "./supabase"
 import Authorize from "./ui/Authorize"
@@ -18,6 +9,7 @@ import ChatsContainer from "./ui/ChatsContainer"
 import NewsContainer from "./ui/NewsContainer"
 import ObserveContainer from "./ui/ObserveContainer"
 import Overlay from "./ui/Overlay"
+import CenteredText from "./ui/StatusContainer"
 import { Session } from "@supabase/supabase-js"
 import { useEffect, useMemo, useRef, useState } from "react"
 import io from "socket.io-client"
@@ -47,10 +39,11 @@ function App() {
   const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
   const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
-  const [roomName, setRoomName] = useState<AvailableGames | null>(null)
+  const [availableRooms, setAvailableRooms] = useState<Tables<"room">[]>([])
+  const [room, setRoom] = useState<Tables<"room"> | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
 
-  const [mapConfig, setMapConfig] = useState<MapConfig | null>(null)
+  const [mapConfig, setMapConfig] = useState<Tables<"map"> | null>(null)
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
@@ -71,6 +64,20 @@ function App() {
   const currentScene = (scene: Phaser.Scene) => {
     console.log(scene)
   }
+
+  useEffect(() => {
+    supabase
+      .from("room")
+      .select("*")
+      .order("name")
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error loading rooms:", error)
+          return
+        }
+        setAvailableRooms(data)
+      })
+  }, [])
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -204,6 +211,19 @@ function App() {
       setSupabaseSession(session)
       if (session) {
         setUsername(session.user.email ? session.user.email.split("@")[0] : session.user.id)
+        supabase
+          .from("users")
+          .select("sprite_definition")
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("Error loading user sprite definition:", error)
+              return
+            }
+            const spriteDefinition = data[0].sprite_definition
+            if (spriteDefinition) {
+              setSpriteDefinition(spriteDefinition as PlayerSpriteDefinition)
+            }
+          })
         socket.emit("authorizeSupabase", session.access_token)
       }
     })
@@ -215,16 +235,20 @@ function App() {
 
   useEffect(() => {
     const path = window.location.pathname
-    let gameName = (
-      path === "/" || path === "" ? "" : path.startsWith("/") ? path.substring(1) : path
-    ) as AvailableGames
-    if (!availableGames.includes(gameName)) {
-      gameName = CONFIG.DEFAULT_GAME as AvailableGames
-      window.location.replace(`/${gameName}`)
+    let roomNamePath = path === "/" || path === "" ? "" : path.startsWith("/") ? path.substring(1) : path
+
+    if (availableRooms.length === 0) return
+
+    const room = availableRooms.find((room) => room.name === roomNamePath)
+    console.log("Room:", room)
+
+    if (!room) {
+      roomNamePath = CONFIG.DEFAULT_GAME
+      window.location.replace(`/${roomNamePath}`)
       return
     }
 
-    setRoomName(gameName)
+    setRoom(room)
 
     const params = new URLSearchParams(window.location.search)
     let initialRoomId = params.get("roomid") || ""
@@ -238,7 +262,7 @@ function App() {
         console.log(`Available rooms: ${rooms}`)
 
         if (!rooms.includes(initialRoomId)) {
-          tempSocket.emit("createRoom", gameName, (newRoomId: string) => {
+          tempSocket.emit("createRoom", roomNamePath, (newRoomId: string) => {
             console.log(`Created new room with id: ${newRoomId}`)
             const newParams = new URLSearchParams(window.location.search)
             newParams.set("roomid", newRoomId)
@@ -251,12 +275,22 @@ function App() {
           tempSocket.disconnect()
         }
 
-        setMapConfig(roomsConfig.find((room) => room.path === gameName)!.mapConfig)
+        supabase
+          .from("map")
+          .select("*")
+          .eq("id", room.map_id)
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("Error loading map:", error)
+              return
+            }
+            setMapConfig(data[0])
+          })
       })
     })
 
     tempSocket.connect()
-  }, [])
+  }, [availableRooms])
 
   function handleResize() {
     setIsMobile(window.innerWidth < mobileWindowWidthThreshold)
