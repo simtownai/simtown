@@ -339,6 +339,7 @@ io.on("connection", (socket) => {
 
   socket.on("sendNews", (newsItem: NewsItem) => {
     if (!currentRoom) return
+    currentRoom.addNewsItem(newsItem)
     io.to(currentRoom.getId()).emit("news", newsItem)
   })
 
