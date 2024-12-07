@@ -3,6 +3,7 @@ import { PromptSystem } from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
+import { Database } from "../shared/supabase-types"
 import {
   GridPosition,
   MapConfig,
@@ -15,6 +16,7 @@ import {
   UpdatePlayerData,
   VoteCandidate,
 } from "../shared/types"
+import { SupabaseClient } from "@supabase/supabase-js"
 import * as fs from "fs"
 
 export class Room {
@@ -47,7 +49,7 @@ export class Room {
     // ToDo: maybe add cache for json files and load them from cache
     this.mapData = JSON.parse(fs.readFileSync(`./public/assets/maps/${this.mapConfig.mapJSONFilename}.json`, "utf8"))
 
-    this.places = this.mapData.layers.find((layer) => layer.name === this.mapConfig.placesLayerName)!.objects!
+    this.places = this.mapData.layers.find((layer) => layer.name === CONFIG.MAP_PLACES_LAYER_NAME)!.objects!
     this.spawnArea = this.places.find((obj) => obj.name === this.mapConfig.spawnPlaceName)!
   }
 
@@ -92,6 +94,7 @@ export class Room {
   }
 
   addPlayer(
+    supabaseClient: SupabaseClient<Database>,
     playerId: string,
     isNPC: boolean,
     username: string,
@@ -109,6 +112,22 @@ export class Room {
     }
 
     this.players.set(playerId, playerData)
+
+    if (!isNPC) {
+      supabaseClient.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabaseClient
+            .from("user_room_instance")
+            .insert([{ user_id: user.id, room_instance_id: this.id }])
+            .then(({ error }) => {
+              if (error) {
+                logger.error(`Error adding user to room instance: ${error.message}`)
+              }
+            })
+        }
+      })
+    }
+
     return playerData
   }
 
@@ -174,6 +193,21 @@ export class Room {
 
     const randomGridPos = availablePositions[Math.floor(Math.random() * availablePositions.length)]
     return gridToWorld(randomGridPos)
+  }
+
+  dumpStateToDatabase(supabaseClient: SupabaseClient<Database>) {
+    // ToDo: update room instance with newspaper
+    supabaseClient
+      .from("room_instance")
+      .update({ newspaper: this.newsPaper })
+      .eq("id", this.id)
+      .then(({ error }) => {
+        if (error) {
+          logger.error(`Error updating room instance: ${error.message}`)
+        }
+      })
+
+    // ToDo: update NPC instances with reflection and position
   }
 
   cleanup(): void {

@@ -29,7 +29,7 @@ app.use(cors())
 const server = createServer(app)
 
 interface SocketData {
-  playerSupabaseClient?: SupabaseClient<Database>
+  playerSupabaseClient: SupabaseClient<Database>
 }
 
 const io = new Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>(server, {
@@ -41,7 +41,11 @@ const io = new Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, Sock
 
 const rooms: Map<string, Room> = new Map()
 
-const createGameRoom = (roomConfig: RoomConfig, roomId: string = uuidv4()): Room | null => {
+const createGameRoom = (
+  supabaseClient: SupabaseClient<Database>,
+  roomConfig: RoomConfig,
+  roomId: string = uuidv4(),
+): Room | null => {
   const room = new Room(roomId, roomConfig.path, roomConfig.mapConfig, roomConfig.NPCConfigs, roomConfig.promptSystem)
   room.initialize()
 
@@ -51,10 +55,37 @@ const createGameRoom = (roomConfig: RoomConfig, roomId: string = uuidv4()): Room
 
   setTimeout(() => {
     if (room.getRealPlayerCount() === 0) {
+      // ToDo: clean up room ONLY IF `user_room_instance` is empty
+      // supabaseClient.rpc("delete_room_instance", { p_id: roomId }).then(({ data, error }) => {
+      //   if (error) {
+      //     logger.error("Error deleting room instance:")
+      //     console.error(error)
+      //     return
+      //   } else {
+      //     logger.info(`Supabase room instance deleted for room '${data}'`)
+      //   }
+      // })
       room.cleanup()
       rooms.delete(room.getId())
     }
   }, CONFIG.ROOM_CLEANUP_TIMEOUT)
+
+  supabaseClient
+    .rpc("create_room_instance", {
+      p_id: roomId,
+      p_room_id: 1,
+      p_npc_ids: [1, 2],
+      p_type: roomConfig.instanceType,
+    })
+    .then(({ data, error }) => {
+      if (error) {
+        logger.error("Error creating room instance:")
+        console.error(error)
+        return
+      } else {
+        logger.info(`Supabase room instance created for room '${data}'`)
+      }
+    })
 
   return room
 }
@@ -62,6 +93,10 @@ const createGameRoom = (roomConfig: RoomConfig, roomId: string = uuidv4()): Room
 io.on("connection", (socket) => {
   const playerId = socket.id
   let currentRoom: Room | null = null
+  socket.data.playerSupabaseClient = createClient<Database>(
+    process.env.VITE_SUPABASE_URL!,
+    process.env.VITE_SUPABASE_ANON_KEY!,
+  )
 
   socket.on("authorizeSupabase", (access_token: string) => {
     socket.data.playerSupabaseClient = createClient<Database>(
@@ -97,12 +132,12 @@ io.on("connection", (socket) => {
     if (roomConfig.instanceType === "shared") {
       let room = Array.from(rooms.values()).find((r) => r.getName() === gameName)
       if (!room) {
-        room = createGameRoom(roomConfig)!
+        room = createGameRoom(socket.data.playerSupabaseClient, roomConfig)!
         rooms.set(room.getId(), room)
       }
       callback(room.getId())
     } else {
-      const room = createGameRoom(roomConfig)
+      const room = createGameRoom(socket.data.playerSupabaseClient, roomConfig)
       if (!room) {
         callback(null)
         return
@@ -147,7 +182,15 @@ io.on("connection", (socket) => {
         animation: `${username}-idle-down`,
       }
 
-      currentRoom.addPlayer(playerId, isNPC, username, spriteDefinition, spawnPosition)
+      // currentRoom.addPlayer(playerId, isNPC, username, spriteDefinition, spawnPosition)
+      currentRoom.addPlayer(
+        socket.data.playerSupabaseClient,
+        playerId,
+        isNPC,
+        username,
+        spriteDefinition,
+        spawnPosition,
+      )
 
       logger.info(
         `${isNPC ? "NPC" : "Player"} '${username}' connected. Number of players: ${currentRoom.getPlayerCount()}`,
@@ -296,7 +339,6 @@ io.on("connection", (socket) => {
 
   socket.on("sendNews", (newsItem: NewsItem) => {
     if (!currentRoom) return
-    currentRoom.addNewsItem(newsItem)
     io.to(currentRoom.getId()).emit("news", newsItem)
   })
 
@@ -396,15 +438,16 @@ io.on("connection", (socket) => {
       logger.info(
         `User ${player.username} left room ${currentRoom.getId()}. Real players in room: ${currentRoom.getRealPlayerCount()}`,
       )
+      if (!player.isNPC) {
+        currentRoom.dumpStateToDatabase(socket.data.playerSupabaseClient)
+        if (currentRoom.getRealPlayerCount() === 0) {
+          currentRoom.cleanup()
+          rooms.delete(currentRoom.getId())
+        }
+      }
     }
 
     socket.leave(currentRoom.getId())
-
-    if (!player?.isNPC && currentRoom.getRealPlayerCount() === 0) {
-      currentRoom.cleanup()
-      rooms.delete(currentRoom.getId())
-      // io.emit("roomList", getRoomInfo())
-    }
   }
 
   socket.on("leaveRoom", () => {
