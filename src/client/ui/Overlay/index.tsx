@@ -78,12 +78,12 @@ export default function Overlay({
 
   return (
     <>
-      <div className={`${styles.overlay} ${styles.overlayTopRight}`}>
-        <div className={styles.timeDisplay}>
-          <div>{formatTimeAMPM(currentTime)}</div>
-          <div>{getDaysRemaining()} days left</div>
-        </div>
-      </div>
+      {/* <div className={`${styles.overlay} ${styles.overlayTopRight}`}> */}
+      {/*   <div className={styles.timeDisplay}> */}
+      {/*     <div>{formatTimeAMPM(currentTime)}</div> */}
+      {/*     <div>{getDaysRemaining()} days left</div> */}
+      {/*   </div> */}
+      {/* </div> */}
       <div className={`${styles.overlay} ${styles.overlayTopLeft}`}>
         <button
           className={`${styles.iconButton}`}
