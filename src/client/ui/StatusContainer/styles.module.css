@@ -1,0 +1,14 @@
+.centeredContainer {
+  background-color: #6c4a2b;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.centeredText {
+  font-family: "Monogram Extended";
+  font-size: 32px;
+  color: #ffffff;
+}

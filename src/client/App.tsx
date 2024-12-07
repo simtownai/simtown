@@ -366,15 +366,19 @@ function App() {
   }
 
   if (!socket) {
-    return <div>Connecting to server...</div>
+    return <CenteredText text="Connecting to server..." />
+  }
+
+  if (!availableRooms.length) {
+    return <CenteredText text="Loading available rooms..." />
   }
 
   if (!roomId) {
-    return <div>Getting room id...</div>
+    return <CenteredText text="Getting room id..." />
   }
 
   if (!mapConfig) {
-    return <div>Map config is not set yet...</div>
+    return <CenteredText text="Map config is not set yet..." />
   }
 
   return (
