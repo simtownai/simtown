@@ -420,7 +420,8 @@ io.on("connection", (socket) => {
       formattedResults += `Total Votes Cast: ${totalVotes}\n`
 
       const newsItem: NewsItem = {
-        date: getGameTime().toISOString(),
+        // date: getGameTime().toISOString(),
+        date: new Date().toISOString(),
         message: formattedResults,
       }
       currentRoom.addNewsItem(newsItem)
@@ -463,8 +464,10 @@ io.on("connection", (socket) => {
 
 function sendVotingReminder(room: Room) {
   const newsItem: NewsItem = {
-    date: getGameTime().toISOString(),
-    message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader! Only ${getDaysRemaining()} game days left.`,
+    // date: getGameTime().toISOString(),
+    date: new Date().toISOString(),
+    message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader!`,
+    // message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader! Only ${getDaysRemaining()} game days left.`,
     place: room.getMapConfig().votingPlaceName,
   }
   room.addNewsItem(newsItem)

@@ -194,7 +194,8 @@ export class AIBrain {
       reflections: reflectionsString,
       currentPlan: currentActionQueueString,
       currentAction: currentActionString,
-      currentTime: getGameTime().toISOString(),
+      // currentTime: getGameTime().toISOString(),
+      currentTime: new Date().toISOString(),
       broadcastAnnouncements: broadcastAnnouncementsString,
     }
     return result

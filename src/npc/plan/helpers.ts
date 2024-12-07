@@ -1,4 +1,4 @@
-import { getBroadcastAnnouncementsKey, getGameTime } from "../../shared/functions"
+import { getBroadcastAnnouncementsKey } from "../../shared/functions"
 import logger from "../../shared/logger"
 import { AIAction, AIActionPlan, MapConfig, NewsItem } from "../../shared/types"
 import { MovementController } from "../MovementController"
@@ -75,7 +75,8 @@ export const convertGeneratedPlanToActions = (
     const key = getBroadcastAnnouncementsKey(targetPlace, username)
     if (!getBrainDump().broadcastAnnouncementsCache.has(key)) {
       getEmitMethods().emitNewsItem({
-        date: getGameTime().toISOString(),
+        // date: getGameTime().toISOString(),
+        date: new Date().toISOString(),
         message: `📢 ${username} will be broadcasting soon`,
         place: targetPlace,
       } as NewsItem)
@@ -136,7 +137,8 @@ export const convertGeneratedPlanToActions = (
             () => {
               logger.debug(`(${getBrainDump().playerData.username}) broadcast ended`)
               getEmitMethods().emitNewsItem({
-                date: getGameTime().toISOString(),
+                // date: getGameTime().toISOString(),
+                date: new Date().toISOString(),
                 message: `📢 ${getBrainDump().playerData.username} has finished broadcasting`,
                 place: actionData.targetPlace,
               } as NewsItem)
