@@ -1,3 +1,4 @@
+import { CONFIG } from "../shared/config"
 import { getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
 import { ChatMessage, MapConfig, MapData, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
@@ -276,7 +277,7 @@ export class NPC {
   }
 
   setupPlaces() {
-    const places = this.mapData.layers.find((layer) => layer.name === this.mapConfig.placesLayerName)!.objects!
+    const places = this.mapData.layers.find((layer) => layer.name === CONFIG.MAP_PLACES_LAYER_NAME)!.objects!
 
     this.places = new Map(
       places

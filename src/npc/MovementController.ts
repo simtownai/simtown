@@ -1,3 +1,4 @@
+import { CONFIG } from "../shared/config"
 import { getDirection, gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
 import {
@@ -44,9 +45,9 @@ export class MovementController {
     private sendMoveMessage: (blockingPlayer: PlayerData) => void,
     private updateAndEmitPlayerData: (updatePlayerData: UpdatePlayerData) => void,
   ) {
-    this.collisionLayer = this.mapData.layers.find((layer) => layer.name === this.mapConfig.collisionLayerName)!
-    this.roadLayer = this.mapData.layers.find((layer) => layer.name === this.mapConfig.roadsLayerName)!
-    this.objectLayer = this.mapData.layers.find((layer) => layer.name === this.mapConfig.placesLayerName)!.objects!
+    this.collisionLayer = this.mapData.layers.find((layer) => layer.name === CONFIG.MAP_COLLISION_LAYER_NAME)!
+    this.roadLayer = this.mapData.layers.find((layer) => layer.name === CONFIG.MAP_ROADS_LAYER_NAME)!
+    this.objectLayer = this.mapData.layers.find((layer) => layer.name === CONFIG.MAP_PLACES_LAYER_NAME)!.objects!
     this.initializeCollisionGrid()
   }
 

@@ -4,9 +4,6 @@ import { z } from "zod"
 export type MapConfig = {
   mapJSONFilename: string
   tilesetPNGFilename: string
-  collisionLayerName: string
-  roadsLayerName: string
-  placesLayerName: string
   spawnPlaceName: string
   votingPlaceName: string
 }

@@ -129,7 +129,7 @@ export class Game extends Phaser.Scene {
     LAYER_CONFIG.map(({ name, depth }) => {
       const layer = this.map.createLayer(name, tileset)!
       layer.setDepth(depth)
-      if (name === this.mapConfig.collisionLayerName) {
+      if (name === CONFIG.MAP_COLLISION_LAYER_NAME) {
         this.collisionLayer = layer
         this.collisionLayer.setCollisionByExclusion([-1])
         this.collisionLayer.setVisible(false)
