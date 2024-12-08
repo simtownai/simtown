@@ -218,6 +218,7 @@ export type Database = {
           map_id: number
           name: string
           scenario: string
+          type: Database["public"]["Enums"]["room_type"]
         }
         Insert: {
           created_at?: string | null
@@ -225,6 +226,7 @@ export type Database = {
           map_id: number
           name: string
           scenario: string
+          type?: Database["public"]["Enums"]["room_type"]
         }
         Update: {
           created_at?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           map_id?: number
           name?: string
           scenario?: string
+          type?: Database["public"]["Enums"]["room_type"]
         }
         Relationships: [
           {
@@ -250,7 +253,6 @@ export type Database = {
           last_update: string | null
           newspaper: Json[] | null
           room_id: number | null
-          type: Database["public"]["Enums"]["room_type"]
         }
         Insert: {
           created_at?: string | null
@@ -258,7 +260,6 @@ export type Database = {
           last_update?: string | null
           newspaper?: Json[] | null
           room_id?: number | null
-          type?: Database["public"]["Enums"]["room_type"]
         }
         Update: {
           created_at?: string | null
@@ -266,7 +267,6 @@ export type Database = {
           last_update?: string | null
           newspaper?: Json[] | null
           room_id?: number | null
-          type?: Database["public"]["Enums"]["room_type"]
         }
         Relationships: [
           {
@@ -374,8 +374,6 @@ export type Database = {
         Args: {
           p_id: string
           p_room_id: number
-          p_npc_ids: number[]
-          p_type?: Database["public"]["Enums"]["room_type"]
         }
         Returns: string
       }
