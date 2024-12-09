@@ -2,7 +2,7 @@ import { Tables } from "../../shared/supabase-types"
 import { supabase } from "../supabase"
 import { useEffect, useState } from "react"
 
-export const useAvailableRooms = (username: string | null) => {
+export const useAvailableRooms = () => {
   const [availableRooms, setAvailableRooms] = useState<Tables<"room">[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -25,7 +25,7 @@ export const useAvailableRooms = (username: string | null) => {
     }
 
     loadRooms()
-  }, [username])
+  }, [])
 
   return { availableRooms, isLoading, error }
 }
