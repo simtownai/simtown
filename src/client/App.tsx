@@ -14,8 +14,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import io from "socket.io-client"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
 import { useLocalStorageMessages } from "./hooks/useLocalStorageMessages"
+import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
 
-const mobileWindowWidthThreshold = 450
 
 const socket = io(CONFIG.SERVER_URL)
 
@@ -24,7 +24,6 @@ function App() {
   const [chatmate, setChatmate] = useState<string | null>(null)
   const [isChatsContainerCollapsed, setIsChatsContainerCollapsed] = useState(true)
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [composeValue, setComposeValue] = useState("")
   const [isMessageLoading, setIsMessageLoading] = useState(false)
@@ -253,18 +252,7 @@ function App() {
     tempSocket.connect()
   }, [availableRooms])
 
-  function handleResize() {
-    setIsMobile(window.innerWidth < mobileWindowWidthThreshold)
-  }
-
-  useEffect(() => {
-    handleResize()
-    const resizeListener = () => handleResize()
-    window.addEventListener("resize", resizeListener)
-    return () => {
-      window.removeEventListener("resize", resizeListener)
-    }
-  }, [])
+  const isMobile = useMobileBreakpoint(mobileWindowWidthThreshold)
 
   const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages(username)
 
