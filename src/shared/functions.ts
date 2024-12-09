@@ -1,8 +1,20 @@
 import componentManifest from "../../public/assets/sprites/Character_Generator/componentManifest.json"
 import { CONFIG } from "./config"
-import { AIAction, GridPosition, PlayerSpriteDefinition } from "./types"
+import {
+  AIAction,
+  ActionType,
+  AvailableActionSchema,
+  GridPosition,
+  PlayerSpriteDefinition,
+  allActionSchemas,
+} from "./types"
 
 export const get_move_message = (username: string) => `Hey ${username}, you're blocking my path.`
+
+export function getActionSchema(actionType: ActionType): AvailableActionSchema {
+  const lookup = Object.fromEntries(allActionSchemas.map((schema) => [schema.shape.type.value, schema]))
+  return lookup[actionType]
+}
 
 export function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
