@@ -1,20 +1,18 @@
 import { CONFIG } from "../shared/config"
-import { calculateDistance, getDaysRemaining, getGameTime, isInZone } from "../shared/functions"
+import { calculateDistance, getGameTime, isInZone } from "../shared/functions"
 import logger from "../shared/logger"
-import { roomsConfig } from "../shared/roomConfig"
-import { Database } from "../shared/supabase-types"
+import { Database, Tables } from "../shared/supabase-types"
 import {
   BroadcastMessage,
   ChatMessage,
   NewsItem,
   PlayerData,
   PlayerSpriteDefinition,
-  RoomConfig,
   UpdatePlayerData,
   VoteCandidate,
   availableVoteCandidates,
 } from "../shared/types"
-import { Room } from "./rooms"
+import { RoomInstance } from "./rooms"
 import { SupabaseClient, createClient } from "@supabase/supabase-js"
 import cors from "cors"
 import express from "express"
@@ -39,60 +37,100 @@ const io = new Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, Sock
   },
 })
 
-const rooms: Map<string, Room> = new Map()
+const rooms: Map<string, RoomInstance> = new Map()
 
-const createGameRoom = (
+async function restoreRoomInstance(
   supabaseClient: SupabaseClient<Database>,
-  roomConfig: RoomConfig,
-  roomId: string = uuidv4(),
-): Room | null => {
-  const room = new Room(roomId, roomConfig.path, roomConfig.mapConfig, roomConfig.NPCConfigs, roomConfig.promptSystem)
-  room.initialize()
+  roomDefinition: Tables<"room">,
+  roomInstance: Tables<"room_instance">,
+): Promise<RoomInstance | undefined> {
+  // retrieve npc instances
+  // create room with setting news paper and propagating additional npc fields
+}
 
-  if (roomConfig.path === "electiontown") {
-    initializeVotingNotifications(room)
-  }
+async function createRoomInstance(
+  supabaseClient: SupabaseClient<Database>,
+  roomDefinition: Tables<"room">,
+  roomInstanceId: string = uuidv4(),
+): Promise<RoomInstance | undefined> {
+  try {
+    // Fetch NPCs
+    const { data: npcData, error: npcError } = await supabaseClient
+      .from("npc_room")
+      .select("npc!inner (*)")
+      .eq("room_id", roomDefinition.id)
 
-  setTimeout(() => {
-    if (room.getRealPlayerCount() === 0) {
-      // ToDo: clean up room ONLY IF `user_room_instance` is empty
-      // supabaseClient.rpc("delete_room_instance", { p_id: roomId }).then(({ data, error }) => {
-      //   if (error) {
-      //     logger.error("Error deleting room instance:")
-      //     console.error(error)
-      //     return
-      //   } else {
-      //     logger.info(`Supabase room instance deleted for room '${data}'`)
-      //   }
-      // })
-      room.cleanup()
-      rooms.delete(room.getId())
+    if (npcError) {
+      logger.error("Error fetching NPCs:")
+      console.error(npcError)
+      return
     }
-  }, CONFIG.ROOM_CLEANUP_TIMEOUT)
 
-  supabaseClient
-    .rpc("create_room_instance", {
-      p_id: roomId,
-      p_room_id: 1,
-      p_npc_ids: [1, 2],
-      p_type: roomConfig.instanceType,
+    const npcs = npcData.map((npc) => npc.npc)
+
+    // Fetch map config
+    const { data: mapData, error: mapError } = await supabaseClient
+      .from("room")
+      .select("map!inner (*)")
+      .eq("id", roomDefinition.id)
+      .single()
+
+    if (mapError) {
+      logger.error("Error fetching map config:")
+      console.error(mapError)
+      return
+    }
+
+    const mapConfig = mapData.map
+
+    // Create room instance in database
+    const { error: createError } = await supabaseClient.rpc("create_room_instance", {
+      p_id: roomInstanceId,
+      p_room_id: roomDefinition.id,
     })
-    .then(({ data, error }) => {
-      if (error) {
-        logger.error("Error creating room instance:")
-        console.error(error)
-        return
-      } else {
-        logger.info(`Supabase room instance created for room '${data}'`)
+    if (createError) {
+      logger.error("Error creating room instance:")
+      console.error(createError)
+      return
+    }
+
+    const roomInstance = new RoomInstance(roomInstanceId, mapConfig, npcs, roomDefinition.scenario)
+    rooms.set(roomInstance.getId(), roomInstance)
+    roomInstance.initialize()
+
+    if (mapConfig.name === "electiontown") {
+      initializeVotingNotifications(roomInstance)
+    }
+
+    // Set up cleanup timeout
+    setTimeout(() => {
+      if (roomInstance.getRealPlayerCount() === 0) {
+        // ToDo: clean up room ONLY IF `user_room_instance` is empty
+        // BUT if it is empty that means that user have no rights to delete it
+        // const { data, error } = await supabaseClient.rpc("delete_room_instance", { p_id: roomId });
+        // if (error) {
+        //   logger.error("Error deleting room instance:");
+        //   console.error(error);
+        //   return;
+        // }
+        // logger.info(`Supabase room instance deleted for room '${data}'`);
+        roomInstance.cleanup()
+        rooms.delete(roomInstance.getId())
       }
-    })
+    }, CONFIG.ROOM_CLEANUP_TIMEOUT)
 
-  return room
+    logger.info(`Supabase room instance created for room '${roomInstanceId}'`)
+    return roomInstance
+  } catch (error) {
+    logger.error("Unexpected error in createRoomInstance:")
+    console.error(error)
+    return
+  }
 }
 
 io.on("connection", (socket) => {
   const playerId = socket.id
-  let currentRoom: Room | null = null
+  let currentRoom: RoomInstance | null = null
   socket.data.playerSupabaseClient = createClient<Database>(
     process.env.VITE_SUPABASE_URL!,
     process.env.VITE_SUPABASE_ANON_KEY!,
@@ -122,28 +160,53 @@ io.on("connection", (socket) => {
     })
   })
 
-  socket.on("createRoom", (gameName: string, callback: (roomId: string | null) => void) => {
-    const roomConfig = roomsConfig.find((config) => config.path === gameName)
-    if (!roomConfig) {
-      callback(null)
-      return
-    }
+  socket.on("createRoom", async (roomId: integer, callback: (roomInstanceId: string | null) => void) => {
+    try {
+      const { data: room, error } = await socket.data.playerSupabaseClient
+        .from("room")
+        .select("*")
+        .eq("id", roomId)
+        .single()
 
-    if (roomConfig.instanceType === "shared") {
-      let room = Array.from(rooms.values()).find((r) => r.getName() === gameName)
-      if (!room) {
-        room = createGameRoom(socket.data.playerSupabaseClient, roomConfig)!
-        rooms.set(room.getId(), room)
-      }
-      callback(room.getId())
-    } else {
-      const room = createGameRoom(socket.data.playerSupabaseClient, roomConfig)
-      if (!room) {
+      if (error) {
+        logger.error("Error fetching room:")
+        console.error(error)
         callback(null)
         return
       }
-      rooms.set(room.getId(), room)
-      callback(room.getId())
+
+      if (room.type === "shared") {
+        const { data: room_instance, error } = await socket.data.playerSupabaseClient
+          .from("room_instance")
+          .select("*")
+          .eq("room_id", roomId)
+          .single()
+
+        let roomInstance: RoomInstance | undefined
+        if (error) {
+          // no instance found, create one
+          roomInstance = (await createRoomInstance(socket.data.playerSupabaseClient, room))!
+        } else {
+          // instance exists, check if it's still active
+          roomInstance = Array.from(rooms.values()).find((r) => r.getId() === room_instance.id)
+          if (!roomInstance) {
+            // instance is not active, restore it
+            roomInstance = (await restoreRoomInstance(socket.data.playerSupabaseClient, room, room_instance))!
+          }
+        }
+        callback(roomInstance.getId())
+      } else {
+        const roomInstance = await createRoomInstance(socket.data.playerSupabaseClient, room)
+        if (!roomInstance) {
+          callback(null)
+          return
+        }
+        callback(roomInstance.getId())
+      }
+    } catch (error) {
+      logger.error("Unexpected error in createRoom:")
+      console.error(error)
+      callback(null)
     }
   })
 
@@ -462,19 +525,19 @@ io.on("connection", (socket) => {
   })
 })
 
-function sendVotingReminder(room: Room) {
+function sendVotingReminder(room: RoomInstance) {
   const newsItem: NewsItem = {
     // date: getGameTime().toISOString(),
     date: new Date().toISOString(),
     message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader!`,
     // message: `🗳️ Polling is open! Make your voice heard - cast your vote for the next leader! Only ${getDaysRemaining()} game days left.`,
-    place: room.getMapConfig().votingPlaceName,
+    place: room.getMapConfig().voting_place_name,
   }
   room.addNewsItem(newsItem)
   io.to(room.getId()).emit("news", newsItem)
 }
 
-function initializeVotingNotifications(room: Room) {
+function initializeVotingNotifications(room: RoomInstance) {
   let lastNotificationGameTime = new Date(getGameTime().setDate(getGameTime().getDate() - 1))
   setInterval(() => {
     const currentGameTime = getGameTime()
