@@ -10,6 +10,7 @@ import { useSupabaseSession } from "./hooks/useSupabaseSession"
 import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
 import { useAvailableRooms } from "./hooks/useAvailableRooms"
 import { GameRoom } from "./components/GameRoom"
+import { Dashboard } from "./components/Dashboard"
 
 const socket = io(CONFIG.SERVER_URL)
 
@@ -40,15 +41,16 @@ function App() {
 
   useEffect(() => {
     const path = window.location.pathname
-    let roomNamePath = path === "/" || path === "" ? "" : path.startsWith("/") ? path.substring(1) : path
+    if (path === "/" || path === "") return
+
+    let roomNamePath = path.startsWith("/") ? path.substring(1) : path
 
     if (availableRooms.length === 0) return
 
     const room = availableRooms.find((room) => room.name === roomNamePath)
 
     if (!room) {
-      roomNamePath = CONFIG.DEFAULT_GAME
-      window.location.replace(`/${roomNamePath}`)
+      window.location.replace("/")
       return
     }
 
@@ -109,6 +111,16 @@ function App() {
 
   if (!availableRooms.length) {
     return <CenteredText text="No rooms available" />
+  }
+
+  if (window.location.pathname === "/" || window.location.pathname === "") {
+    return (
+      <Dashboard
+        rooms={availableRooms}
+        username={username}
+        spriteDefinition={spriteDefinition}
+      />
+    )
   }
 
   if (!roomId) {
