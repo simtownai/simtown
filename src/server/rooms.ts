@@ -22,6 +22,7 @@ export class RoomInstance {
   protected mapData: MapData
   protected players: Map<string, PlayerData>
   protected NPCConfigs: Tables<"npc">[]
+  protected NPCInstances: Tables<"npc_instance">[]
   protected npcs: NPC[]
   protected scenario: string
   protected created: Date
@@ -30,10 +31,17 @@ export class RoomInstance {
   protected places: Object[]
   protected spawnArea: Object
 
-  constructor(id: string, mapConfig: Tables<"map">, NPCConfigs: Tables<"npc">[], scenario: string) {
+  constructor(
+    id: string,
+    mapConfig: Tables<"map">,
+    NPCConfigs: Tables<"npc">[],
+    scenario: string,
+    NPCInstances: Tables<"npc_instance">[] = [],
+  ) {
     this.id = id
     this.mapConfig = mapConfig
     this.NPCConfigs = NPCConfigs
+    this.NPCInstances = NPCInstances
     this.scenario = scenario
     this.players = new Map()
     this.npcs = []
@@ -50,10 +58,31 @@ export class RoomInstance {
 
   initialize(): void {
     this.NPCConfigs.forEach((config) => {
-      const npc = new NPC(config, this.id, this.scenario, this.mapConfig, this.mapData)
+      const npcInstance = this.NPCInstances.find((instance) => instance.npc_id === config.id)
+
+      let npc: NPC
+      if (npcInstance) {
+        npc = new NPC(
+          config,
+          this.id,
+          this.scenario,
+          this.mapConfig,
+          this.mapData,
+          npcInstance.reflections ? npcInstance.reflections : undefined,
+          npcInstance.position_x !== null && npcInstance.position_y !== null
+            ? { x: npcInstance.position_x, y: npcInstance.position_y }
+            : undefined,
+        )
+      } else {
+        npc = new NPC(config, this.id, this.scenario, this.mapConfig, this.mapData)
+      }
       this.npcs.push(npc)
     })
     logger.info(`Initialized room instance with id '${this.id}'`)
+  }
+
+  setNewsPaper(newsPaper: NewsItem[]) {
+    this.newsPaper = newsPaper
   }
 
   getMapConfig(): Tables<"map"> {
@@ -198,11 +227,12 @@ export class RoomInstance {
       })
 
     this.npcs.forEach((npc) => {
+      const { x, y } = gridToWorld(worldToGrid(npc.playerData.x, npc.playerData.y))
       supabaseClient
         .from("npc_instance")
         .update({
-          position_x: npc.playerData.x,
-          position_y: npc.playerData.y,
+          position_x: x,
+          position_y: y,
           reflections: npc.aiBrain.getReflections(),
         })
         .eq("room_instance_id", this.id)
