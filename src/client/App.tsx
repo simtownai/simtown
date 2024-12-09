@@ -262,12 +262,12 @@ function App() {
         console.log(`Available rooms: ${rooms}`)
 
         if (!rooms.includes(initialRoomId)) {
-          tempSocket.emit("createRoom", roomNamePath, (newRoomId: string) => {
-            console.log(`Created new room with id: ${newRoomId}`)
+          tempSocket.emit("createRoom", room.id, (roomInstanceId: string) => {
+            console.log(`Created new room with id: ${roomInstanceId}`)
             const newParams = new URLSearchParams(window.location.search)
-            newParams.set("roomid", newRoomId)
+            newParams.set("roomid", roomInstanceId)
             window.history.replaceState({}, "", `${window.location.pathname}?${newParams.toString()}`)
-            setRoomId(newRoomId)
+            setRoomId(roomInstanceId)
             tempSocket.disconnect()
           })
         } else {
