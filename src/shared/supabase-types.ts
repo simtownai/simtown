@@ -41,7 +41,7 @@ export type Database = {
       map: {
         Row: {
           created_at: string | null
-          description: string | null
+          description: string
           id: number
           map_json_filename: string
           name: string
@@ -51,7 +51,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          description?: string | null
+          description: string
           id?: number
           map_json_filename: string
           name: string
@@ -61,7 +61,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          description?: string | null
+          description?: string
           id?: number
           map_json_filename?: string
           name?: string
