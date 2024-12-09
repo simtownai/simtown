@@ -1,7 +1,7 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
 import { Tables } from "../shared/supabase-types"
-import { BroadcastMessage, ChatMessage, NewsItem, PlayerData, PlayerSpriteDefinition } from "../shared/types"
+import { BroadcastMessage, ChatMessage, NewsItem, PlayerData } from "../shared/types"
 import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
 import { supabase } from "./supabase"
 import Authorize from "./ui/Authorize"
@@ -10,9 +10,9 @@ import NewsContainer from "./ui/NewsContainer"
 import ObserveContainer from "./ui/ObserveContainer"
 import Overlay from "./ui/Overlay"
 import CenteredText from "./ui/StatusContainer"
-import { Session } from "@supabase/supabase-js"
 import { useEffect, useMemo, useRef, useState } from "react"
 import io from "socket.io-client"
+import { useSupabaseSession } from "./hooks/useSupabaseSession"
 
 const mobileWindowWidthThreshold = 450
 
@@ -20,8 +20,6 @@ const socket = io(CONFIG.SERVER_URL)
 
 function App() {
   const [isGameLoaded, setIsGameLoaded] = useState(false)
-  const [username, setUsername] = useState<string>("Player" + Math.floor(Math.random() * 1000) + 1)
-  const [spriteDefinition, setSpriteDefinition] = useState<PlayerSpriteDefinition>(createRandomSpriteDefinition())
   const [chatmate, setChatmate] = useState<string | null>(null)
   const [isChatsContainerCollapsed, setIsChatsContainerCollapsed] = useState(true)
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
@@ -40,11 +38,10 @@ function App() {
   const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
   const [availableRooms, setAvailableRooms] = useState<Tables<"room">[]>([])
-  const [room, setRoom] = useState<Tables<"room"> | null>(null)
+  const [_room, setRoom] = useState<Tables<"room"> | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
 
   const [mapConfig, setMapConfig] = useState<Tables<"map"> | null>(null)
-  const [supabaseSession, setSupabaseSession] = useState<Session | null>(null)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
@@ -203,35 +200,13 @@ function App() {
     }
   }, [])
 
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("onAuthStateChange", event, session)
-      setSupabaseSession(session)
-      if (session) {
-        setUsername(session.user.email ? session.user.email.split("@")[0] : session.user.id)
-        supabase
-          .from("users")
-          .select("sprite_definition")
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("Error loading user sprite definition:", error)
-              return
-            }
-            const spriteDefinition = data[0].sprite_definition
-            if (spriteDefinition) {
-              setSpriteDefinition(spriteDefinition as PlayerSpriteDefinition)
-            }
-          })
-        socket.emit("authorizeSupabase", session.access_token)
-      }
-    })
+  const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
+  const {
+    supabaseSession,
+    username,
+    spriteDefinition,
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
+  } = useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
 
   useEffect(() => {
     const path = window.location.pathname
