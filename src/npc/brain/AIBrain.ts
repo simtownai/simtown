@@ -1,16 +1,14 @@
-import { getGameTime } from "../../shared/functions"
 import logger from "../../shared/logger"
+import { Tables } from "../../shared/supabase-types"
 import {
   AvailableActionSchema,
   ChatMessage,
-  MapConfig,
   NewsItem,
   PlayerData,
   UpdatePlayerData,
   VoteCandidate,
   availableVoteCandidates,
 } from "../../shared/types"
-import { NPCConfig } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -57,7 +55,8 @@ export type BrainDump = {
 
 type AIBrainInterface = {
   getPlayerData: () => PlayerData
-  config: NPCConfig
+  name: string
+  backstory: string[]
   getAvailableActions: () => AvailableActionSchema[]
   getOtherPlayers: () => Map<string, PlayerData>
   getNewsPaper: () => NewsItem[]
@@ -67,12 +66,13 @@ type AIBrainInterface = {
   places: string[]
   getEmitMethods: () => EmitInterface
   adjustDirection: (username: string) => void
-  mapConfig: MapConfig
+  mapConfig: Tables<"map">
 }
 
 export class AIBrain {
   private memory: Memory
-  private npcConfig: NPCConfig
+  private name: string
+  private backstory: string[]
   private actionQueue: Action[] = []
   private currentAction: Action | null = null
   private isProcessingAction: boolean = false
@@ -86,12 +86,13 @@ export class AIBrain {
   private getEmitMethods: () => EmitInterface
   private getPromptSystem: () => PromptSystem
   private adjustDirection: (username: string) => void
-  private mapConfig: MapConfig
+  private mapConfig: Tables<"map">
 
   constructor(args: AIBrainInterface) {
     this.getEmitMethods = args.getEmitMethods
-    this.npcConfig = args.config
-    this.memory = new Memory(args.config)
+    this.name = args.name
+    this.backstory = args.backstory
+    this.memory = new Memory(args.backstory)
     this.places = args.places
     this.getAvailableActions = args.getAvailableActions
     this.getOtherPlayers = args.getOtherPlayers
@@ -106,7 +107,7 @@ export class AIBrain {
 
   async generatePlanAndSetActions() {
     try {
-      const currentPlanData = convertActionsToGeneratedPlan(this.actionQueue)
+      // const currentPlanData = convertActionsToGeneratedPlan(this.actionQueue)
       const newPlanData = await generatePlanForTheday(
         this.getBrainDump,
         this.getStringifiedBrainDump(),
@@ -157,12 +158,12 @@ export class AIBrain {
   }
 
   getStringifiedBrainDump(): StringifiedBrainDump {
-    const backstory = this.npcConfig.backstory.join(" ")
-    const name = this.npcConfig.username
+    const backstory = this.backstory.join(" ")
+    const name = this.name
     const playerNames = Array.from(this.getOtherPlayers().keys())
     const playerNamesString = playerNames.length > 0 ? `${playerNames.join(", ")}` : "No other players available"
     const placesNames = this.places
-    const newsPaperString = availableVoteCandidates.includes(this.npcConfig.username as VoteCandidate)
+    const newsPaperString = availableVoteCandidates.includes(this.name as VoteCandidate)
       ? ""
       : `\n${this.getNewsPaper()
           .map((newsItem) => `${newsItem.date}: ${newsItem.message} ${newsItem.place ? `at ${newsItem.place}` : ""}`)
@@ -199,6 +200,10 @@ export class AIBrain {
       broadcastAnnouncements: broadcastAnnouncementsString,
     }
     return result
+  }
+
+  getReflections() {
+    return this.memory.reflections
   }
 
   pushNewAction(action: Action, index: number): string {

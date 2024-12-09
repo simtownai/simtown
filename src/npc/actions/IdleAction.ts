@@ -3,11 +3,11 @@ import logger from "../../shared/logger"
 import { IdleActivityType } from "../../shared/types"
 import { EmitInterface } from "../SocketManager"
 import { BrainDump } from "../brain/AIBrain"
-import { IdleActionDuration } from "../npcConfig"
 import { Action } from "./Action"
 
 export class IdleAction extends Action {
   activityType: IdleActivityType
+  readonly IdleActionDuration = 30000
 
   constructor(
     getBrainDump: () => BrainDump,
@@ -32,7 +32,7 @@ export class IdleAction extends Action {
     }
 
     this.elapsedTime += deltaTime
-    if (this.elapsedTime >= IdleActionDuration) {
+    if (this.elapsedTime >= this.IdleActionDuration) {
       this.resetAnimation()
       this.isCompletedFlag = true
       logger.debug(`(${this.getBrainDump().playerData.username}) Idle action completed`)

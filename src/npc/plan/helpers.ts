@@ -1,6 +1,7 @@
 import { getBroadcastAnnouncementsKey } from "../../shared/functions"
 import logger from "../../shared/logger"
-import { AIAction, AIActionPlan, MapConfig, NewsItem } from "../../shared/types"
+import { Tables } from "../../shared/supabase-types"
+import { AIAction, AIActionPlan, NewsItem } from "../../shared/types"
 import { MovementController } from "../MovementController"
 import { EmitInterface } from "../SocketManager"
 import { Action } from "../actions/Action"
@@ -65,7 +66,7 @@ export const convertGeneratedPlanToActions = (
   movementController: MovementController,
   adjustDirection: (username: string) => void,
   promptSystem: PromptSystem,
-  mapConfig: MapConfig,
+  mapConfig: Tables<"map">,
 ): Action[] => {
   // Define a type for all possible action combinations
   type ActionResult = Action | Action[]
@@ -163,7 +164,7 @@ export const convertGeneratedPlanToActions = (
           getBrainDump,
           getEmitMethods,
           movementController,
-          { targetType: "place", name: mapConfig.votingPlaceName },
+          { targetType: "place", name: mapConfig.voting_place_name },
           `Moving before voting`,
           false,
         )

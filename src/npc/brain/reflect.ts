@@ -7,7 +7,6 @@ import { ListenAction } from "../actions/ListenAction"
 import { MoveAction } from "../actions/MoveAction"
 import { TalkAction } from "../actions/TalkAction"
 import { VoteAction } from "../actions/VoteAction"
-import { IdleActionDuration } from "../npcConfig"
 import client from "../openai/openai"
 import { PromptSystem } from "../prompts"
 import { StringifiedBrainDump } from "./AIBrain"
@@ -21,7 +20,7 @@ export const reflect = async (action: Action, promptSystem: PromptSystem) => {
     const idleAction = action as IdleAction
     return isInterrupted
       ? `I was ${idleAction.activityType}, but got interrupted.`
-      : `I completed ${idleAction.activityType} for ${IdleActionDuration / 1000} seconds`
+      : `I completed ${idleAction.activityType} for ${idleAction.IdleActionDuration / 1000} seconds`
   } else if (actionType === "MoveAction") {
     const moveAction = action as MoveAction
     //   as we are assuming this is completed, we know we succesfuly got to target

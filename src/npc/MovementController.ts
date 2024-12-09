@@ -1,16 +1,7 @@
 import { CONFIG } from "../shared/config"
 import { getDirection, gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
-import {
-  GridPosition,
-  Layer,
-  MapConfig,
-  MapData,
-  MoveTarget,
-  Object,
-  PlayerData,
-  UpdatePlayerData,
-} from "../shared/types"
+import { GridPosition, Layer, MapData, MoveTarget, Object, PlayerData, UpdatePlayerData } from "../shared/types"
 import EasyStar from "easystarjs"
 
 const tinyMovementThreshold = 0.01
@@ -38,7 +29,6 @@ export class MovementController {
   private currentMoveTarget: MoveTarget | null = null
 
   constructor(
-    private mapConfig: MapConfig,
     private mapData: MapData,
     private getPlayerData: () => PlayerData,
     private getOtherPlayers: () => Map<string, PlayerData>,

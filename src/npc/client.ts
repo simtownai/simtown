@@ -1,8 +1,8 @@
 import { CONFIG } from "../shared/config"
-import { getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
+import { getActionSchema, getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
 import logger from "../shared/logger"
-import { ChatMessage, MapConfig, MapData, NewsItem, PlayerData, UpdatePlayerData } from "../shared/types"
-import { NPCConfig } from "../shared/types"
+import { Tables } from "../shared/supabase-types"
+import { ChatMessage, MapData, NewsItem, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
 import { MovementController } from "./MovementController"
 import { SocketManager } from "./SocketManager"
 import { BroadcastAction } from "./actions/BroadcastAction"
@@ -11,9 +11,10 @@ import { AIBrain } from "./brain/AIBrain"
 import { PromptSystem } from "./prompts"
 
 export class NPC {
+  id: number
   movementController: MovementController
   aiBrain: AIBrain
-  private playerData: PlayerData
+  playerData: PlayerData
   private otherPlayers: Map<string, PlayerData>
   private newsPaper: NewsItem[]
   private broadcastAnnouncements: Set<string>
@@ -21,14 +22,17 @@ export class NPC {
   private places: Map<string, { x: number; y: number }>
   private socketManager: SocketManager
   private updateLoopInterval: NodeJS.Timeout | null = null
+  private promptSystem: PromptSystem
 
   constructor(
-    private npcConfig: NPCConfig,
+    private npcConfig: Tables<"npc">,
     private roomId: string,
-    private promptSystem: PromptSystem,
-    private mapConfig: MapConfig,
+    scenario: string,
+    private mapConfig: Tables<"map">,
     private mapData: MapData,
   ) {
+    this.id = npcConfig.id
+    this.promptSystem = new PromptSystem(scenario, mapConfig.name, mapConfig.description)
     this.otherPlayers = new Map<string, PlayerData>()
     this.newsPaper = []
     this.broadcastAnnouncements = new Set<string>()
@@ -36,8 +40,8 @@ export class NPC {
     this.setupPlaces()
     this.socketManager = new SocketManager({
       roomId: this.roomId,
-      username: this.npcConfig.username,
-      spriteDefinition: this.npcConfig.spriteDefinition,
+      username: this.npcConfig.name,
+      spriteDefinition: this.npcConfig.sprite_definition as PlayerSpriteDefinition,
       setupPlayers: this.setupPlayers.bind(this),
       onPlayerJoined: this.onPlayerJoined.bind(this),
       onPlayerDataChanged: this.onPlayerDataChanged.bind(this),
@@ -55,7 +59,6 @@ export class NPC {
       if (player.id === playerId) {
         this.playerData = player
         this.movementController = new MovementController(
-          this.mapConfig,
           this.mapData,
           () => this.playerData,
           () => this.otherPlayers,
@@ -65,16 +68,17 @@ export class NPC {
 
         this.socketManager.emitUpdatePlayerData({
           npcState: {
-            backstory: this.npcConfig.backstory,
+            backstory: [this.npcConfig.backstory],
           },
         })
 
-        logger.info(`(${this.npcConfig.username}) NPC initialized`)
+        logger.info(`(${this.npcConfig.name}) NPC initialized`)
 
         try {
           this.aiBrain = new AIBrain({
-            config: this.npcConfig,
-            getAvailableActions: () => this.npcConfig.availableActions,
+            name: this.npcConfig.name,
+            backstory: [this.npcConfig.backstory],
+            getAvailableActions: () => this.npcConfig.available_actions.map((action) => getActionSchema(action)),
             getOtherPlayers: () => this.otherPlayers,
             getPlayerData: () => this.playerData,
             getNewsPaper: () => this.newsPaper,
@@ -90,7 +94,7 @@ export class NPC {
           this.aiBrain.generatePlanAndSetActions()
           this.startUpdateLoop()
         } catch (error) {
-          logger.error(`(${this.npcConfig.username}) Error initializing NPC`)
+          logger.error(`(${this.npcConfig.name}) Error initializing NPC`)
           console.error(error)
         }
       } else {
@@ -100,13 +104,13 @@ export class NPC {
   }
 
   onPlayerDataChanged(player: PlayerData) {
-    if (player.username !== this.npcConfig.username) {
+    if (player.username !== this.npcConfig.name) {
       this.otherPlayers.set(player.username, player)
     }
   }
 
   onEndConversation(message: ChatMessage) {
-    if (message.to === this.npcConfig.username) {
+    if (message.to === this.npcConfig.name) {
       const currentAction = this.aiBrain.getCurrentAction()
 
       // log_threads(this.aiBrain.getBrainDump(), message.from)
@@ -122,7 +126,7 @@ export class NPC {
         currentAction.getTargetPlayerUsername() !== message.from
       ) {
         logger.error(
-          `(${this.npcConfig.username}) Received conversation timeout message but we are not talking with this player, message: ${JSON.stringify(message)}`,
+          `(${this.npcConfig.name}) Received conversation timeout message but we are not talking with this player, message: ${JSON.stringify(message)}`,
         )
         logger.debug(`Currently talking with ${currentAction.getTargetPlayerUsername()}`)
         logger.debug(`Reflections are ${this.aiBrain.getStringifiedBrainDump().reflections}`)
@@ -176,23 +180,23 @@ export class NPC {
   }
 
   onNewMessage(message: ChatMessage) {
-    if (message.to === this.npcConfig.username) {
+    if (message.to === this.npcConfig.name) {
       // Check if we're already in a TalkAction with this person
       this.adjustDirection(message.from)
       const currentAction = this.aiBrain.getCurrentAction()
 
       if (currentAction instanceof TalkAction && currentAction.getTargetPlayerUsername() === message.from) {
         logger.debug(
-          `(${this.npcConfig.username}) Received message from ${message.from} ${message.message} while talking with them`,
+          `(${this.npcConfig.name}) Received message from ${message.from} ${message.message} while talking with them`,
         )
         // Update the current TalkAction with the new message
         currentAction.handleMessage(message)
       } else if (currentAction instanceof BroadcastAction) {
-        logger.debug(`(${this.npcConfig.username}) Received message from ${message.from} while broadcasting`)
+        logger.debug(`(${this.npcConfig.name}) Received message from ${message.from} while broadcasting`)
         // TODO: figure out whether we want to save talk aproach in memory and come back to the person, I think no
         const refusalMessage: ChatMessage = {
           to: message.from,
-          from: this.npcConfig.username,
+          from: this.npcConfig.name,
           message: `Sorry ${message.from}, I'm in the middle of broadcasting at ${currentAction.targetPlace} right now.`,
           date: new Date().toISOString(),
         }
@@ -213,22 +217,20 @@ export class NPC {
         )
         const refusalMessage: ChatMessage = {
           to: message.from,
-          from: this.npcConfig.username,
+          from: this.npcConfig.name,
           message: `Sorry ${message.from}, I'm already talking with ${currentAction.getTargetPlayerUsername()} right now.`,
           date: new Date().toISOString(),
         }
         this.socketManager.emitEndConversation(refusalMessage)
         logger.debug(
-          `(${this.npcConfig.username}) Refused to talk with ${message.from} while talking with ${currentAction.getTargetPlayerUsername()}`,
+          `(${this.npcConfig.name}) Refused to talk with ${message.from} while talking with ${currentAction.getTargetPlayerUsername()}`,
         )
         return this.aiBrain.pushNewAction(action, 0)
       } else {
         const currentActionName = this.aiBrain.getCurrentAction()
           ? this.aiBrain.getCurrentAction()!.constructor.name
           : "no action"
-        logger.debug(
-          `(${this.npcConfig.username}) Received message from ${message.from} while doing ${currentActionName}`,
-        )
+        logger.debug(`(${this.npcConfig.name}) Received message from ${message.from} while doing ${currentActionName}`)
         const action = new TalkAction(
           this.aiBrain.getBrainDump,
           () => this.socketManager.getEmitMethods(),
@@ -252,7 +254,7 @@ export class NPC {
         const key = getBroadcastAnnouncementsKey(news.place!, news.message.split(" ")[1])
         if (news.message.includes("will be")) this.broadcastAnnouncements.add(key)
         if (news.message.includes("finished")) this.broadcastAnnouncements.delete(key)
-        // logger.debug(`(${this.npcConfig.username}) Broadcasting: ${JSON.stringify([...this.broadcastAnnouncements])}`)
+        // logger.debug(`(${this.npcConfig.name}) Broadcasting: ${JSON.stringify([...this.broadcastAnnouncements])}`)
       }
     }
 
