@@ -39,62 +39,72 @@ const io = new Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, Sock
 
 const rooms: Map<string, RoomInstance> = new Map()
 
-async function restoreRoomInstance(
+async function handleRoomInstance(
   supabaseClient: SupabaseClient<Database>,
   roomDefinition: Tables<"room">,
-  roomInstance: Tables<"room_instance">,
+  databaseRoomInstance?: Tables<"room_instance">,
 ): Promise<RoomInstance | undefined> {
-  // retrieve npc instances
-  // create room with setting news paper and propagating additional npc fields
-}
-
-async function createRoomInstance(
-  supabaseClient: SupabaseClient<Database>,
-  roomDefinition: Tables<"room">,
-  roomInstanceId: string = uuidv4(),
-): Promise<RoomInstance | undefined> {
+  // if databaseRoomInstance is not provided, it means that we are creating a new room instance
   try {
-    // Fetch NPCs
-    const { data: npcData, error: npcError } = await supabaseClient
-      .from("npc_room")
-      .select("npc!inner (*)")
-      .eq("room_id", roomDefinition.id)
+    const roomInstanceId = databaseRoomInstance ? databaseRoomInstance.id : uuidv4()
 
-    if (npcError) {
-      logger.error("Error fetching NPCs:")
-      console.error(npcError)
-      return
-    }
-
-    const npcs = npcData.map((npc) => npc.npc)
-
-    // Fetch map config
     const { data: mapData, error: mapError } = await supabaseClient
       .from("room")
       .select("map!inner (*)")
       .eq("id", roomDefinition.id)
       .single()
-
     if (mapError) {
       logger.error("Error fetching map config:")
       console.error(mapError)
       return
     }
-
     const mapConfig = mapData.map
 
-    // Create room instance in database
-    const { error: createError } = await supabaseClient.rpc("create_room_instance", {
-      p_id: roomInstanceId,
-      p_room_id: roomDefinition.id,
-    })
-    if (createError) {
-      logger.error("Error creating room instance:")
-      console.error(createError)
+    const { data: npcData, error: npcError } = await supabaseClient
+      .from("npc_room")
+      .select("npc!inner (*)")
+      .eq("room_id", roomDefinition.id)
+    if (npcError) {
+      logger.error("Error fetching NPCs:")
+      console.error(npcError)
       return
     }
+    const npcs = npcData.map((npc) => npc.npc)
 
-    const roomInstance = new RoomInstance(roomInstanceId, mapConfig, npcs, roomDefinition.scenario)
+    // If we're creating a new instance, create it in the database
+    if (!databaseRoomInstance) {
+      const { error: createError } = await supabaseClient.rpc("create_room_instance", {
+        p_id: roomInstanceId,
+        p_room_id: roomDefinition.id,
+      })
+      if (createError) {
+        logger.error("Error creating room instance:")
+        console.error(createError)
+        return
+      }
+    }
+
+    // For restoration, fetch NPC instances
+    let npcInstances: Tables<"npc_instance">[] = []
+    if (databaseRoomInstance) {
+      const { data: instances, error: instancesError } = await supabaseClient
+        .from("npc_instance")
+        .select("*")
+        .eq("room_instance_id", databaseRoomInstance.id)
+      if (instancesError) {
+        logger.error("Error fetching NPC instances:")
+        console.error(instancesError)
+        return
+      }
+      npcInstances = instances
+    }
+
+    const roomInstance = new RoomInstance(roomInstanceId, mapConfig, npcs, roomDefinition.scenario, npcInstances)
+
+    if (databaseRoomInstance && databaseRoomInstance.newspaper) {
+      roomInstance.setNewsPaper(databaseRoomInstance.newspaper as NewsItem[])
+    }
+
     rooms.set(roomInstance.getId(), roomInstance)
     roomInstance.initialize()
 
@@ -119,10 +129,10 @@ async function createRoomInstance(
       }
     }, CONFIG.ROOM_CLEANUP_TIMEOUT)
 
-    logger.info(`Supabase room instance created for room '${roomInstanceId}'`)
+    logger.info(`Supabase room instance ${databaseRoomInstance ? "restored" : "created"} for room '${roomInstanceId}'`)
     return roomInstance
   } catch (error) {
-    logger.error("Unexpected error in createRoomInstance:")
+    logger.error("Unexpected error in handleRoomInstance:")
     console.error(error)
     return
   }
@@ -185,18 +195,18 @@ io.on("connection", (socket) => {
         let roomInstance: RoomInstance | undefined
         if (error) {
           // no instance found, create one
-          roomInstance = (await createRoomInstance(socket.data.playerSupabaseClient, room))!
+          roomInstance = (await handleRoomInstance(socket.data.playerSupabaseClient, room))!
         } else {
           // instance exists, check if it's still active
           roomInstance = Array.from(rooms.values()).find((r) => r.getId() === room_instance.id)
           if (!roomInstance) {
             // instance is not active, restore it
-            roomInstance = (await restoreRoomInstance(socket.data.playerSupabaseClient, room, room_instance))!
+            roomInstance = (await handleRoomInstance(socket.data.playerSupabaseClient, room, room_instance))!
           }
         }
         callback(roomInstance.getId())
       } else {
-        const roomInstance = await createRoomInstance(socket.data.playerSupabaseClient, room)
+        const roomInstance = await handleRoomInstance(socket.data.playerSupabaseClient, room)
         if (!roomInstance) {
           callback(null)
           return
