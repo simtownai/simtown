@@ -227,7 +227,13 @@ io.on("connection", (socket) => {
 
   socket.on(
     "joinRoom",
-    (roomId: string, isNPC: boolean, username: string, spriteDefinition: PlayerSpriteDefinition) => {
+    (
+      roomId: string,
+      isNPC: boolean,
+      username: string,
+      spriteDefinition: PlayerSpriteDefinition,
+      position?: { x: number; y: number },
+    ) => {
       const room = rooms.get(roomId)
       if (!room) {
         logger.error(
@@ -244,7 +250,7 @@ io.on("connection", (socket) => {
       currentRoom = room
       socket.join(room.getId())
 
-      const spawnPosition = currentRoom.findValidPosition()
+      const spawnPosition = position || currentRoom.findValidPosition()
       let playerData: PlayerData = {
         id: playerId,
         isNPC: isNPC,
