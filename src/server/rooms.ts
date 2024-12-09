@@ -1,14 +1,11 @@
 import { NPC } from "../npc/client"
-import { PromptSystem } from "../npc/prompts"
 import { CONFIG } from "../shared/config"
 import { gridToWorld, worldToGrid } from "../shared/functions"
 import logger from "../shared/logger"
-import { Database } from "../shared/supabase-types"
+import { Database, Tables } from "../shared/supabase-types"
 import {
   GridPosition,
-  MapConfig,
   MapData,
-  NPCConfig,
   NewsItem,
   Object,
   PlayerData,
@@ -19,27 +16,25 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js"
 import * as fs from "fs"
 
-export class Room {
+export class RoomInstance {
   protected id: string
-  protected name: string
-  protected mapConfig: MapConfig
+  protected mapConfig: Tables<"map">
   protected mapData: MapData
   protected players: Map<string, PlayerData>
-  protected NPCConfigs: NPCConfig[]
+  protected NPCConfigs: Tables<"npc">[]
   protected npcs: NPC[]
-  protected promptSystem: PromptSystem
+  protected scenario: string
   protected created: Date
   protected newsPaper: NewsItem[]
   protected voteResults: Map<string, VoteCandidate>[]
   protected places: Object[]
   protected spawnArea: Object
 
-  constructor(id: string, name: string, mapConfig: MapConfig, NPCConfigs: NPCConfig[], promptSystem: PromptSystem) {
+  constructor(id: string, mapConfig: Tables<"map">, NPCConfigs: Tables<"npc">[], scenario: string) {
     this.id = id
-    this.name = name
     this.mapConfig = mapConfig
     this.NPCConfigs = NPCConfigs
-    this.promptSystem = promptSystem
+    this.scenario = scenario
     this.players = new Map()
     this.npcs = []
     this.created = new Date()
@@ -47,30 +42,26 @@ export class Room {
     this.voteResults = [new Map()]
 
     // ToDo: maybe add cache for json files and load them from cache
-    this.mapData = JSON.parse(fs.readFileSync(`./public/assets/maps/${this.mapConfig.mapJSONFilename}.json`, "utf8"))
+    this.mapData = JSON.parse(fs.readFileSync(`./public/assets/maps/${this.mapConfig.map_json_filename}.json`, "utf8"))
 
     this.places = this.mapData.layers.find((layer) => layer.name === CONFIG.MAP_PLACES_LAYER_NAME)!.objects!
-    this.spawnArea = this.places.find((obj) => obj.name === this.mapConfig.spawnPlaceName)!
+    this.spawnArea = this.places.find((obj) => obj.name === this.mapConfig.spawn_place_name)!
   }
 
   initialize(): void {
     this.NPCConfigs.forEach((config) => {
-      const npc = new NPC(config, this.id, this.promptSystem, this.mapConfig, this.mapData)
+      const npc = new NPC(config, this.id, this.scenario, this.mapConfig, this.mapData)
       this.npcs.push(npc)
     })
-    logger.info(`Initialized '${this.constructor.name}' with name '${this.name}' and id '${this.id}'`)
+    logger.info(`Initialized room instance with id '${this.id}'`)
   }
 
-  getMapConfig(): MapConfig {
+  getMapConfig(): Tables<"map"> {
     return this.mapConfig
   }
 
   getId(): string {
     return this.id
-  }
-
-  getName(): string {
-    return this.name
   }
 
   getRealPlayerCount(): number {
@@ -196,7 +187,6 @@ export class Room {
   }
 
   dumpStateToDatabase(supabaseClient: SupabaseClient<Database>) {
-    // ToDo: update room instance with newspaper
     supabaseClient
       .from("room_instance")
       .update({ newspaper: this.newsPaper })
@@ -207,11 +197,26 @@ export class Room {
         }
       })
 
-    // ToDo: update NPC instances with reflection and position
+    this.npcs.forEach((npc) => {
+      supabaseClient
+        .from("npc_instance")
+        .update({
+          position_x: npc.playerData.x,
+          position_y: npc.playerData.y,
+          reflections: npc.aiBrain.getReflections(),
+        })
+        .eq("room_instance_id", this.id)
+        .eq("npc_id", npc.id)
+        .then(({ error }) => {
+          if (error) {
+            logger.error(`Error updating NPC instance: ${error.message}`)
+          }
+        })
+    })
   }
 
   cleanup(): void {
     this.npcs.forEach((npc) => npc.cleanup())
-    logger.info(`Cleaned up ${this.constructor.name}: ${this.name} (${this.id})`)
+    logger.info(`Cleaned up room instance with id '${this.id}'`)
   }
 }
