@@ -56,6 +56,44 @@ export class SpriteHandler {
       { keySuffix: "read", row: 7, frameCount: 12, frameRate: 10, repeat: -1, isDirectional: false },
     ]
 
+    // Define the order of components based on the type definition
+    const componentOrder: (keyof PlayerSpriteDefinition)[] = [
+      "body",
+      "eyes",
+      "outfit",
+      "hairstyle",
+      "accessory",
+      "book",
+    ]
+
+    const renderComponents = (
+      ctx: CanvasRenderingContext2D,
+      frameNumber: number,
+      spriteDefinition: PlayerSpriteDefinition,
+    ) => {
+      // Render each component in the defined order
+      for (const componentKey of componentOrder) {
+        const componentFilename = spriteDefinition[componentKey]
+        if (!componentFilename) continue
+
+        const componentFrame = this.scene.textures.getFrame(componentFilename, frameNumber)
+
+        if (componentFrame && componentFrame.source.image) {
+          ctx.drawImage(
+            componentFrame.source.image as CanvasImageSource,
+            componentFrame.cutX,
+            componentFrame.cutY,
+            CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+            componentFrame.cutHeight,
+            0,
+            0,
+            CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
+            componentFrame.cutHeight,
+          )
+        }
+      }
+    }
+
     for (const anim of animations) {
       const { keySuffix, row, frameCount, frameRate, repeat, isDirectional = true } = anim
 
@@ -76,27 +114,8 @@ export class SpriteHandler {
             const canvas = canvasTexture.getSourceImage() as HTMLCanvasElement
             const ctx = canvas.getContext("2d")!
 
-            // Draw each component's frame onto the canvas
-            for (const componentKey in spriteDefinition) {
-              const componentFilename = spriteDefinition[componentKey as keyof PlayerSpriteDefinition]
-              if (!componentFilename) continue
-
-              const componentFrame = this.scene.textures.getFrame(componentFilename, frameNumber)
-
-              if (componentFrame && componentFrame.source.image) {
-                ctx.drawImage(
-                  componentFrame.source.image as CanvasImageSource,
-                  componentFrame.cutX,
-                  componentFrame.cutY,
-                  CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
-                  componentFrame.cutHeight,
-                  0,
-                  0,
-                  CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
-                  componentFrame.cutHeight,
-                )
-              }
-            }
+            // Render components in the correct order
+            renderComponents(ctx, frameNumber, spriteDefinition)
 
             canvasTexture.refresh()
             frames.push({ key: textureKey })
@@ -121,27 +140,8 @@ export class SpriteHandler {
           const canvas = canvasTexture.getSourceImage() as HTMLCanvasElement
           const ctx = canvas.getContext("2d")!
 
-          // Draw each component's frame onto the canvas
-          for (const componentKey in spriteDefinition) {
-            const componentFilename = spriteDefinition[componentKey as keyof PlayerSpriteDefinition]
-            if (!componentFilename) continue
-
-            const componentFrame = this.scene.textures.getFrame(componentFilename, frameNumber)
-
-            if (componentFrame && componentFrame.source.image) {
-              ctx.drawImage(
-                componentFrame.source.image as CanvasImageSource,
-                componentFrame.cutX,
-                componentFrame.cutY,
-                CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
-                componentFrame.cutHeight,
-                0,
-                0,
-                CONFIG.SPRITE_COLLISION_BOX_HEIGHT,
-                componentFrame.cutHeight,
-              )
-            }
-          }
+          // Render components in the correct order
+          renderComponents(ctx, frameNumber, spriteDefinition)
 
           canvasTexture.refresh()
           frames.push({ key: textureKey })
