@@ -61,7 +61,7 @@ function App() {
     console.log(scene)
   }
 
-  const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
+
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -180,6 +180,7 @@ function App() {
     spriteDefinition,
 
   } = useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
+  const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms(username)
 
   useEffect(() => {
     const path = window.location.pathname
