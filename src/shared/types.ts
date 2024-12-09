@@ -1,12 +1,4 @@
-import { PromptSystem } from "../npc/prompts"
 import { z } from "zod"
-
-export type MapConfig = {
-  mapJSONFilename: string
-  tilesetPNGFilename: string
-  spawnPlaceName: string
-  votingPlaceName: string
-}
 
 export type NPCConfig = {
   username: string
@@ -14,19 +6,6 @@ export type NPCConfig = {
   spriteDefinition: PlayerSpriteDefinition
   availableActions: AvailableActionSchema[]
 }
-
-export type RoomInstanceType = "shared" | "private"
-
-export type RoomConfig = {
-  path: AvailableGames
-  instanceType: RoomInstanceType
-  NPCConfigs: NPCConfig[]
-  promptSystem: PromptSystem
-  mapConfig: MapConfig
-}
-
-export const availableGames = ["electiontown", "characterai", "murderdrones", "harry"] as const
-export type AvailableGames = (typeof availableGames)[number]
 
 export type PlayerSpriteDefinition = {
   body: "Body_01" | "Body_02" | "Body_03" | "Body_04" | "Body_05" | "Body_06" | "Body_07" | "Body_08" | "Body_09"
@@ -151,15 +130,18 @@ export const VoteSchema = z.object({
   type: z.literal("vote"),
 })
 
-export type AvailableActionSchema =
-  | typeof MoveToCoordinatesSchema
-  | typeof MoveToPersonSchema
-  | typeof MoveToPlaceSchema
-  | typeof TalkSchema
-  | typeof IdleSchema
-  | typeof BroadcastSchema
-  | typeof ListenSchema
-  | typeof VoteSchema
+export const allActionSchemas = [
+  MoveToPersonSchema,
+  MoveToPlaceSchema,
+  MoveToCoordinatesSchema,
+  TalkSchema,
+  IdleSchema,
+  BroadcastSchema,
+  ListenSchema,
+  VoteSchema,
+] as const
+export type AvailableActionSchema = (typeof allActionSchemas)[number]
+export type ActionType = (typeof allActionSchemas)[number]["shape"]["type"]["value"]
 
 const AIActionSchema = z.discriminatedUnion("type", [
   MoveToCoordinatesSchema,
