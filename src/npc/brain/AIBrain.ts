@@ -67,6 +67,7 @@ type AIBrainInterface = {
   getEmitMethods: () => EmitInterface
   adjustDirection: (username: string) => void
   mapConfig: Tables<"map">
+  reflections?: string[]
 }
 
 export class AIBrain {
@@ -92,7 +93,7 @@ export class AIBrain {
     this.getEmitMethods = args.getEmitMethods
     this.name = args.name
     this.backstory = args.backstory
-    this.memory = new Memory(args.backstory)
+    this.memory = new Memory(args.backstory, args.reflections)
     this.places = args.places
     this.getAvailableActions = args.getAvailableActions
     this.getOtherPlayers = args.getOtherPlayers
@@ -103,6 +104,14 @@ export class AIBrain {
     this.getPromptSystem = args.getPromptSystem
     this.adjustDirection = args.adjustDirection
     this.mapConfig = args.mapConfig
+
+    if (args.reflections) {
+      this.getEmitMethods().updatePlayerData({
+        npcState: {
+          reflections: this.memory.reflections,
+        },
+      })
+    }
   }
 
   async generatePlanAndSetActions() {

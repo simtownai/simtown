@@ -30,6 +30,8 @@ export class NPC {
     scenario: string,
     private mapConfig: Tables<"map">,
     private mapData: MapData,
+    private reflections?: string[],
+    initialPosition?: { x: number; y: number },
   ) {
     this.id = npcConfig.id
     this.promptSystem = new PromptSystem(scenario, mapConfig.name, mapConfig.description)
@@ -51,6 +53,7 @@ export class NPC {
       onNews: this.onNews.bind(this),
       adjustDirection: this.adjustDirection.bind(this),
       adjustDirectionPlace: this.adjustDirectionPlace.bind(this),
+      initialPosition: initialPosition,
     })
   }
 
@@ -89,6 +92,7 @@ export class NPC {
             getEmitMethods: () => this.socketManager.getEmitMethods(),
             adjustDirection: (username: string) => this.adjustDirection(username),
             mapConfig: this.mapConfig,
+            reflections: this.reflections,
           })
 
           this.aiBrain.generatePlanAndSetActions()

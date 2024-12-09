@@ -5,9 +5,9 @@ class Memory {
   conversations: ConversationMemory
   reflections: string[]
 
-  constructor(backstory: string[]) {
+  constructor(backstory: string[], reflections?: string[]) {
     this.backstory = backstory.join("/n")
-    this.reflections = []
+    this.reflections = reflections || []
     this.conversations = new ConversationMemory()
   }
 }

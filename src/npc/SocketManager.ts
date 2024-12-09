@@ -33,6 +33,7 @@ export type SocketManagerConfig = {
   onNews: (news: NewsItem | NewsItem[]) => void
   adjustDirection: (username: string) => void
   adjustDirectionPlace: (place: string) => void
+  initialPosition?: { x: number; y: number }
 }
 
 export class SocketManager {
@@ -61,8 +62,11 @@ export class SocketManager {
     this.adjustDirectionPlace = args.adjustDirectionPlace
     this.setupSocketEvents()
     this.socket.connect()
-    // this.socket.emit("joinGame", true, args.username, args.spriteDefinition)
-    this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition)
+    if (args.initialPosition) {
+      this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition, args.initialPosition)
+    } else {
+      this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition)
+    }
   }
 
   private setupSocketEvents() {
