@@ -13,6 +13,7 @@ import CenteredText from "./ui/StatusContainer"
 import { useEffect, useMemo, useRef, useState } from "react"
 import io from "socket.io-client"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
+import { useLocalStorageMessages } from "./hooks/useLocalStorageMessages"
 
 const mobileWindowWidthThreshold = 450
 
@@ -25,7 +26,6 @@ function App() {
   const [isChatCollapsed, setIsChatCollapsed] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [messages, setMessages] = useState<Map<string, ChatMessage[]>>(new Map())
   const [composeValue, setComposeValue] = useState("")
   const [isMessageLoading, setIsMessageLoading] = useState(false)
   const [newsPaper, setNewsPaper] = useState<NewsItem[]>([])
@@ -117,61 +117,47 @@ function App() {
     })
 
     socket.on("newMessage", (message: ChatMessage) => {
-      setMessages((prevMessages) => {
-        const oldMessages = prevMessages.get(message.from) || []
-        const newMessage = {
-          ...message,
-          isRead:
-            !isChatsContainerCollapsedRef.current &&
-            !isChatCollapsedRef.current &&
-            chatmateRef.current === message.from,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(message.from, newMessages)
-      })
+      const newMessage = {
+        ...message,
+        isRead: !isChatsContainerCollapsedRef.current &&
+          !isChatCollapsedRef.current &&
+          chatmateRef.current === message.from,
+      } as ChatMessage
+      addMessage(newMessage, message.from)
     })
 
     socket.on("overhearMessage", (message: ChatMessage) => {
-      setMessages((prevMessages) => {
-        const [first, second] = [message.from, message.to].sort()
-        const key = `${first}-${second} (overheard)`
-        const oldMessages = prevMessages.get(key) || []
-        const newMessage = {
-          ...message,
-          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(key, newMessages)
-      })
+      const [first, second] = [message.from, message.to].sort()
+      const key = `${first}-${second} (overheard)`
+      const newMessage = {
+        ...message,
+        isRead: !isChatsContainerCollapsedRef.current &&
+          !isChatCollapsedRef.current &&
+          chatmateRef.current === key,
+      } as ChatMessage
+      addMessage(newMessage, key)
     })
 
     socket.on("listenBroadcast", (message: BroadcastMessage) => {
-      setMessages((prevMessages) => {
-        const key = `${message.from} (broadcast)`
-        const oldMessages = prevMessages.get(key) || []
-        const newMessage = {
-          to: username,
-          ...message,
-          isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(key, newMessages)
-      })
+      const key = `${message.from} (broadcast)`
+      const newMessage = {
+        to: username,
+        ...message,
+        isRead: !isChatsContainerCollapsedRef.current &&
+          !isChatCollapsedRef.current &&
+          chatmateRef.current === key,
+      } as ChatMessage
+      addMessage(newMessage, key)
     })
 
     socket.on("endConversation", (message: ChatMessage) => {
-      setMessages((prevMessages) => {
-        const oldMessages = prevMessages.get(message.from) || []
-        const newMessage = {
-          ...message,
-          isRead:
-            !isChatsContainerCollapsedRef.current &&
-            !isChatCollapsedRef.current &&
-            chatmateRef.current === message.from,
-        } as ChatMessage
-        const newMessages = [...oldMessages, newMessage]
-        return new Map(prevMessages).set(message.from, newMessages)
-      })
+      const newMessage = {
+        ...message,
+        isRead: !isChatsContainerCollapsedRef.current &&
+          !isChatCollapsedRef.current &&
+          chatmateRef.current === message.from,
+      } as ChatMessage
+      addMessage(newMessage, message.from)
     })
 
     socket.on("news", (news: NewsItem | NewsItem[]) => {
@@ -280,18 +266,11 @@ function App() {
     }
   }, [])
 
+  const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages(username)
+
   useEffect(() => {
     if (chatmate) {
-      setMessages((prevMessages) => {
-        const userMessages = prevMessages.get(chatmate)
-        if (!userMessages) return prevMessages
-
-        const updatedMessages = userMessages.map((msg) => ({
-          ...msg,
-          isRead: true,
-        }))
-        return new Map(prevMessages).set(chatmate, updatedMessages)
-      })
+      markMessagesAsRead(chatmate)
     }
   }, [isChatsContainerCollapsed, isChatCollapsed, chatmate])
 
@@ -304,21 +283,6 @@ function App() {
       return updatedNews
     })
   }, [isNewsContainerCollapsed])
-
-  useEffect(() => {
-    if (username) {
-      localStorage.setItem(`chat-history-${username}`, JSON.stringify(Array.from(messages.entries())))
-    }
-  }, [messages])
-
-  useEffect(() => {
-    if (username) {
-      const messagesHistory = localStorage.getItem(`chat-history-${username}`)
-      if (messagesHistory) {
-        setMessages(new Map(JSON.parse(messagesHistory)))
-      }
-    }
-  }, [])
 
   const totalUnreadCount = useMemo(() => {
     let count = 0
