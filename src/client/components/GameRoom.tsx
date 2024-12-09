@@ -8,14 +8,15 @@ import NewsContainer from "../ui/NewsContainer"
 import ObserveContainer from "../ui/ObserveContainer"
 import Overlay from "../ui/Overlay"
 import { useLocalStorageMessages } from "../hooks/useLocalStorageMessages"
+import { useRoomInitialization } from "../hooks/useRoomInitialization"
+import CenteredText from "../ui/StatusContainer"
+
 
 interface GameRoomProps {
     socket: Socket
     username: string
     spriteDefinition: any
-    room: Tables<"room">
-    roomId: string
-    mapConfig: Tables<"map">
+    availableRooms: Tables<"room">[]
     isMobile: boolean
 }
 
@@ -23,10 +24,11 @@ export function GameRoom({
     socket,
     username,
     spriteDefinition,
-    roomId,
-    mapConfig,
+    availableRooms,
     isMobile,
 }: GameRoomProps) {
+    const { room, roomId, mapConfig } = useRoomInitialization(availableRooms)
+
     const [isGameLoaded, setIsGameLoaded] = useState(false)
     const [chatmate, setChatmate] = useState<string | null>(null)
     const [isChatsContainerCollapsed, setIsChatsContainerCollapsed] = useState(true)
@@ -202,6 +204,14 @@ export function GameRoom({
 
     const handleGameLoaded = () => {
         setIsGameLoaded(true)
+    }
+
+    if (!roomId) {
+        return <CenteredText text="Getting room id..." />
+    }
+
+    if (!mapConfig || !room) {
+        return <CenteredText text="Loading room configuration..." />
     }
 
     return (
