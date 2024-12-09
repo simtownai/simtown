@@ -1,5 +1,6 @@
 import { Tables } from "../../shared/supabase-types"
 import styles from "./Dashboard.module.css"
+import { useNavigate } from "react-router-dom"
 
 interface DashboardProps {
     rooms: Tables<"room">[]
@@ -8,6 +9,8 @@ interface DashboardProps {
 }
 
 export function Dashboard({ rooms }: DashboardProps) {
+    const navigate = useNavigate()
+
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>Available Rooms</h1>
@@ -16,9 +19,7 @@ export function Dashboard({ rooms }: DashboardProps) {
                     <div
                         key={room.id}
                         className={styles.roomCard}
-                        onClick={() => {
-                            window.location.href = `/${room.name}`
-                        }}
+                        onClick={() => navigate(`/${room.name}`)}
                     >
                         <h2>{room.name}</h2>
                         <p>{room.scenario || "No description available"}</p>
