@@ -15,6 +15,7 @@ import io from "socket.io-client"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
 import { useLocalStorageMessages } from "./hooks/useLocalStorageMessages"
 import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
+import { useAvailableRooms } from "./hooks/useAvailableRooms"
 
 
 const socket = io(CONFIG.SERVER_URL)
@@ -36,7 +37,6 @@ function App() {
   const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
   const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
-  const [availableRooms, setAvailableRooms] = useState<Tables<"room">[]>([])
   const [_room, setRoom] = useState<Tables<"room"> | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
 
@@ -61,19 +61,7 @@ function App() {
     console.log(scene)
   }
 
-  useEffect(() => {
-    supabase
-      .from("room")
-      .select("*")
-      .order("name")
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Error loading rooms:", error)
-          return
-        }
-        setAvailableRooms(data)
-      })
-  }, [])
+  const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -219,7 +207,6 @@ function App() {
       console.log(`Connected to server with id: ${tempSocket.id}`)
 
       tempSocket.emit("getAvailableRooms", (rooms: string[]) => {
-        console.log(`Available rooms: ${rooms}`)
 
         if (!rooms.includes(initialRoomId)) {
           tempSocket.emit("createRoom", room.id, (roomInstanceId: string) => {
@@ -296,8 +283,16 @@ function App() {
     return <CenteredText text="Connecting to server..." />
   }
 
-  if (!availableRooms.length) {
+  if (isLoadingRooms) {
     return <CenteredText text="Loading available rooms..." />
+  }
+
+  if (roomsError) {
+    return <CenteredText text={`Error loading rooms: ${roomsError.message}`} />
+  }
+
+  if (!availableRooms.length) {
+    return <CenteredText text="No rooms available" />
   }
 
   if (!roomId) {
