@@ -1,3 +1,4 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { useEffect } from "react"
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
@@ -53,24 +54,34 @@ function App() {
     return <CenteredText text="No rooms available" />
   }
 
-  if (window.location.pathname === "/" || window.location.pathname === "") {
-    return (
-      <Dashboard
-        rooms={availableRooms}
-        username={username}
-        spriteDefinition={spriteDefinition}
-      />
-    )
-  }
-
   return (
-    <GameRoom
-      socket={socket}
-      username={username}
-      spriteDefinition={spriteDefinition}
-      availableRooms={availableRooms}
-      isMobile={isMobile}
-    />
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Dashboard
+              rooms={availableRooms}
+              username={username}
+              spriteDefinition={spriteDefinition}
+            />
+          }
+        />
+        <Route
+          path="/:roomName"
+          element={
+            <GameRoom
+              socket={socket}
+              username={username}
+              spriteDefinition={spriteDefinition}
+              availableRooms={availableRooms}
+              isMobile={isMobile}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
