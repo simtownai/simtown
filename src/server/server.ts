@@ -227,20 +227,49 @@ io.on("connection", (socket) => {
 
   socket.on(
     "joinRoom",
-    (
+    async (
       roomId: string,
       isNPC: boolean,
       username: string,
       spriteDefinition: PlayerSpriteDefinition,
       position?: { x: number; y: number },
     ) => {
-      const room = rooms.get(roomId)
+      let room = rooms.get(roomId)
       if (!room) {
-        logger.error(
-          `Room not found: ${roomId}. User ${username} failed to join. Available rooms: ${Array.from(rooms.keys())}`,
-        )
-        socket.emit("joinError", "Room not found")
-        return
+        const { data: databaseRoomInstance, error } = await socket.data.playerSupabaseClient
+          .from("room_instance")
+          .select("*")
+          .eq("id", roomId)
+          .single()
+        if (error) {
+          logger.error("Error fetching room instance:")
+          console.error(error)
+          return
+        }
+        if (!databaseRoomInstance) {
+          logger.error(
+            `Room not found: ${roomId}. User ${username} failed to join. Available rooms: ${Array.from(rooms.keys())}`,
+          )
+          socket.emit("joinError", "Room not found")
+          return
+        }
+
+        const { data: roomDefinition, error: roomError } = await socket.data.playerSupabaseClient
+          .from("room")
+          .select("*")
+          .eq("id", databaseRoomInstance.room_id)
+          .single()
+        if (roomError) {
+          logger.error("Error fetching room:")
+          console.error(roomError)
+          return
+        }
+
+        room = await handleRoomInstance(socket.data.playerSupabaseClient, roomDefinition, databaseRoomInstance)
+        if (!room) {
+          logger.error("Error creating room instance")
+          return
+        }
       }
 
       if (currentRoom) {

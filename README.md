@@ -1,5 +1,13 @@
 # ToDo
 
+- restore room instance for user private room if exists
+- save chats
+- add room recreation on server on JoinRoom
+- offer to log in
+- trying to move on a phone but started at NPC so chat opened
+- joystick on a phone dances when holding at one direction
+- chat hard to read on a phone
+- figure out how chat should look like
 - if deleting room instance check if other players are still connected and if yes then delete only your connection
 - remove user room connection when room deleted
 - improving login with google with icon and name

@@ -252,21 +252,21 @@ export type Database = {
           id: string
           last_update: string | null
           newspaper: Json[] | null
-          room_id: number | null
+          room_id: number
         }
         Insert: {
           created_at?: string | null
           id?: string
           last_update?: string | null
           newspaper?: Json[] | null
-          room_id?: number | null
+          room_id: number
         }
         Update: {
           created_at?: string | null
           id?: string
           last_update?: string | null
           newspaper?: Json[] | null
-          room_id?: number | null
+          room_id?: number
         }
         Relationships: [
           {
