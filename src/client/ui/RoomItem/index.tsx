@@ -25,29 +25,20 @@ export default function RoomItem({ room, onNavigate }: RoomItemProps) {
     fetchMapImage()
   }, [room.map?.image])
 
-  const formatLastUpdate = (lastUpdate: string) => {
-    const date = new Date(lastUpdate)
-    const now = new Date()
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-
-    if (diffInMinutes < 1) return "you joined just now"
-    if (diffInMinutes < 60) return `you last joined ${diffInMinutes}min ago`
-
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `you last joined ${diffInHours}h ago`
-
-    const diffInDays = Math.floor(diffInHours / 24)
-    return `you last joined ${diffInDays}d ago`
-  }
-
   return (
     <div className={styles.roomCard} onClick={() => onNavigate(room.name)}>
       <div className={styles.roomHeader}>
         <div className={styles.roomInfo}>
           <h3>{room.name}</h3>
-          {room.room_instance && room.room_instance[0] && (
-            <span className={styles.lastUpdate}>{formatLastUpdate(room.room_instance[0].last_update)}</span>
-          )}
+          {
+            <span className={styles.lastUpdate}>
+              {room.type === "shared"
+                ? "This is a shared room, users can join at any time"
+                : room.room_instance.length
+                  ? "Continue playing"
+                  : "Start playing"}
+            </span>
+          }
         </div>
       </div>
 
