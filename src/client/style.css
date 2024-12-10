@@ -6,11 +6,29 @@
 }
 
 :root {
+  /* Primary colors */
   --color-background: #6c4a2b;
   --color-card: #48331c;
   --color-header: #e1af74;
   --color-header-text: #522e02;
+
+  /* Text colors */
   --color-text: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-accent: #e2b57e;
+  --color-text-muted: #b49f86;
+  --color-text-placeholder: #a68868;
+
+  /* UI colors */
+  --color-border: #48331c;
+  --color-hover: rgba(0, 0, 0, 0.1);
+  --color-active: rgba(0, 0, 0, 0.2);
+  --color-feedback: #ff4444;
+
+  /* Message colors */
+  --color-message-background: #6c4a2b;
+  --color-compose-background: #48331c;
+  --color-compose-input: #6c4a2b;
 }
 
 html,

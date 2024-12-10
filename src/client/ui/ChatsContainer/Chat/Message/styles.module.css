@@ -12,7 +12,7 @@
 .message {
   max-width: 100%;
   width: 100%;
-  color: #fff;
+  color: var(--color-text);
   font-size: 22px;
   display: flex;
   flex-direction: column;
@@ -24,11 +24,11 @@
 }
 
 .senderWe {
-  color: #e2b57e;
+  color: var(--color-text-accent);
 }
 
 .senderNotWe {
-  color: #b49f86;
+  color: var(--color-text-muted);
 }
 
 .message p {
@@ -62,5 +62,5 @@
 
 .messageDate {
   font-size: 22px;
-  color: rgba(255, 255, 255, 0.7); /* Faded effect */
+  color: var(--color-text-secondary);
 }
