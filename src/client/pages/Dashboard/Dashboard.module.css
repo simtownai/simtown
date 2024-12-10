@@ -64,78 +64,22 @@
 .roomsGrid {
   display: grid;
   gap: 2rem;
-  grid-template-columns: 1fr;
   width: 100%;
+  grid-template-columns: minmax(0, 1fr);
 }
 
-.roomCard {
-  background: white;
-  margin: 2rem;
-  border-radius: 12px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid #e1e1e3;
-}
-
-.roomCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.roomHeader {
-  margin-bottom: 1rem;
-}
-
-.roomHeader h3 {
-  font-size: 1.25rem;
-  margin: 0 0 0.5rem 0;
-  color: #1a1a1a;
-}
-
-.lastUpdate {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.roomDescription {
-  color: #1a1a1a;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-}
-
-.mapSection {
-  border-top: 1px solid #e1e1e3;
-  padding-top: 1rem;
-  margin-top: 1rem;
-}
-
-.expandButton {
-  background: none;
-  border: none;
-  color: #666;
-  padding: 0;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.mapInfo {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #f5f5f7;
-  border-radius: 8px;
-}
-
-.mapInfo h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  color: #1a1a1a;
-}
-
+.roomCard,
+.roomCard:hover,
+.roomHeader,
+.roomHeader h3,
+.lastUpdate,
+.roomDescription,
+.mapSection,
+.expandButton,
+.mapInfo,
+.mapInfo h4,
 .mapInfo p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #666;
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -160,18 +104,19 @@
 
   .roomsGrid {
     grid-template-columns: 1fr;
-    row-gap: 1.5rem;
+    gap: 2rem;
+    row-gap: 1rem;
   }
 }
 
 @media (min-width: 768px) {
   .roomsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
   .roomsGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
