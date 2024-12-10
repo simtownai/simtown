@@ -43,6 +43,7 @@ export type Database = {
           created_at: string | null
           description: string
           id: number
+          image: string
           map_json_filename: string
           name: string
           spawn_place_name: string
@@ -53,6 +54,7 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: number
+          image: string
           map_json_filename: string
           name: string
           spawn_place_name: string
@@ -63,6 +65,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: number
+          image?: string
           map_json_filename?: string
           name?: string
           spawn_place_name?: string

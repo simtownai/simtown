@@ -6,6 +6,7 @@ export type RoomWithMap = Tables<"room"> & {
   map: {
     name: string
     description: string
+    image: string
   } | null
   room_instance: {
     last_update: string
@@ -30,12 +31,12 @@ export const useAvailableRooms = () => {
           .select(
             `
             *,
-            map(name, description),
+            map(name, description, image),
             room_instance(last_update),
             npc(id, name, sprite_definition)
           `,
           )
-          .order("name")
+          .order("name", { ascending: false })
 
         if (error) {
           throw new Error(error.message)
