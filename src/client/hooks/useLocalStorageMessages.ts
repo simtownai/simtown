@@ -1,23 +1,8 @@
 import { ChatMessage } from "../../shared/types"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
-export function useLocalStorageMessages(username: string | null) {
+export function useLocalStorageMessages() {
   const [messages, setMessages] = useState<Map<string, ChatMessage[]>>(new Map())
-
-  useEffect(() => {
-    if (username) {
-      const messagesHistory = localStorage.getItem(`chat-history-${username}`)
-      if (messagesHistory) {
-        setMessages(new Map(JSON.parse(messagesHistory)))
-      }
-    }
-  }, [username])
-
-  useEffect(() => {
-    if (username) {
-      localStorage.setItem(`chat-history-${username}`, JSON.stringify(Array.from(messages.entries())))
-    }
-  }, [messages, username])
 
   const markMessagesAsRead = (chatmate: string) => {
     setMessages((prevMessages) => {

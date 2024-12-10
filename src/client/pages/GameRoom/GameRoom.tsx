@@ -159,7 +159,7 @@ export function GameRoom({ socket, username, spriteDefinition, availableRooms, i
     }
   }, [])
 
-  const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages(username)
+  const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages()
 
   useEffect(() => {
     if (chatmate) {

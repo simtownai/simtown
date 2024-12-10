@@ -25,8 +25,6 @@ export default function RoomItem({ room, onNavigate, expanded, onToggleExpand }:
       </div>
       <p className={styles.roomDescription}>{room.scenario || "No description available"}</p>
 
-      {/* {room.npc && <AvatarHorizontalList npcs={formatNpcs(room.npc)} />} */}
-
       {room.map && (
         <div className={styles.mapSection}>
           <a className={styles.expandButton} onClick={(e) => onToggleExpand(room.id, e)}>

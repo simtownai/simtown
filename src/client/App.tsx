@@ -22,6 +22,7 @@ function App() {
   )
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
+
   const isMobile = useMobileBreakpoint(mobileWindowWidthThreshold)
 
   useEffect(() => {

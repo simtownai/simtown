@@ -20,6 +20,7 @@
   --color-text-placeholder: #a68868;
 
   /* UI colors */
+  --color-border-light: #6c4a2b;
   --color-border: #48331c;
   --color-hover: rgba(0, 0, 0, 0.1);
   --color-active: rgba(0, 0, 0, 0.2);
