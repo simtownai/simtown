@@ -1,7 +1,8 @@
 import styles from "./Dashboard.module.css"
-import { RoomWithMap } from "./hooks/useAvailableRooms"
+
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { RoomWithMap } from "../../hooks/useAvailableRooms"
 
 interface DashboardProps {
   rooms: RoomWithMap[]
