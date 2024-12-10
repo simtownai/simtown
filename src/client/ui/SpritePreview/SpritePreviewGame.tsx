@@ -1,5 +1,5 @@
-import { PlayerSpriteDefinition } from "../../shared/types"
-import { SpritePreview } from "../game/scenes/SpritePreview"
+import { PlayerSpriteDefinition } from "../../../shared/types"
+import { SpritePreview } from "../../game/scenes/SpritePreview"
 import styles from "./SpritePreviewGame.module.css"
 import Phaser from "phaser"
 import { useEffect, useRef, useState } from "react"

@@ -1,8 +1,9 @@
-import { SpritePreviewGame } from "../../components/SpritePreviewGame"
+import { SpritePreviewGame } from "../../ui/SpritePreview/SpritePreviewGame"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import styles from "./Dashboard.module.css"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import RoomItem from "../../ui/RoomItem"
 
 interface DashboardProps {
   rooms: RoomWithMap[]
@@ -14,10 +15,6 @@ export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps)
   const navigate = useNavigate()
   const [expandedRooms, setExpandedRooms] = useState<Record<number, boolean>>({})
 
-  const formatLastUpdate = (lastUpdate: string) => {
-    const date = new Date(lastUpdate)
-    return date.toLocaleString()
-  }
 
   const toggleRoomExpansion = (roomId: number, event: React.MouseEvent) => {
     event.stopPropagation()
@@ -29,44 +26,40 @@ export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps)
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Available Rooms</h1>
-        <div className={styles.userPreview}>
-          <h2>Your Character</h2>
-          <SpritePreviewGame username={username} spriteDefinition={spriteDefinition} width={100} height={100} />
-        </div>
-      </div>
-      <div className={styles.roomsGrid}>
-        {rooms.map((room) => (
-          <div key={room.id} className={styles.roomCard} onClick={() => navigate(`/${room.name}`)}>
-            <h2>
-              {room.name}
-              <p className={styles.lastUpdate}>
-                {room.room_instance &&
-                  room.room_instance[0] &&
-                  `Last active: ${formatLastUpdate(room.room_instance[0].last_update)}`}
-              </p>
-            </h2>
-
-            <p>{room.scenario || "No description available"}</p>
-
-            {room.map && (
-              <>
-                <button className={styles.expandButton} onClick={(e) => toggleRoomExpansion(room.id, e)}>
-                  {expandedRooms[room.id] ? "Hide Map Info ▼" : "Show Map Info ▶"}
-                </button>
-
-                {expandedRooms[room.id] && (
-                  <div className={styles.mapInfo}>
-                    <h3>Map: {room.map.name}</h3>
-                    <p>{room.map.description}</p>
-                  </div>
-                )}
-              </>
-            )}
+      <header className={styles.header}>
+        <div className={styles.welcomeSection}>
+          <h1>Welcome back,</h1>
+          <div className={styles.userInfo}>
+            <SpritePreviewGame
+              username={username}
+              spriteDefinition={spriteDefinition}
+              width={48}
+              height={48}
+            />
+            <span className={styles.username}>{username}</span>
           </div>
-        ))}
-      </div>
+        </div>
+
+      </header>
+
+      <main className={styles.roomsContainer}>
+        <section className={styles.introSection}>
+          <h2>What do you want to do?</h2>
+          <p className={styles.subtitle}>Join a room and start chatting!</p>
+        </section>
+
+        <div className={styles.roomsGrid}>
+          {rooms.map((room) => (
+            <RoomItem
+              key={room.id}
+              room={room}
+              onNavigate={(roomName) => navigate(`/${roomName}`)}
+              expanded={expandedRooms[room.id]}
+              onToggleExpand={toggleRoomExpansion}
+            />
+          ))}
+        </div>
+      </main>
     </div>
   )
 }

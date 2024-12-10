@@ -1,6 +1,7 @@
 import { CONFIG } from "../../../shared/config"
 import { PlayerSpriteDefinition } from "../../../shared/types"
 import { SpriteHandler } from "./spriteHandler"
+import Phaser from "phaser"
 
 export class SpritePreview extends Phaser.Scene {
   private spriteHandler!: SpriteHandler

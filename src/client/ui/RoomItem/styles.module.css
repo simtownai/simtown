@@ -1,0 +1,70 @@
+.roomCard {
+  background: var(--color-card);
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+}
+
+.roomCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.roomHeader {
+  margin-bottom: 1rem;
+  background: var(--color-header);
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.roomHeader h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--color-header-text);
+}
+
+.lastUpdate {
+  font-size: 0.875rem;
+  color: var(--color-header-text);
+  opacity: 0.8;
+}
+
+.roomDescription {
+  color: var(--color-text);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.mapSection {
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  padding: 0;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.mapInfo {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--color-background);
+}
+
+.mapInfo h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.mapInfo p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+} 
