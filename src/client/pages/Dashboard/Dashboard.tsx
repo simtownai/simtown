@@ -1,8 +1,8 @@
+import { SpritePreviewGame } from "../../components/SpritePreviewGame"
+import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import styles from "./Dashboard.module.css"
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { RoomWithMap } from "../../hooks/useAvailableRooms"
 
 interface DashboardProps {
   rooms: RoomWithMap[]
@@ -10,7 +10,7 @@ interface DashboardProps {
   spriteDefinition: any
 }
 
-export function Dashboard({ rooms }: DashboardProps) {
+export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps) {
   const navigate = useNavigate()
   const [expandedRooms, setExpandedRooms] = useState<Record<number, boolean>>({})
 
@@ -29,7 +29,13 @@ export function Dashboard({ rooms }: DashboardProps) {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Available Rooms</h1>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Available Rooms</h1>
+        <div className={styles.userPreview}>
+          <h2>Your Character</h2>
+          <SpritePreviewGame username={username} spriteDefinition={spriteDefinition} width={100} height={100} />
+        </div>
+      </div>
       <div className={styles.roomsGrid}>
         {rooms.map((room) => (
           <div key={room.id} className={styles.roomCard} onClick={() => navigate(`/${room.name}`)}>

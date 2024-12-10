@@ -80,3 +80,23 @@
   color: var(--color-header);
   font-style: italic;
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.userPreview {
+  background: var(--color-card);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.userPreview h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: var(--color-header);
+}
