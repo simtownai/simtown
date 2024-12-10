@@ -63,9 +63,8 @@ export class SpritePreview extends Phaser.Scene {
       this.cameras.main.centerY,
       `${this.username}-idle-down-frame0`,
     )
-    this.previewSprite.setScale(3) // Make it larger for preview
+    this.previewSprite.setScale(1.5)
 
-    // Play idle animation
     this.previewSprite.play(`${this.username}-idle-down`)
 
     // Center the camera

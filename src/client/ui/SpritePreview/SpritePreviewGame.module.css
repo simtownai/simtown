@@ -1,5 +1,7 @@
 .container {
   position: relative;
+  background: var(--color-card);
+  border-radius: 4px;
 }
 
 .gameContainer {

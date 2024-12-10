@@ -28,9 +28,9 @@ export default function RoomItem({ room, onNavigate, expanded, onToggleExpand }:
 
             {room.map && (
                 <div className={styles.mapSection}>
-                    <button className={styles.expandButton} onClick={(e) => onToggleExpand(room.id, e)}>
+                    <a className={styles.expandButton} onClick={(e) => onToggleExpand(room.id, e)}>
                         {expanded ? "Hide Details ▼" : "Show Details ▶"}
-                    </button>
+                    </a>
 
                     {expanded && (
                         <div className={styles.mapInfo}>

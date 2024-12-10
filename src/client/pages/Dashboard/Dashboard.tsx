@@ -15,7 +15,6 @@ export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps)
   const navigate = useNavigate()
   const [expandedRooms, setExpandedRooms] = useState<Record<number, boolean>>({})
 
-
   const toggleRoomExpansion = (roomId: number, event: React.MouseEvent) => {
     event.stopPropagation()
     setExpandedRooms((prev) => ({
@@ -28,18 +27,17 @@ export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps)
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.welcomeSection}>
-          <h1>Welcome back,</h1>
-          <div className={styles.userInfo}>
-            <SpritePreviewGame
-              username={username}
-              spriteDefinition={spriteDefinition}
-              width={48}
-              height={48}
-            />
-            <span className={styles.username}>{username}</span>
-          </div>
+          <span className={styles.welcomeText}>Welcome back:</span>
+          <span className={styles.username}>{username}</span>
         </div>
-
+        <div className={styles.spriteSection}>
+          <SpritePreviewGame
+            username={username}
+            spriteDefinition={spriteDefinition}
+            width={48}
+            height={48}
+          />
+        </div>
       </header>
 
       <main className={styles.roomsContainer}>
