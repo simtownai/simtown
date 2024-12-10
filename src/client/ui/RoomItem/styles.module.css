@@ -19,13 +19,13 @@
 }
 
 .roomHeader h3 {
-  font-size: 1.25rem;
+  font-size: 2rem;
   margin: 0 0 0.5rem 0;
   color: var(--color-header-text);
 }
 
 .lastUpdate {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--color-header-text);
   opacity: 0.8;
 }
@@ -34,6 +34,7 @@
   color: var(--color-text);
   line-height: 1.5;
   margin-bottom: 1rem;
+  font-size: 1.5rem;
 }
 
 .mapSection {
@@ -67,4 +68,52 @@
   margin: 0;
   font-size: 0.875rem;
   color: var(--color-text-secondary);
-} 
+}
+
+.npcSprites {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  margin: 1rem 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.npcSpriteContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 48px;
+}
+
+.npcName {
+  font-size: 0.75rem;
+  color: var(--color-text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 64px;
+}
+
+/* Add smooth scrolling for the NPC sprites container */
+.npcSprites {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.npcSprites::-webkit-scrollbar {
+  height: 6px;
+}
+
+.npcSprites::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.npcSprites::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}

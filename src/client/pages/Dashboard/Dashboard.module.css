@@ -6,12 +6,13 @@
 }
 
 .header {
-  padding: 1rem 2rem;
+  padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: var(--color-card);
   border-bottom: 1px solid var(--color-border);
+  height: 80px;
 }
 
 .welcomeSection {
@@ -21,12 +22,12 @@
 }
 
 .welcomeText {
-  font-size: 1.2rem;
+  font-size: 2rem;
   color: var(--color-text-secondary);
 }
 
 .username {
-  font-size: 1.2rem;
+  font-size: 2rem;
   font-weight: 600;
   color: var(--color-text);
 }
@@ -34,15 +35,7 @@
 .spriteSection {
   display: flex;
   align-items: center;
-}
-
-.searchBar input {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #e1e1e3;
-  width: 300px;
-  font-size: 1rem;
-  background: #f5f5f7;
+  height: 100%;
 }
 
 .roomsContainer {
@@ -147,6 +140,7 @@
   .header {
     padding: 0.75rem 1rem;
     flex-direction: row;
+    height: 60px;
   }
 
   .welcomeSection {

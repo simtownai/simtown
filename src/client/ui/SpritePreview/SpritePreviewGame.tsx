@@ -4,7 +4,7 @@ import styles from "./SpritePreviewGame.module.css"
 import Phaser from "phaser"
 import { useEffect, useRef, useState } from "react"
 
-interface SpritePreviewGameProps {
+export interface SpritePreviewGameProps {
   username: string
   spriteDefinition: PlayerSpriteDefinition
   width?: number

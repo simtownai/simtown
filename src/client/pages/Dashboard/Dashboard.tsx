@@ -1,9 +1,9 @@
-import { SpritePreviewGame } from "../../ui/SpritePreview/SpritePreviewGame"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
+import RoomItem from "../../ui/RoomItem"
+import { SpritePreviewGame } from "../../ui/SpritePreview/SpritePreviewGame"
 import styles from "./Dashboard.module.css"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import RoomItem from "../../ui/RoomItem"
 
 interface DashboardProps {
   rooms: RoomWithMap[]
@@ -31,12 +31,7 @@ export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps)
           <span className={styles.username}>{username}</span>
         </div>
         <div className={styles.spriteSection}>
-          <SpritePreviewGame
-            username={username}
-            spriteDefinition={spriteDefinition}
-            width={48}
-            height={48}
-          />
+          <SpritePreviewGame username={username} spriteDefinition={spriteDefinition} width={82} height={82} />
         </div>
       </header>
 
