@@ -13,6 +13,11 @@ export function Dashboard({ rooms }: DashboardProps) {
     const navigate = useNavigate()
     const [expandedRooms, setExpandedRooms] = useState<Record<number, boolean>>({})
 
+    const formatLastUpdate = (lastUpdate: string) => {
+        const date = new Date(lastUpdate)
+        return date.toLocaleString()
+    }
+
     const toggleRoomExpansion = (roomId: number, event: React.MouseEvent) => {
         event.stopPropagation()
         setExpandedRooms(prev => ({
@@ -32,28 +37,37 @@ export function Dashboard({ rooms }: DashboardProps) {
                         onClick={() => navigate(`/${room.name}`)}
                     >
                         <h2>{room.name}</h2>
+                        <h2>
+                            {room.room_instance && room.room_instance[0] && (
+                                `Last active: ${formatLastUpdate(room.room_instance[0].last_update)}`
+                            )}
+                        </h2>
+
                         <p>{room.scenario || "No description available"}</p>
 
-                        {room.map && (
-                            <>
-                                <button
-                                    className={styles.expandButton}
-                                    onClick={(e) => toggleRoomExpansion(room.id, e)}
-                                >
-                                    {expandedRooms[room.id] ? 'Hide Map Info ▼' : 'Show Map Info ▶'}
-                                </button>
 
-                                {expandedRooms[room.id] && (
-                                    <div className={styles.mapInfo}>
-                                        <h3>Map: {room.map.name}</h3>
-                                        <p>{room.map.description}</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
+                        {
+                            room.map && (
+                                <>
+                                    <button
+                                        className={styles.expandButton}
+                                        onClick={(e) => toggleRoomExpansion(room.id, e)}
+                                    >
+                                        {expandedRooms[room.id] ? 'Hide Map Info ▼' : 'Show Map Info ▶'}
+                                    </button>
+
+                                    {expandedRooms[room.id] && (
+                                        <div className={styles.mapInfo}>
+                                            <h3>Map: {room.map.name}</h3>
+                                            <p>{room.map.description}</p>
+                                        </div>
+                                    )}
+                                </>
+                            )
+                        }
                     </div>
                 ))}
             </div>
-        </div>
+        </div >
     )
 }

@@ -7,6 +7,9 @@ export type RoomWithMap = Tables<"room"> & {
     name: string
     description: string
   } | null
+  room_instance: {
+    last_update: string
+  }[]
 }
 
 export const useAvailableRooms = () => {
@@ -22,7 +25,8 @@ export const useAvailableRooms = () => {
           .select(
             `
             *,
-            map(name, description)
+            map(name, description),
+            room_instance(last_update)
           `,
           )
           .order("name")

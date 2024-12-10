@@ -305,21 +305,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          last_update: string | null
+          last_update: string
           newspaper: Json[] | null
           room_id: number
         }
         Insert: {
           created_at?: string | null
           id?: string
-          last_update?: string | null
+          last_update?: string
           newspaper?: Json[] | null
           room_id: number
         }
         Update: {
           created_at?: string | null
           id?: string
-          last_update?: string | null
+          last_update?: string
           newspaper?: Json[] | null
           room_id?: number
         }
