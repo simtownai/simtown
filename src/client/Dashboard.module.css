@@ -1,0 +1,75 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--color-header);
+}
+
+.roomsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.roomCard {
+  background: var(--color-card);
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.roomCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.roomCard h2 {
+  margin: 0 0 1rem 0;
+  color: var(--color-header-text);
+  background-color: var(--color-header);
+  padding: 0.5rem;
+}
+
+.roomCard p {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: var(--color-header);
+  cursor: pointer;
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 0.9em;
+  text-align: left;
+}
+
+.expandButton:hover {
+  color: var(--color-text);
+}
+
+.mapInfo {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--color-card);
+  border: 1px solid var(--color-header);
+}
+
+.mapInfo h3 {
+  margin: 0 0 8px 0;
+  font-size: 1em;
+  color: var(--color-header);
+}
+
+.mapInfo p {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--color-text);
+}

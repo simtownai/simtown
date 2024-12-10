@@ -13,8 +13,8 @@
 
 .timeDisplay {
   font-size: 24px;
-  color: #fff;
-  background-color: #6c4a2b;
+  color: var(--color-text);
+  background-color: var(--color-background);
   padding: 5px 10px;
   text-align: center;
   /* https://pixelcorners.lukeb.co.uk/?radius=5&multiplier=3 */
@@ -100,7 +100,7 @@
   min-width: 20px;
   height: 20px;
   background-color: #ff4444;
-  color: white;
+  color: var(--color-text);
   /* border-radius: 10px; */
   font-size: 20px;
   font-weight: bold;

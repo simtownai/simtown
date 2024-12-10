@@ -8,8 +8,8 @@ import io from "socket.io-client"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
 import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
 import { useAvailableRooms } from "./hooks/useAvailableRooms"
-import { GameRoom } from "./components/GameRoom"
-import { Dashboard } from "./components/Dashboard"
+import { Dashboard } from "./Dashboard"
+import { GameRoom } from "./GameRoom"
 
 const socket = io(CONFIG.SERVER_URL)
 

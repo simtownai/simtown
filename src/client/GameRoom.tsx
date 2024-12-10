@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
-import { Tables } from "../../shared/supabase-types"
-import { BroadcastMessage, ChatMessage, NewsItem, PlayerData } from "../../shared/types"
-import { IRefPhaserGame, PhaserGame } from "../game/PhaserGame"
-import ChatsContainer from "../ui/ChatsContainer"
-import NewsContainer from "../ui/NewsContainer"
-import ObserveContainer from "../ui/ObserveContainer"
-import Overlay from "../ui/Overlay"
-import { useLocalStorageMessages } from "../hooks/useLocalStorageMessages"
-import { useRoomInitialization } from "../hooks/useRoomInitialization"
-import CenteredText from "../ui/StatusContainer"
+import { Tables } from "../shared/supabase-types"
+import { useRoomInitialization } from "./hooks/useRoomInitialization"
+import { BroadcastMessage, ChatMessage, NewsItem, PlayerData } from "../shared/types"
+import { IRefPhaserGame, PhaserGame } from "./game/PhaserGame"
+import { useLocalStorageMessages } from "./hooks/useLocalStorageMessages"
+import CenteredText from "./ui/StatusContainer"
+import Overlay from "./ui/Overlay"
+import ChatsContainer from "./ui/ChatsContainer"
+import NewsContainer from "./ui/NewsContainer"
+import ObserveContainer from "./ui/ObserveContainer"
+
 
 
 interface GameRoomProps {

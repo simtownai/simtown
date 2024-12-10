@@ -5,6 +5,14 @@
   font-style: normal;
 }
 
+:root {
+  --color-background: #6c4a2b;
+  --color-card: #48331c;
+  --color-header: #e1af74;
+  --color-header-text: #522e02;
+  --color-text: #ffffff;
+}
+
 html,
 body,
 #root {
@@ -18,6 +26,8 @@ body,
 body {
   display: flex;
   font-family: "Monogram Extended", Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 #game-container {
