@@ -1,25 +1,19 @@
-import { Tables } from "../shared/supabase-types"
 import styles from "./Dashboard.module.css"
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { RoomWithMap } from "./hooks/useAvailableRooms"
 
 interface DashboardProps {
-    rooms: (Tables<"room"> & {
-        id: string;
-        map: {
-            name: string
-            description: string
-        } | null
-    })[]
+    rooms: RoomWithMap[]
     username: string
     spriteDefinition: any
 }
 
 export function Dashboard({ rooms }: DashboardProps) {
     const navigate = useNavigate()
-    const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({})
+    const [expandedRooms, setExpandedRooms] = useState<Record<number, boolean>>({})
 
-    const toggleRoomExpansion = (roomId: string, event: React.MouseEvent) => {
+    const toggleRoomExpansion = (roomId: number, event: React.MouseEvent) => {
         event.stopPropagation()
         setExpandedRooms(prev => ({
             ...prev,

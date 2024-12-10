@@ -2,7 +2,7 @@ import { Tables } from "../../shared/supabase-types"
 import { supabase } from "../supabase"
 import { useEffect, useState } from "react"
 
-type RoomWithMap = Tables<"room"> & {
+export type RoomWithMap = Tables<"room"> & {
   map: {
     name: string
     description: string
