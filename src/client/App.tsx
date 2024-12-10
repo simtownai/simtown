@@ -1,25 +1,25 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import { useEffect } from "react"
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import Authorize from "./ui/Authorize"
-import CenteredText from "./ui/StatusContainer"
-import io from "socket.io-client"
-import { useSupabaseSession } from "./hooks/useSupabaseSession"
-import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
-import { useAvailableRooms } from "./hooks/useAvailableRooms"
 import { Dashboard } from "./Dashboard"
 import { GameRoom } from "./GameRoom"
+import { useAvailableRooms } from "./hooks/useAvailableRooms"
+import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
+import { useSupabaseSession } from "./hooks/useSupabaseSession"
+import Authorize from "./ui/Authorize"
+import CenteredText from "./ui/StatusContainer"
+import { useEffect } from "react"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
+import io from "socket.io-client"
 
 const socket = io(CONFIG.SERVER_URL)
 
 function App() {
   const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
-  const {
-    supabaseSession,
-    username,
-    spriteDefinition,
-  } = useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
+  const { supabaseSession, username, spriteDefinition } = useSupabaseSession(
+    defaultUsername,
+    createRandomSpriteDefinition(),
+    socket,
+  )
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
   const isMobile = useMobileBreakpoint(mobileWindowWidthThreshold)
@@ -59,13 +59,7 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            <Dashboard
-              rooms={availableRooms}
-              username={username}
-              spriteDefinition={spriteDefinition}
-            />
-          }
+          element={<Dashboard rooms={availableRooms} username={username} spriteDefinition={spriteDefinition} />}
         />
         <Route
           path="/:roomName"

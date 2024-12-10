@@ -73,3 +73,10 @@
   font-size: 0.9em;
   color: var(--color-text);
 }
+
+.lastUpdate {
+  margin: 0.5rem 0;
+  font-size: 0.9em;
+  color: var(--color-header);
+  font-style: italic;
+}
