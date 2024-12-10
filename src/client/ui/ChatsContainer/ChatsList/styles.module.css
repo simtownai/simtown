@@ -1,11 +1,10 @@
 .chatList {
   display: flex;
   flex-direction: column;
-  background-color: #6c4a2b;
-  background-color: #48331c;
+  background-color: var(--color-card);
   transition: width 0.3s ease-in-out;
   overflow: hidden;
-  box-sizing: border-box; /* Include padding in width and height */
+  box-sizing: border-box;
 }
 
 .chatListDesktop {
@@ -40,7 +39,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--color-text);
   font-size: 1.2rem;
   text-align: center;
   padding: 20px;

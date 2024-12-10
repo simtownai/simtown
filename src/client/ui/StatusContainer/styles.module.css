@@ -1,5 +1,5 @@
 .centeredContainer {
-  background-color: #6c4a2b;
+  background-color: var(--color-background);
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -10,5 +10,5 @@
 .centeredText {
   font-family: "Monogram Extended";
   font-size: 32px;
-  color: #ffffff;
+  color: var(--color-text);
 }

@@ -219,3 +219,23 @@ type Tileset = {
   tileheight: number
   tilewidth: number
 }
+
+export interface NPC {
+  id: number
+  name: string
+  sprite_definition: PlayerSpriteDefinition
+}
+
+export interface RoomWithMap {
+  id: number
+  name: string
+  scenario?: string
+  map?: {
+    name: string
+    description: string
+  }
+  room_instance?: Array<{
+    last_update: string
+  }>
+  npcs?: NPC[]
+}

@@ -34,8 +34,8 @@
 .chatsListWrapper {
   width: 300px;
   height: 100%;
-  border-right: 1px solid #6c4a2b;
-  background-color: #ffffff;
+  border-right: 1px solid var(--color-background);
+  background-color: var(--color-card);
 }
 
 .chatWrapper {

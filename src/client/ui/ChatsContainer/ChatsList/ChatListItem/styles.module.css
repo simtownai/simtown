@@ -2,23 +2,23 @@
   padding: 12px 16px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  color: #fff;
+  color: var(--color-text);
   font-size: 18px;
   user-select: none;
-  border-bottom: 1px solid #6c4a2b;
+  border-bottom: 1px solid var(--color-border-light);
   list-style: none;
 }
 
 .item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--color-hover);
 }
 
 .itemActive {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--color-active);
 }
 
 .itemActive:hover {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--color-active);
 }
 
 .contentWrapper {
@@ -34,12 +34,12 @@
 
 .chatName {
   font-size: 24px;
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .chatDate {
   font-size: 22px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-secondary);
 }
 
 .messageRow {
@@ -51,7 +51,7 @@
 .lastMessage {
   flex: 1;
   font-size: 22px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

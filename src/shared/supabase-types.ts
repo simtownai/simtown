@@ -71,6 +71,55 @@ export type Database = {
         }
         Relationships: []
       }
+      message: {
+        Row: {
+          content: string
+          created_at: string | null
+          from_npc_instance_id: number | null
+          from_user_id: string | null
+          id: string
+          thread_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          from_npc_instance_id?: number | null
+          from_user_id?: string | null
+          id?: string
+          thread_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          from_npc_instance_id?: number | null
+          from_user_id?: string | null
+          id?: string
+          thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_from_npc_instance_id_fkey"
+            columns: ["from_npc_instance_id"]
+            isOneToOne: false
+            referencedRelation: "npc_instance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "thread"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           chat_id: string
@@ -250,21 +299,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          last_update: string | null
+          last_update: string
           newspaper: Json[] | null
           room_id: number
         }
         Insert: {
           created_at?: string | null
           id?: string
-          last_update?: string | null
+          last_update?: string
           newspaper?: Json[] | null
           room_id: number
         }
         Update: {
           created_at?: string | null
           id?: string
-          last_update?: string | null
+          last_update?: string
           newspaper?: Json[] | null
           room_id?: number
         }
@@ -274,6 +323,67 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "room"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thread: {
+        Row: {
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      thread_participant: {
+        Row: {
+          created_at: string | null
+          id: string
+          npc_instance_id: number | null
+          thread_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          npc_instance_id?: number | null
+          thread_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          npc_instance_id?: number | null
+          thread_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_participant_npc_instance_id_fkey"
+            columns: ["npc_instance_id"]
+            isOneToOne: false
+            referencedRelation: "npc_instance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thread_participant_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "thread"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "thread_participant_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -331,39 +441,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      votes: {
-        Row: {
-          chat_id: string
-          is_upvoted: boolean
-          message_id: string
-        }
-        Insert: {
-          chat_id: string
-          is_upvoted: boolean
-          message_id: string
-        }
-        Update: {
-          chat_id?: string
-          is_upvoted?: boolean
-          message_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "votes_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "votes_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
