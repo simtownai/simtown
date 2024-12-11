@@ -13,7 +13,7 @@ import {
   availableVoteCandidates,
 } from "../shared/types"
 import { RoomInstance } from "./rooms"
-import { SupabaseClient, createClient } from "@supabase/supabase-js"
+import { PostgrestError, SupabaseClient, createClient } from "@supabase/supabase-js"
 import cors from "cors"
 import express from "express"
 import { createServer } from "http"
@@ -27,6 +27,7 @@ app.use(cors())
 const server = createServer(app)
 
 interface SocketData {
+  playerId: string
   playerSupabaseClient: SupabaseClient<Database>
 }
 
@@ -84,19 +85,14 @@ async function handleRoomInstance(
       }
     }
 
-    // For restoration, fetch NPC instances
-    let npcInstances: Tables<"npc_instance">[] = []
-    if (databaseRoomInstance) {
-      const { data: instances, error: instancesError } = await supabaseClient
-        .from("npc_instance")
-        .select("*")
-        .eq("room_instance_id", databaseRoomInstance.id)
-      if (instancesError) {
-        logger.error("Error fetching NPC instances:")
-        console.error(instancesError)
-        return
-      }
-      npcInstances = instances
+    const { data: npcInstances, error: instancesError } = await supabaseClient
+      .from("npc_instance")
+      .select("*")
+      .eq("room_instance_id", databaseRoomInstance ? databaseRoomInstance.id : roomInstanceId)
+    if (instancesError) {
+      logger.error("Error fetching NPC instances:")
+      console.error(instancesError)
+      return
     }
 
     const roomInstance = new RoomInstance(roomInstanceId, mapConfig, npcs, roomDefinition.scenario, npcInstances)
