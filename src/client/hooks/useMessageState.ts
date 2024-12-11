@@ -51,7 +51,7 @@ export function useMessageState({
       const key = `${first}-${second} (overheard)`
       const newMessage = {
         ...message,
-        isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
+        isRead: true,
       } as ChatMessage
       addMessage(newMessage, key)
     })
