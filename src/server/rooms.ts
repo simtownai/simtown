@@ -70,6 +70,7 @@ export class RoomInstance {
           this.scenario,
           this.mapConfig,
           this.mapData,
+          npcInstance.id.toString(),
           npcInstance.reflections ? npcInstance.reflections : undefined,
           npcInstance.position_x !== null && npcInstance.position_y !== null
             ? { x: npcInstance.position_x, y: npcInstance.position_y }
@@ -139,13 +140,14 @@ export class RoomInstance {
     }
 
     this.players.set(playerId, playerData)
+    this.playerToSocket.set(playerId, socketId)
 
     if (!isNPC) {
       supabaseClient.auth.getUser().then(({ data: { user } }) => {
         if (user) {
           supabaseClient
             .from("user_room_instance")
-            .insert([{ user_id: user.id, room_instance_id: this.id }])
+            .upsert([{ user_id: user.id, room_instance_id: this.id }])
             .then(({ error }) => {
               if (error) {
                 logger.error(`Error adding user to room instance: ${error.message}`)
