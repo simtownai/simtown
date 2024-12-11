@@ -37,8 +37,8 @@ export class LoadingScene extends Scene {
     this.progressBar = this.add.graphics()
 
     const textConfig = {
-      fontFamily: "Monogram Extended",
-      fontSize: "32px",
+      fontFamily: CONFIG.FONT_FAMILY,
+      fontSize: "28px",
       color: "#ffffff",
       resolution: 1,
     }

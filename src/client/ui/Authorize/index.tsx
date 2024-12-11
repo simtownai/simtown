@@ -1,3 +1,4 @@
+import { CONFIG } from "../../../shared/config"
 import { supabase } from "../../supabase"
 import Header from "../OverlayHeader"
 import styles from "./styles.module.css"
@@ -55,10 +56,10 @@ export default function Authorize({ redirectTo, isMobile, onClose }: AuthorizePr
                   inputPlaceholder: "#a68868",
                 },
                 fonts: {
-                  bodyFontFamily: `"Monogram Extended", Arial, sans-serif`,
-                  buttonFontFamily: `"Monogram Extended", Arial, sans-serif`,
-                  inputFontFamily: `"Monogram Extended", Arial, sans-serif`,
-                  labelFontFamily: `"Monogram Extended", Arial, sans-serif`,
+                  bodyFontFamily: CONFIG.FONT_FAMILY,
+                  buttonFontFamily: CONFIG.FONT_FAMILY,
+                  inputFontFamily: CONFIG.FONT_FAMILY,
+                  labelFontFamily: CONFIG.FONT_FAMILY,
                 },
               },
             },

@@ -48,7 +48,6 @@
 
 .timeDisplay > div {
   margin: 2px 0;
-  font-family: "Monogram Extended";
 }
 
 .overlayTopRight {
@@ -109,7 +108,6 @@
   justify-content: center;
   padding: 0 4px;
   image-rendering: pixelated;
-  font-family: "Monogram Extended";
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
   /* https://pixelcorners.lukeb.co.uk/?radius=4&multiplier=3 */
   clip-path: polygon(

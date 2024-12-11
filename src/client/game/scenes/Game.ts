@@ -332,8 +332,8 @@ export class Game extends Phaser.Scene {
 
     const actionEmoji = this.add
       .text(0, 0, getTextFromAction(playerInfo.action, false), {
-        fontSize: "24px",
-        fontFamily: "Roboto",
+        fontSize: "20px",
+        fontFamily: CONFIG.FONT_FAMILY,
         color: "#ffffff",
       })
       .setOrigin(0, 0.5) // Set origin to left-center instead of center

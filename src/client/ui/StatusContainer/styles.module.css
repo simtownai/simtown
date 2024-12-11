@@ -8,7 +8,6 @@
 }
 
 .centeredText {
-  font-family: "Monogram Extended";
   font-size: 32px;
   color: var(--color-text);
 }
