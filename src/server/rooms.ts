@@ -30,6 +30,7 @@ export class RoomInstance {
   protected voteResults: Map<string, VoteCandidate>[]
   protected places: Object[]
   protected spawnArea: Object
+  protected playerToSocket: Map<string, string>
 
   constructor(
     id: string,
@@ -48,6 +49,7 @@ export class RoomInstance {
     this.created = new Date()
     this.newsPaper = []
     this.voteResults = [new Map()]
+    this.playerToSocket = new Map()
 
     // ToDo: maybe add cache for json files and load them from cache
     this.mapData = JSON.parse(fs.readFileSync(`./public/assets/maps/${this.mapConfig.map_json_filename}.json`, "utf8"))
@@ -113,7 +115,12 @@ export class RoomInstance {
     return this.created
   }
 
+  getPlayerSocketId(playerId: string): string {
+    return this.playerToSocket.get(playerId)!
+  }
+
   addPlayer(
+    socketId: string,
     supabaseClient: SupabaseClient<Database>,
     playerId: string,
     isNPC: boolean,
