@@ -1,4 +1,9 @@
 :root {
+  --font-size: 20px;
+  --font-size-medium: 18px;
+  --font-size-small: 16px;
+  --font-size-very-small: 14px;
+
   /* Primary colors */
   --color-background: #6c4a2b;
   --color-card: #48331c;

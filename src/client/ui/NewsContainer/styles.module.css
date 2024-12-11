@@ -55,17 +55,17 @@
 }
 
 .newsDate {
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   color: rgba(255, 255, 255, 0.7);
 }
 
 .newsPlace {
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   color: #e2b57e;
 }
 
 .newsMessage {
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   color: #fff;
   white-space: pre-wrap;
 }
@@ -76,7 +76,7 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 24px;
+  font-size: var(--font-size);
   text-align: center;
 }
 

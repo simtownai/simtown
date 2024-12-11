@@ -3,7 +3,7 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
   color: var(--color-text);
-  font-size: 18px;
+  font-size: var(--font-size-very-small);
   user-select: none;
   border-bottom: 1px solid var(--color-border-light);
   list-style: none;
@@ -33,12 +33,12 @@
 }
 
 .chatName {
-  font-size: 24px;
+  font-size: var(--font-size);
   color: var(--color-text);
 }
 
 .chatDate {
-  font-size: 22px;
+  font-size: var(--font-size-small);
   color: var(--color-text-secondary);
 }
 
@@ -50,7 +50,7 @@
 
 .lastMessage {
   flex: 1;
-  font-size: 22px;
+  font-size: var(--font-size-small);
   color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;

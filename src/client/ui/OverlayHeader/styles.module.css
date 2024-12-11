@@ -14,7 +14,7 @@
 
 .heading {
   color: #522e02;
-  font-size: 24px;
+  font-size: var(--font-size);
   display: flex;
   align-items: center;
   justify-content: center;

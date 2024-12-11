@@ -34,7 +34,7 @@
   padding: 20px;
   overflow-y: auto;
   flex-grow: 1;
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   color: #fff;
 }
 

@@ -20,7 +20,7 @@
   outline: none;
   color: var(--color-text);
   background-color: var(--color-compose-input);
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   gap: 8px;
   font-family: inherit;
   line-height: inherit;

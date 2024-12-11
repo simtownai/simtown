@@ -13,14 +13,14 @@
   max-width: 100%;
   width: 100%;
   color: var(--color-text);
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .messageSender {
-  font-size: 24px;
+  font-size: var(--font-size);
 }
 
 .senderWe {
@@ -61,6 +61,6 @@
 }
 
 .messageDate {
-  font-size: 22px;
+  font-size: var(--font-size-medium);
   color: var(--color-text-secondary);
 }
