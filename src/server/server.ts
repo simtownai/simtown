@@ -289,7 +289,6 @@ io.on("connection", (socket) => {
         spriteDefinition,
         spawnPosition,
       )
-      console.log(currentRoom.getPlayer(playerId))
 
       logger.info(
         `${isNPC ? "NPC" : "Player"} '${username}' connected. Number of players: ${currentRoom.getPlayerCount()}`,
