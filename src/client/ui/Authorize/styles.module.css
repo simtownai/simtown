@@ -3,3 +3,17 @@
   margin: 0 auto;
   padding: 2rem;
 }
+
+.authcontainer h1 {
+  color: var(--color-header);
+  margin-bottom: 2rem;
+}
+
+/* Override some Supabase styles */
+.authcontainer :global(.supabase-auth-ui_ui-container) {
+  color: var(--color-text);
+}
+
+.authcontainer :global(.supabase-auth-ui_ui-divider) {
+  background-color: var(--color-border);
+}
