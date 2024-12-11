@@ -348,21 +348,18 @@ export type Database = {
       thread_participant: {
         Row: {
           created_at: string | null
-          id: string
           npc_instance_id: number | null
           thread_id: string
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string
           npc_instance_id?: number | null
           thread_id: string
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string
           npc_instance_id?: number | null
           thread_id?: string
           user_id?: string | null
