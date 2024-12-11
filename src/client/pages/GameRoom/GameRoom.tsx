@@ -1,7 +1,10 @@
-import { BroadcastMessage, ChatMessage, NewsItem, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
+import { NewsItem, PlayerSpriteDefinition } from "../../../shared/types"
 import { IRefPhaserGame, PhaserGame } from "../../game/PhaserGame"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import { useLocalStorageMessages } from "../../hooks/useLocalStorageMessages"
+import { useMessageState } from "../../hooks/useMessageState"
+import { useOverlayState } from "../../hooks/useOverlayState"
+import { usePlayerState } from "../../hooks/usePlayerState"
 import { useRoomInitialization } from "../../hooks/useRoomInitialization"
 import ChatsContainer from "../../ui/ChatsContainer"
 import NewsContainer from "../../ui/NewsContainer"
@@ -22,145 +25,51 @@ interface GameRoomProps {
 
 export function GameRoom({ socket, userId, username, spriteDefinition, availableRooms, isMobile }: GameRoomProps) {
   const { room, roomId, mapConfig } = useRoomInitialization(availableRooms)
+  const { players } = usePlayerState(socket, username)
+
+  const {
+    isChatsContainerCollapsed,
+    setIsChatsContainerCollapsed,
+    isChatCollapsed,
+    setIsChatCollapsed,
+    isExpanded,
+    setIsExpanded,
+    isNewsContainerCollapsed,
+    setIsNewsContainerCollapsed,
+    isObserveContainerCollapsed,
+    setIsObserveContainerCollapsed,
+    isObservedNPCCollapsed,
+    setIsObservedNPCCollapsed,
+    isObservedContainerExpanded,
+    setIsObservedContainerExpanded,
+    soundEnabled,
+    setSoundEnabled,
+  } = useOverlayState()
 
   const [isGameLoaded, setIsGameLoaded] = useState(false)
   const [chatmate, setChatmate] = useState<string | null>(null)
-  const [isChatsContainerCollapsed, setIsChatsContainerCollapsed] = useState(true)
-  const [isChatCollapsed, setIsChatCollapsed] = useState(true)
-  const [isExpanded, setIsExpanded] = useState(false)
   const [composeValue, setComposeValue] = useState("")
   const [isMessageLoading, setIsMessageLoading] = useState(false)
   const [newsPaper, setNewsPaper] = useState<NewsItem[]>([])
-  const [isNewsContainerCollapsed, setIsNewsContainerCollapsed] = useState(true)
-  const [soundEnabled, setSoundEnabled] = useState(localStorage.getItem("soundEnabled") === "true")
-  const [players, setPlayers] = useState<Map<string, PlayerData>>(new Map())
-
   const [observedNPC, setObservedNPC] = useState<string | null>(null)
-  const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
-  const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
-  const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
 
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
-  const chatmateRef = useRef(chatmate)
-  const isChatsContainerCollapsedRef = useRef(isChatsContainerCollapsed)
-  const isChatCollapsedRef = useRef(isChatCollapsed)
+  const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages()
 
-  useEffect(() => {
-    chatmateRef.current = chatmate
-  }, [chatmate])
-  useEffect(() => {
-    isChatsContainerCollapsedRef.current = isChatsContainerCollapsed
-  }, [isChatsContainerCollapsed])
-  useEffect(() => {
-    isChatCollapsedRef.current = isChatCollapsed
-  }, [isChatCollapsed])
+  useMessageState({
+    socket,
+    username,
+    isChatsContainerCollapsed,
+    isChatCollapsed,
+    chatmate,
+    isNewsContainerCollapsed,
+    addMessage,
+  })
 
   const currentScene = (scene: Phaser.Scene) => {
     console.log(scene)
   }
-
-  // Socket event handlers
-  useEffect(() => {
-    socket.on("playerJoined", (player: PlayerData) => {
-      if (player.username !== username) {
-        setPlayers((prevPlayers) => new Map(prevPlayers).set(player.username, player))
-      }
-    })
-
-    socket.on("existingPlayers", (players: PlayerData[]) => {
-      const playersMap = new Map(players.map((player) => [player.username, player]))
-      setPlayers(playersMap)
-    })
-
-    socket.on("playerDataChanged", (player: PlayerData) => {
-      setPlayers((prevPlayers) => {
-        const currentPlayer = prevPlayers.get(player.username)
-        if (player.npcState && currentPlayer?.npcState) {
-          player.npcState = {
-            ...currentPlayer.npcState,
-            ...player.npcState,
-          }
-        }
-        return new Map(prevPlayers).set(player.username, {
-          ...currentPlayer,
-          ...player,
-        })
-      })
-    })
-
-    socket.on("playerLeft", (username: string) => {
-      setPlayers((prevPlayers) => {
-        const newPlayers = new Map(prevPlayers)
-        newPlayers.delete(username)
-        return newPlayers
-      })
-    })
-
-    socket.on("newMessage", (message: ChatMessage) => {
-      const newMessage = {
-        ...message,
-        isRead:
-          !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === message.from,
-      } as ChatMessage
-      addMessage(newMessage, message.from)
-    })
-
-    socket.on("overhearMessage", (message: ChatMessage) => {
-      const [first, second] = [message.from, message.to].sort()
-      const key = `${first}-${second} (overheard)`
-      const newMessage = {
-        ...message,
-        isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
-      } as ChatMessage
-      addMessage(newMessage, key)
-    })
-
-    socket.on("listenBroadcast", (message: BroadcastMessage) => {
-      const key = `${message.from} (broadcast)`
-      const newMessage = {
-        to: username,
-        ...message,
-        isRead: !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === key,
-      } as ChatMessage
-      addMessage(newMessage, key)
-    })
-
-    socket.on("endConversation", (message: ChatMessage) => {
-      const newMessage = {
-        ...message,
-        isRead:
-          !isChatsContainerCollapsedRef.current && !isChatCollapsedRef.current && chatmateRef.current === message.from,
-      } as ChatMessage
-      addMessage(newMessage, message.from)
-    })
-
-    socket.on("news", (news: NewsItem | NewsItem[]) => {
-      const ifNewsInitialization = Array.isArray(news)
-      setNewsPaper((prevNews) => {
-        const newsArray = Array.isArray(news) ? news : [news]
-        const newNews = newsArray.map((newsItem) => ({
-          ...newsItem,
-          isRead: ifNewsInitialization || !isNewsContainerCollapsed,
-        }))
-        return [...prevNews, ...newNews]
-      })
-    })
-
-    return () => {
-      socket.off("playerJoined")
-      socket.off("existingPlayers")
-      socket.off("playerDataChanged")
-      socket.off("playerLeft")
-      socket.off("newMessage")
-      socket.off("overhearMessage")
-      socket.off("listenBroadcast")
-      socket.off("endConversation")
-      socket.off("news")
-    }
-  }, [])
-
-  const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages()
 
   useEffect(() => {
     if (chatmate) {
