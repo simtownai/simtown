@@ -1,0 +1,70 @@
+.header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+  height: 80px;
+}
+
+.welcomeSection {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.welcomeText {
+  font-size: 2rem;
+  color: var(--color-text-secondary);
+}
+
+.welcomeText strong {
+  font-size: 2.5rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.welcomeText strong:hover {
+  color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.username {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.spriteSection {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0.75rem 1rem;
+    flex-direction: row;
+    height: 60px;
+  }
+
+  .welcomeSection {
+    gap: 0.25rem;
+  }
+
+  .welcomeText {
+    font-size: 1rem;
+  }
+
+  .welcomeText strong {
+    font-size: 1.25rem;
+  }
+
+  .username {
+    font-size: 1rem;
+  }
+}

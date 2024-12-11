@@ -1,10 +1,10 @@
 import { useState } from "react"
 
 export function useAuth() {
-  const [isAuthContainerExpanded, setIsAuthContainerExpanded] = useState(false)
+  const [isAuthContainerExpanded, setAuthContainerExpanded] = useState(false)
 
   return {
     isAuthContainerExpanded,
-    setIsAuthContainerExpanded,
+    setAuthContainerExpanded,
   }
 }

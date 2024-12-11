@@ -1,34 +1,33 @@
 import { PlayerSpriteDefinition } from "../../../shared/types"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
+import { HeaderDashboard } from "../../ui/HeaderDashboard"
 import RoomItem from "../../ui/RoomItem"
-import { SpritePreviewGame } from "../../ui/SpritePreview/SpritePreviewGame"
 import styles from "./Dashboard.module.css"
+import { Session } from "@supabase/supabase-js"
 import { useNavigate } from "react-router-dom"
 
 interface DashboardProps {
   rooms: RoomWithMap[]
   username: string
   spriteDefinition: PlayerSpriteDefinition
+  session: Session | null
+  showAuthContainer: () => void
 }
 
-export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps) {
+export function Dashboard({ rooms, username, spriteDefinition, session, showAuthContainer }: DashboardProps) {
   const navigate = useNavigate()
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.welcomeSection}>
-          <span className={styles.welcomeText}>Welcome back:</span>
-          <span className={styles.username}>{username}</span>
-        </div>
-        <div className={styles.spriteSection}>
-          <SpritePreviewGame username={username} spriteDefinition={spriteDefinition} width={82} height={82} />
-        </div>
-      </header>
+      <HeaderDashboard
+        showAuthContainer={showAuthContainer}
+        username={username}
+        spriteDefinition={spriteDefinition}
+        session={session}
+      />
 
       <main className={styles.roomsContainer}>
         <section className={styles.introSection}>
-          {/* <h2>What do you want to do?</h2> */}
           <p className={styles.subtitle}>Join a room and start chatting!</p>
         </section>
 

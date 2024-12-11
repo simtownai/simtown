@@ -22,7 +22,7 @@ function App() {
     createRandomSpriteDefinition(),
     socket,
   )
-  const { isAuthContainerExpanded, setIsAuthContainerExpanded } = useAuth()
+  const { isAuthContainerExpanded, setAuthContainerExpanded } = useAuth()
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
 
@@ -60,20 +60,28 @@ function App() {
         <Authorize
           redirectTo={window.location.href}
           isMobile={isMobile}
-          onClose={() => setIsAuthContainerExpanded(false)}
+          onClose={() => setAuthContainerExpanded(false)}
         />
       )}
       <Routes>
         <Route
           path="/"
-          element={<Dashboard rooms={availableRooms} username={username} spriteDefinition={spriteDefinition} />}
+          element={
+            <Dashboard
+              showAuthContainer={() => setAuthContainerExpanded(true)}
+              session={supabaseSession}
+              rooms={availableRooms}
+              username={username}
+              spriteDefinition={spriteDefinition}
+            />
+          }
         />
         <Route
           path="/:roomName"
           element={
             <GameRoom
               socket={socket}
-              supabaseSession={supabaseSession}
+              setAuthContainerExpanded={setAuthContainerExpanded}
               userId={supabaseSession ? supabaseSession.user.id : uuidv4()}
               username={username}
               spriteDefinition={spriteDefinition}
