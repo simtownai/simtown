@@ -135,7 +135,8 @@ async function handleRoomInstance(
 }
 
 io.on("connection", (socket) => {
-  const playerId = socket.id
+  socket.data.playerId = socket.id
+
   let currentRoom: RoomInstance | null = null
   socket.data.playerSupabaseClient = createClient<Database>(
     process.env.VITE_SUPABASE_URL!,
@@ -161,7 +162,7 @@ io.on("connection", (socket) => {
         console.error(error)
         return
       } else {
-        logger.info(`Supabase client authorized for player ${data?.user.email}`)
+        logger.info(`Supabase client authorized for player ${data.user.email}`)
       }
     })
   })
@@ -226,6 +227,7 @@ io.on("connection", (socket) => {
     async (
       roomId: string,
       isNPC: boolean,
+      playerId: string,
       username: string,
       spriteDefinition: PlayerSpriteDefinition,
       position?: { x: number; y: number },
@@ -273,21 +275,13 @@ io.on("connection", (socket) => {
       }
 
       currentRoom = room
+      socket.data.playerId = playerId
       socket.join(room.getId())
 
       const spawnPosition = position || currentRoom.findValidPosition()
-      let playerData: PlayerData = {
-        id: playerId,
-        isNPC: isNPC,
-        username: username,
-        spriteDefinition: spriteDefinition,
-        x: spawnPosition.x,
-        y: spawnPosition.y,
-        animation: `${username}-idle-down`,
-      }
 
-      // currentRoom.addPlayer(playerId, isNPC, username, spriteDefinition, spawnPosition)
       currentRoom.addPlayer(
+        socket.id,
         socket.data.playerSupabaseClient,
         playerId,
         isNPC,
@@ -295,6 +289,7 @@ io.on("connection", (socket) => {
         spriteDefinition,
         spawnPosition,
       )
+      console.log(currentRoom.getPlayer(playerId))
 
       logger.info(
         `${isNPC ? "NPC" : "Player"} '${username}' connected. Number of players: ${currentRoom.getPlayerCount()}`,
@@ -302,14 +297,14 @@ io.on("connection", (socket) => {
 
       socket.emit("existingPlayers", Array.from(currentRoom.getPlayers().values()))
       socket.emit("news", currentRoom.getNewsPaper())
-      socket.to(roomId).emit("playerJoined", playerData)
+      socket.to(roomId).emit("playerJoined", currentRoom.getPlayer(playerId))
     },
   )
 
   socket.on("updatePlayerData", (playerData: UpdatePlayerData) => {
     if (!currentRoom) return
 
-    const currentPlayerData = currentRoom.getPlayer(playerId)
+    const currentPlayerData = currentRoom.getPlayer(socket.data.playerId)
     if (!currentPlayerData) return
 
     if (playerData.npcState) {
@@ -325,7 +320,7 @@ io.on("connection", (socket) => {
       ...playerData,
     }
 
-    currentRoom.updatePlayerData(playerId, newPlayerData)
+    currentRoom.updatePlayerData(socket.data.playerId, newPlayerData)
 
     // avoiding sending npcState to other players if it didn't change
     if (!playerData.npcState) {
@@ -344,13 +339,17 @@ io.on("connection", (socket) => {
     logger.info(`endConversation receied from ${message.from}: ${message.message}`)
     currentRoom.getPlayers().forEach(async (player) => {
       if (player.username === message.to) {
-        const recipientSocket = io.sockets.sockets.get(player.id)
+        const recipientSocket = io.sockets.sockets.get(currentRoom!.getPlayerSocketId(player.id))
         if (recipientSocket) {
           recipientSocket.emit("endConversation", message)
-          const sender = currentRoom?.getPlayer(playerId)!
-          emitOverhear(currentRoom!.getPlayers(), sender, player, message)
+          const sender = currentRoom?.getPlayer(socket.data.playerId)!
+          emitOverhear(currentRoom!, currentRoom!.getPlayers(), sender, player, message)
           if (!player.isNPC || !sender.isNPC) {
-            // await saveMessageToSupabase(message, player.username)
+            await handleMessage(socket.data.playerSupabaseClient, {
+              from: sender.id,
+              to: player.id,
+              message: message.message,
+            })
           }
         } else {
           socket.emit("messageError", { error: "Recipient not found" })
@@ -376,7 +375,7 @@ io.on("connection", (socket) => {
       )
 
       if (isInBroadcastZone) {
-        const recipientSocket = io.sockets.sockets.get(player.id)
+        const recipientSocket = io.sockets.sockets.get(currentRoom!.getPlayerSocketId(player.id))
         if (recipientSocket) {
           recipientSocket.emit("listenBroadcast", message)
         } else {
@@ -389,25 +388,31 @@ io.on("connection", (socket) => {
   socket.on("sendMessage", (message: ChatMessage) => {
     if (!currentRoom) return
 
-    // logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
+    logger.info(`Message from ${message.from} to ${message.to}: ${message.message}`)
 
     if (message.to === "all") {
       io.emit("newMessage", message)
     } else {
       currentRoom.getPlayers().forEach(async (player) => {
         if (player.username === message.to) {
-          const recipientSocket = io.sockets.sockets.get(player.id)
+          const recipientSocket = io.sockets.sockets.get(currentRoom!.getPlayerSocketId(player.id))
           if (recipientSocket) {
             recipientSocket.emit("newMessage", message)
 
             // Overhear logic
-            const sender = currentRoom?.getPlayer(playerId)!
-            emitOverhear(currentRoom?.getPlayers()!, sender, player, message)
+            const sender = currentRoom?.getPlayer(socket.data.playerId)!
+            emitOverhear(currentRoom!, currentRoom?.getPlayers()!, sender, player, message)
             if (!player.isNPC || !sender.isNPC) {
               // const supabaseUserName = player.isNPC ? sender.username : player.username
               // await saveMessageToSupabase(message, supabaseUserName)
+              await handleMessage(socket.data.playerSupabaseClient, {
+                from: sender.id,
+                to: player.id,
+                message: message.message,
+              })
             }
           } else {
+            logger.error(`Error sending the message: recipient not found`)
             socket.emit("messageError", { error: "Recipient not found" })
           }
         }
@@ -418,6 +423,7 @@ io.on("connection", (socket) => {
   })
 
   function emitOverhear(
+    room: RoomInstance,
     players: Map<string, PlayerData>,
     sender: PlayerData,
     receiver: PlayerData,
@@ -433,7 +439,7 @@ io.on("connection", (socket) => {
           calculateDistance(receiver.x, receiver.y, potentialOverhearPlayer.x, potentialOverhearPlayer.y) <=
             CONFIG.INTERACTION_PROXIMITY_THRESHOLD)
       ) {
-        const potentialOverhearSocket = io.sockets.sockets.get(potentialOverhearPlayer.id)
+        const potentialOverhearSocket = io.sockets.sockets.get(room.getPlayerSocketId(potentialOverhearPlayer.id))
         if (potentialOverhearSocket) {
           potentialOverhearSocket.emit("overhearMessage", message)
         }
@@ -449,11 +455,11 @@ io.on("connection", (socket) => {
 
   socket.on("vote", (candidate: VoteCandidate) => {
     if (!currentRoom) return
-    const player = currentRoom.getPlayer(playerId)
+    const player = currentRoom.getPlayer(socket.data.playerId)
 
     if (!player) {
       logger.error(
-        `User ${playerId} not found. Available players: ${Array.from(currentRoom.getPlayers().keys())} (${currentRoom.getPlayerCount()} total)`,
+        `User ${socket.data.playerId} not found. Available players: ${Array.from(currentRoom.getPlayers().keys())} (${currentRoom.getPlayerCount()} total)`,
       )
       return
     }
@@ -538,7 +544,7 @@ io.on("connection", (socket) => {
   function leaveCurrentRoom() {
     if (!currentRoom) return
 
-    const player = currentRoom.removePlayer(playerId)
+    const player = currentRoom.removePlayer(socket.data.playerId)
     if (player) {
       socket.to(currentRoom.getId()).emit("playerLeft", player.username)
       logger.info(
@@ -591,6 +597,209 @@ function initializeVotingNotifications(room: RoomInstance) {
       lastNotificationGameTime = currentGameTime
     }
   }, 10000)
+}
+
+interface MessageInput {
+  from: string
+  to: string
+  message: string
+}
+
+class MessageHandlerError extends Error {
+  constructor(
+    message: string,
+    public step: string,
+    public originalError?: PostgrestError | Error,
+  ) {
+    super(message)
+    console.error(originalError)
+    this.name = "MessageHandlerError"
+  }
+}
+
+export async function handleMessage(supabase: SupabaseClient, { from, to, message }: MessageInput) {
+  try {
+    // Helper function to determine if a string is a UUID
+    const isUUID = (str: string): boolean => {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      return uuidRegex.test(str)
+    }
+
+    // Input validation
+    if (!from || !to || !message) {
+      throw new MessageHandlerError(
+        "Missing required fields",
+        "input_validation",
+        new Error(`from: ${from}, to: ${to}, message: ${message}`),
+      )
+    }
+
+    // Convert participants to the correct format for database
+    const participant1 = {
+      user_id: isUUID(from) ? from : null,
+      npc_instance_id: !isUUID(from) ? parseInt(from) : null,
+    }
+
+    const participant2 = {
+      user_id: isUUID(to) ? to : null,
+      npc_instance_id: !isUUID(to) ? parseInt(to) : null,
+    }
+
+    // Validate participant conversion
+    if (!participant1.user_id && !participant1.npc_instance_id) {
+      throw new MessageHandlerError(
+        'Invalid "from" format',
+        "participant_conversion",
+        new Error(`Unable to parse "from" value: ${from}`),
+      )
+    }
+
+    if (!participant2.user_id && !participant2.npc_instance_id) {
+      throw new MessageHandlerError(
+        'Invalid "to" format',
+        "participant_conversion",
+        new Error(`Unable to parse "to" value: ${to}`),
+      )
+    }
+
+    // Find existing thread
+    let existingThreadsQuery = supabase.from("thread_participant").select(`
+        thread_id,
+        user_id,
+        npc_instance_id
+      `)
+
+    // Add the appropriate filter based on participant1 type
+    if (participant1.user_id) {
+      existingThreadsQuery = existingThreadsQuery.eq("user_id", participant1.user_id)
+    } else {
+      existingThreadsQuery = existingThreadsQuery.eq("npc_instance_id", participant1.npc_instance_id)
+    }
+
+    const { data: existingThreads, error: threadError } = await existingThreadsQuery
+
+    if (threadError) {
+      throw new MessageHandlerError("Failed to search for existing threads", "thread_search", threadError)
+    }
+
+    let threadId: string | null = null
+
+    // Check if there's a thread with exactly these two participants
+    if (existingThreads) {
+      for (const thread of existingThreads) {
+        // Find the other participant in this thread
+        const { data: participants, error: participantError } = await supabase
+          .from("thread_participant")
+          .select("*")
+          .eq("thread_id", thread.thread_id)
+
+        if (participantError) {
+          console.warn(`Failed to fetch participants for thread ${thread.thread_id}:`, participantError)
+          continue
+        }
+
+        // Should be exactly 2 participants
+        if (participants.length !== 2) continue
+
+        // Check if the other participant matches
+        const hasMatchingParticipants = participants.some(
+          (p) =>
+            (participant2.user_id && p.user_id === participant2.user_id) ||
+            (participant2.npc_instance_id && p.npc_instance_id === participant2.npc_instance_id),
+        )
+
+        if (hasMatchingParticipants) {
+          threadId = thread.thread_id
+          break
+        }
+      }
+    }
+
+    // If no thread exists, create a new one
+    if (!threadId) {
+      const { data: newThread, error: createThreadError } = await supabase.from("thread").insert({}).select().single()
+
+      if (createThreadError) {
+        throw new MessageHandlerError("Failed to create new thread", "thread_creation", createThreadError)
+      }
+
+      if (!newThread) {
+        throw new MessageHandlerError("Created thread returned no data", "thread_creation")
+      }
+
+      threadId = newThread.id
+
+      try {
+        // Attempt to create thread participants
+        const { error: createParticipantsError } = await supabase.from("thread_participant").insert([
+          {
+            thread_id: threadId,
+            ...participant1,
+          },
+          {
+            thread_id: threadId,
+            ...participant2,
+          },
+        ])
+
+        if (createParticipantsError) {
+          // Check if this is a foreign key violation (anonymous user)
+          if (createParticipantsError.code === "23503") {
+            console.debug("Attempted to create thread with anonymous user:", createParticipantsError.message)
+            return null
+          }
+          // For other errors, throw as usual
+          throw new MessageHandlerError(
+            "Failed to create thread participants",
+            "participant_creation",
+            createParticipantsError,
+          )
+        }
+      } catch (error: any) {
+        // Catch any other potential database errors
+        if (error?.code === "23503") {
+          console.debug("Attempted to create thread with anonymous user:", error.message)
+          return null
+        }
+        throw error
+      }
+    }
+
+    // Add message to thread
+    const { data: newMessage, error: messageError } = await supabase
+      .from("message")
+      .insert({
+        thread_id: threadId,
+        from_user_id: participant1.user_id,
+        from_npc_instance_id: participant1.npc_instance_id,
+        content: message,
+      })
+      .select()
+      .single()
+
+    if (messageError) {
+      throw new MessageHandlerError("Failed to create message", "message_creation", messageError)
+    }
+
+    if (!newMessage) {
+      throw new MessageHandlerError("Created message returned no data", "message_creation")
+    }
+
+    return {
+      threadId,
+      messageId: newMessage.id,
+    }
+  } catch (error) {
+    if (error instanceof MessageHandlerError) {
+      throw error
+    }
+
+    throw new MessageHandlerError(
+      "Unexpected error in message handler",
+      "unknown",
+      error instanceof Error ? error : new Error(String(error)),
+    )
+  }
 }
 
 server.listen(CONFIG.SERVER_PORT, () => {
