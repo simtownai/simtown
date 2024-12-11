@@ -1,3 +1,4 @@
+import { PlayerSpriteDefinition } from "../../../shared/types"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import RoomItem from "../../ui/RoomItem"
 import { SpritePreviewGame } from "../../ui/SpritePreview/SpritePreviewGame"
@@ -7,7 +8,7 @@ import { useNavigate } from "react-router-dom"
 interface DashboardProps {
   rooms: RoomWithMap[]
   username: string
-  spriteDefinition: any
+  spriteDefinition: PlayerSpriteDefinition
 }
 
 export function Dashboard({ rooms, username, spriteDefinition }: DashboardProps) {
