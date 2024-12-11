@@ -18,13 +18,13 @@
 }
 
 .introSection h2 {
-  font-size: 1.5rem;
+  font-size: var(--font-size);
   margin: 0;
   color: var(--color-text);
 }
 
 .subtitle {
-  font-size: 2rem;
+  font-size: var(--font-size-large);
   margin: 0.5rem 0 0 0;
   color: var(--color-text);
   font-weight: 600;

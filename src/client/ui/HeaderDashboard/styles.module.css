@@ -15,12 +15,12 @@
 }
 
 .welcomeText {
-  font-size: 2rem;
+  font-size: var(--font-size-large);
   color: var(--color-text-secondary);
 }
 
 .welcomeText strong {
-  font-size: 2.5rem;
+  font-size: var(--font-size-large);
   color: var(--color-text);
   cursor: pointer;
   transition:
@@ -34,7 +34,7 @@
 }
 
 .username {
-  font-size: 2rem;
+  font-size: var(--font-size-large);
   font-weight: 600;
   color: var(--color-text);
 }
@@ -57,14 +57,14 @@
   }
 
   .welcomeText {
-    font-size: 1rem;
+    font-size: var(--font-size);
   }
 
   .welcomeText strong {
-    font-size: 1.25rem;
+    font-size: var(--font-size);
   }
 
   .username {
-    font-size: 1rem;
+    font-size: var(--font-size);
   }
 }
