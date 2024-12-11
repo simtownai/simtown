@@ -25,42 +25,40 @@ export function useRoomInitialization(availableRooms: RoomWithMap[]) {
     }
 
     setRoom(room)
+    setMapConfig(room.map)
 
     const params = new URLSearchParams(window.location.search)
-    let initialRoomId = params.get("roomid") || ""
 
-    const tempSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
-
-    tempSocket.on("connect", () => {
-      tempSocket.emit("getAvailableRooms", (rooms: string[]) => {
-        if (!rooms.includes(initialRoomId)) {
-          tempSocket.emit("createRoom", room.id, (roomInstanceId: string) => {
-            const newParams = new URLSearchParams(window.location.search)
-            newParams.set("roomid", roomInstanceId)
-            window.history.replaceState({}, "", `${window.location.pathname}?${newParams.toString()}`)
-            setRoomId(roomInstanceId)
+    const initialRoomId = params.get("roomid") || ""
+    if (room.room_instance.find((room_instance) => room_instance.id === initialRoomId)) {
+      setRoomId(initialRoomId)
+    } else if (room.room_instance.length > 0) {
+      const roomInstanceId = room.room_instance.sort((a, b) => (a.last_update > b.last_update ? -1 : 1))[0].id
+      const newParams = new URLSearchParams(window.location.search)
+      newParams.set("roomid", roomInstanceId)
+      window.history.replaceState({}, "", `${window.location.pathname}?${newParams.toString()}`)
+      setRoomId(roomInstanceId)
+    } else {
+      const tempSocket = io(CONFIG.SERVER_URL, { autoConnect: false })
+      tempSocket.on("connect", () => {
+        tempSocket.emit("getAvailableRooms", (rooms: string[]) => {
+          if (!rooms.includes(initialRoomId)) {
+            tempSocket.emit("createRoom", room.id, (roomInstanceId: string) => {
+              const newParams = new URLSearchParams(window.location.search)
+              newParams.set("roomid", roomInstanceId)
+              window.history.replaceState({}, "", `${window.location.pathname}?${newParams.toString()}`)
+              setRoomId(roomInstanceId)
+              tempSocket.disconnect()
+            })
+          } else {
+            setRoomId(initialRoomId)
             tempSocket.disconnect()
-          })
-        } else {
-          setRoomId(initialRoomId)
-          tempSocket.disconnect()
-        }
-
-        supabase
-          .from("map")
-          .select("*")
-          .eq("id", room.map_id)
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("Error loading map:", error)
-              return
-            }
-            setMapConfig(data[0])
-          })
+          }
+        })
       })
-    })
 
-    tempSocket.connect()
+      tempSocket.connect()
+    }
   }, [availableRooms])
 
   return { room, roomId, mapConfig }
