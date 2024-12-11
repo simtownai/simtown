@@ -12,17 +12,13 @@ export default function RoomItem({ room, onNavigate }: RoomItemProps) {
   const [mapImageUrl, setMapImageUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchMapImage() {
-      if (room.map?.image) {
-        const { data } = await supabase.storage.from("map_images").getPublicUrl(room.map.image)
+    if (room.map?.image) {
+      const { data } = supabase.storage.from("map_images").getPublicUrl(room.map.image)
 
-        if (data?.publicUrl) {
-          setMapImageUrl(data.publicUrl)
-        }
+      if (data?.publicUrl) {
+        setMapImageUrl(data.publicUrl)
       }
     }
-
-    fetchMapImage()
   }, [room.map?.image])
 
   return (
