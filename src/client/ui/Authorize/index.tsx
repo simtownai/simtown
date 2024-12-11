@@ -9,13 +9,14 @@ interface AuthorizeProps {
   redirectTo: string
   isMobile: boolean
   onClose: () => void
+  message?: string
 }
 
-export default function Authorize({ redirectTo, isMobile, onClose }: AuthorizeProps) {
+export default function Authorize({ redirectTo, isMobile, onClose, message }: AuthorizeProps) {
   const containerStyle = !isMobile
     ? {
         width: "450px",
-        height: "650px",
+        height: "auto",
         maxWidth: "calc(100vw - 40px)",
         maxHeight: "calc(100vh - 40px)",
       }
@@ -36,6 +37,7 @@ export default function Authorize({ redirectTo, isMobile, onClose }: AuthorizePr
       <div className={styles.content}>
         <center>
           <h1>Simtown</h1>
+          {message && <p className={styles.message}>{message}</p>}
         </center>
         <Auth
           supabaseClient={supabase}

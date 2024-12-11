@@ -1,5 +1,5 @@
-import { CONFIG } from "../../../shared/config"
-import { formatTimeAMPM, getDaysRemaining, getGameTime } from "../../../shared/functions"
+import { getGameTime } from "../../../shared/functions"
+import { AuthState } from "../../hooks/useAuth"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import homeIcon from "../_images/overlay/home-icon.png"
@@ -8,6 +8,7 @@ import soundOffIcon from "../_images/overlay/sound-off-icon.png"
 import soundOnIcon from "../_images/overlay/sound-on-icon.png"
 import HelpContainer from "./HelpContainer"
 import styles from "./styles.module.css"
+import { Session } from "@supabase/supabase-js"
 import React, { useEffect, useState } from "react"
 
 interface OverlayProps {
@@ -20,9 +21,12 @@ interface OverlayProps {
   setIsObserveContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   soundEnabled: boolean
   setSoundEnabled: React.Dispatch<React.SetStateAction<boolean>>
+  setAuthContainerExpanded: (value: AuthState) => void
+  session: Session | null
 }
 
 export default function Overlay({
+  session,
   isMobile,
   isChatsContainerCollapsed,
   setIsChatsContainerCollapsed,
@@ -32,6 +36,7 @@ export default function Overlay({
   setIsObserveContainerCollapsed,
   soundEnabled,
   setSoundEnabled,
+  setAuthContainerExpanded,
 }: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
   const [currentTime, setCurrentTime] = useState(getGameTime())
@@ -112,6 +117,17 @@ export default function Overlay({
         >
           <img src={soundEnabled ? soundOnIcon : soundOffIcon} className={styles.buttonImage} />
         </button>
+        {!session ? (
+          <button
+            className={`${styles.loginButton}`}
+            onClick={(e) => {
+              handleClick(e)
+              setAuthContainerExpanded("")
+            }}
+          >
+            Log In
+          </button>
+        ) : null}
       </div>
       <div className={`${styles.overlay} ${styles.overlayBottomLeft}`}>
         <button

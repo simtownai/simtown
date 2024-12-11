@@ -1,10 +1,12 @@
 import { useState } from "react"
 
+export type AuthState = false | string
+
 export function useAuth() {
-  const [isAuthContainerExpanded, setAuthContainerExpanded] = useState(false)
+  const [authState, setAuthContainerExpanded] = useState<AuthState>(false)
 
   return {
-    isAuthContainerExpanded,
+    authState,
     setAuthContainerExpanded,
   }
 }

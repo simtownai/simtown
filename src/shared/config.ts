@@ -20,4 +20,5 @@ export const CONFIG = {
   MAP_ROADS_LAYER_NAME: "PREFERABLE PATHS",
   MAP_PLACES_LAYER_NAME: "PLACES",
   FONT_FAMILY: `"Roboto Mono", Arial, sans-serif`,
+  AUTH_THRESHOLD_MESSAGES: 2,
 }

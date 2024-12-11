@@ -19,7 +19,7 @@ function App() {
   const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
   const { supabaseSession, username, spriteDefinition, setSpriteDefinition, saveSpriteDefinitionInSupabase } =
     useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
-  const { isAuthContainerExpanded, setAuthContainerExpanded } = useAuth()
+  const { authState, setAuthContainerExpanded } = useAuth()
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
 
@@ -53,13 +53,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      {CONFIG.AUTH_ENABLED && isAuthContainerExpanded && (
-        <Authorize
-          redirectTo={window.location.href}
-          isMobile={isMobile}
-          onClose={() => setAuthContainerExpanded(false)}
-        />
-      )}
       <Routes>
         <Route
           path="/"
@@ -67,7 +60,7 @@ function App() {
             <Dashboard
               saveSpriteDefinitionInSupabase={saveSpriteDefinitionInSupabase}
               setSpriteDefinition={setSpriteDefinition}
-              showAuthContainer={() => setAuthContainerExpanded(true)}
+              showAuthContainer={() => setAuthContainerExpanded("")}
               session={supabaseSession}
               rooms={availableRooms}
               username={username}
@@ -79,6 +72,7 @@ function App() {
           path="/:roomName"
           element={
             <GameRoom
+              session={supabaseSession}
               socket={socket}
               setAuthContainerExpanded={setAuthContainerExpanded}
               userId={supabaseSession ? supabaseSession.user.id : uuidv4()}
@@ -91,6 +85,14 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {CONFIG.AUTH_ENABLED && authState && (
+        <Authorize
+          message={authState}
+          redirectTo={window.location.href}
+          isMobile={isMobile}
+          onClose={() => setAuthContainerExpanded(false)}
+        />
+      )}
     </BrowserRouter>
   )
 }

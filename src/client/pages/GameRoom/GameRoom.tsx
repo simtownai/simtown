@@ -1,5 +1,7 @@
+import { CONFIG } from "../../../shared/config"
 import { NewsItem, PlayerSpriteDefinition } from "../../../shared/types"
 import { IRefPhaserGame, PhaserGame } from "../../game/PhaserGame"
+import { AuthState } from "../../hooks/useAuth"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import { useLocalStorageMessages } from "../../hooks/useLocalStorageMessages"
 import { useMessageState } from "../../hooks/useMessageState"
@@ -11,6 +13,7 @@ import NewsContainer from "../../ui/NewsContainer"
 import ObserveContainer from "../../ui/ObserveContainer"
 import Overlay from "../../ui/Overlay"
 import CenteredText from "../../ui/StatusContainer"
+import { Session } from "@supabase/supabase-js"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
 
@@ -21,7 +24,8 @@ interface GameRoomProps {
   spriteDefinition: PlayerSpriteDefinition
   availableRooms: RoomWithMap[]
   isMobile: boolean
-  setAuthContainerExpanded: (value: boolean) => void
+  setAuthContainerExpanded: (value: AuthState) => void
+  session: Session | null
 }
 
 export function GameRoom({
@@ -32,6 +36,7 @@ export function GameRoom({
   spriteDefinition,
   availableRooms,
   isMobile,
+  session,
 }: GameRoomProps) {
   const { room, roomId, mapConfig } = useRoomInitialization(availableRooms)
   const { players } = usePlayerState(socket, username)
@@ -65,6 +70,8 @@ export function GameRoom({
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
   const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages()
+
+  const [hasShownAuthContainer, setHasShownAuthContainer] = useState(false)
 
   useMessageState({
     socket,
@@ -112,6 +119,20 @@ export function GameRoom({
     setIsGameLoaded(true)
   }
 
+  useEffect(() => {
+    const totalMessages = Array.from(messages.values()).reduce(
+      (sum: number, chatMessages) => sum + chatMessages.length,
+      0,
+    )
+
+    if (totalMessages >= CONFIG.AUTH_THRESHOLD_MESSAGES && !session && !hasShownAuthContainer) {
+      setAuthContainerExpanded(
+        "You seem to be enjoying the game! Log in to save all your messages and continue your conversations next time you visit.",
+      )
+      setHasShownAuthContainer(true)
+    }
+  }, [messages, session, hasShownAuthContainer])
+
   if (!roomId) {
     return <CenteredText text="Getting room id..." />
   }
@@ -142,6 +163,7 @@ export function GameRoom({
       />
       {isGameLoaded && (
         <Overlay
+          session={session}
           isMobile={isMobile}
           isChatsContainerCollapsed={isChatsContainerCollapsed}
           setIsChatsContainerCollapsed={setIsChatsContainerCollapsed}
@@ -151,6 +173,7 @@ export function GameRoom({
           setIsObserveContainerCollapsed={setIsObserveContainerCollapsed}
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
+          setAuthContainerExpanded={setAuthContainerExpanded}
         />
       )}
       {isGameLoaded && !isChatsContainerCollapsed && (
