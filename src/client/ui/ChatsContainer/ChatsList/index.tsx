@@ -35,7 +35,15 @@ const ChatsList: React.FC<ChatsListProps> = ({
           isRead: lastChatmateMessage ? lastChatmateMessage.isRead! : true, // TODO: handle undefined
         }
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const aIsSpecial = a.name.endsWith("(overheard)") || a.name.endsWith("(broadcast)")
+        const bIsSpecial = b.name.endsWith("(overheard)") || b.name.endsWith("(broadcast)")
+
+        if (aIsSpecial && !bIsSpecial) return 1
+        if (!aIsSpecial && bIsSpecial) return -1
+
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })
   }, [messages])
 
   useEffect(() => {
