@@ -49,6 +49,8 @@ export const useSupabaseSession = (
         setInitialMessages(initialMessages)
         console.log("initialMessages", initialMessages)
         socket?.emit("authorizeSupabase", session.access_token)
+      } else {
+        setInitialMessages(new Map())
       }
     })
 
