@@ -25,7 +25,7 @@ export function HeaderDashboard({
   onSave,
 }: HeaderDashboardProps) {
   const isMobile = useMobileBreakpoint()
-  const iconSize = isMobile ? 18 : 28
+  const iconSize = isMobile ? 24 : 48
   const [hasRandomized, setHasRandomized] = useState(false)
 
   const handleRandomize = () => {
@@ -43,7 +43,7 @@ export function HeaderDashboard({
         </div>
         <div className={styles.spriteControls}>
           <button className={styles.iconButton} onClick={onRandomize}>
-            <img src={Randomize} alt="Randomize" width={18} height={18} />
+            <img className={styles.buttonImage} src={Randomize} alt="Randomize" />
           </button>
           <div className={styles.spriteSection}>
             <SpritePreviewGame username={username} spriteDefinition={spriteDefinition} width={82} height={82} />
@@ -67,10 +67,10 @@ export function HeaderDashboard({
             disabled={!hasRandomized}
             title="Save your avatar"
           >
-            <img src={Save} alt="Save" width={iconSize} height={iconSize} />
+            <img className={styles.buttonImage} src={Save} alt="Save" />
           </button>
           <button className={styles.iconButton} onClick={handleRandomize} title="Randomize your avatar">
-            <img src={Randomize} alt="Randomize" width={iconSize} height={iconSize} />
+            <img className={styles.buttonImage} src={Randomize} alt="Randomize" />
           </button>
           <div className={styles.spriteSection}>
             <SpritePreviewGame username={username} spriteDefinition={spriteDefinition} width={82} height={82} />

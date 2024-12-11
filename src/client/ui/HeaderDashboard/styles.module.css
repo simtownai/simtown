@@ -55,20 +55,29 @@
 }
 
 .iconButton {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
+  padding: 0;
+  outline: none;
+  transition: transform 0.1s;
+  overflow: visible;
 }
 
 .iconButton:hover {
-  background: var(--color-hover);
+  transform: scale(1.1);
+}
+
+.buttonImage {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
 }
 
 .iconButtonDisabled {
@@ -77,10 +86,10 @@
 }
 
 .iconButtonDisabled:hover {
-  background: var(--color-background);
+  transform: none;
 }
 
-/* Remove the general tooltip style */
+/* Update tooltip styles */
 .iconButton:hover::after {
   content: attr(title);
   position: absolute;
@@ -93,8 +102,6 @@
   font-size: var(--font-size-very-small);
   white-space: nowrap;
   z-index: 1000;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
 
@@ -139,5 +146,15 @@
 
   .spriteControls button:hover::after {
     display: none; /* Hide tooltips on mobile */
+  }
+
+  .iconButton {
+    width: 24px;
+    height: 24px;
+  }
+
+  .buttonImage {
+    width: 24px;
+    height: 24px;
   }
 }
