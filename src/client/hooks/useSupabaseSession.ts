@@ -8,6 +8,8 @@ interface UseSupabaseSessionReturn {
   supabaseSession: Session | null
   username: string
   spriteDefinition: PlayerSpriteDefinition
+  setSpriteDefinition: (spriteDefinition: PlayerSpriteDefinition) => void
+  saveSpriteDefinitionInSupabase: () => void
 }
 
 export const useSupabaseSession = (
@@ -49,9 +51,18 @@ export const useSupabaseSession = (
     }
   }, [socket])
 
+  const saveSpriteDefinitionInSupabase = async () => {
+    if (!supabaseSession) {
+      throw new Error("Should not be able to save sprite definition without a session")
+    }
+    await supabase.from("users").update({ sprite_definition: spriteDefinition }).eq("id", supabaseSession.user.id)
+  }
+
   return {
     supabaseSession,
     username,
     spriteDefinition,
+    setSpriteDefinition,
+    saveSpriteDefinitionInSupabase,
   }
 }

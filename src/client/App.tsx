@@ -17,11 +17,8 @@ const socket = io(CONFIG.SERVER_URL)
 
 function App() {
   const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
-  const { supabaseSession, username, spriteDefinition } = useSupabaseSession(
-    defaultUsername,
-    createRandomSpriteDefinition(),
-    socket,
-  )
+  const { supabaseSession, username, spriteDefinition, setSpriteDefinition, saveSpriteDefinitionInSupabase } =
+    useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
   const { isAuthContainerExpanded, setAuthContainerExpanded } = useAuth()
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
@@ -68,6 +65,8 @@ function App() {
           path="/"
           element={
             <Dashboard
+              saveSpriteDefinitionInSupabase={saveSpriteDefinitionInSupabase}
+              setSpriteDefinition={setSpriteDefinition}
               showAuthContainer={() => setAuthContainerExpanded(true)}
               session={supabaseSession}
               rooms={availableRooms}

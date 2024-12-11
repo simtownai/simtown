@@ -1,3 +1,4 @@
+import { createRandomSpriteDefinition } from "../../../shared/functions"
 import { PlayerSpriteDefinition } from "../../../shared/types"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import { HeaderDashboard } from "../../ui/HeaderDashboard"
@@ -12,14 +13,26 @@ interface DashboardProps {
   spriteDefinition: PlayerSpriteDefinition
   session: Session | null
   showAuthContainer: () => void
+  setSpriteDefinition: (spriteDefinition: PlayerSpriteDefinition) => void
+  saveSpriteDefinitionInSupabase: () => void
 }
 
-export function Dashboard({ rooms, username, spriteDefinition, session, showAuthContainer }: DashboardProps) {
+export function Dashboard({
+  rooms,
+  username,
+  spriteDefinition,
+  session,
+  showAuthContainer,
+  setSpriteDefinition,
+  saveSpriteDefinitionInSupabase,
+}: DashboardProps) {
   const navigate = useNavigate()
 
   return (
     <div className={styles.container}>
       <HeaderDashboard
+        onSave={saveSpriteDefinitionInSupabase}
+        onRandomize={() => setSpriteDefinition(createRandomSpriteDefinition())}
         showAuthContainer={showAuthContainer}
         username={username}
         spriteDefinition={spriteDefinition}

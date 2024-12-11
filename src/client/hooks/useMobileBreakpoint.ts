@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
 export const mobileWindowWidthThreshold = 450
-export const useMobileBreakpoint = (breakpoint: number) => {
+export const useMobileBreakpoint = (breakpoint: number = mobileWindowWidthThreshold) => {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {

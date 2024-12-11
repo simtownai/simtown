@@ -39,10 +39,73 @@
   color: var(--color-text);
 }
 
-.spriteSection {
+.spriteContainer {
+  height: 100%;
   display: flex;
   align-items: center;
-  height: 100%;
+}
+
+.spriteControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.spriteSection {
+  margin-bottom: 1rem;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.iconButton:hover {
+  background: var(--color-hover);
+}
+
+.iconButtonDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconButtonDisabled:hover {
+  background: var(--color-background);
+}
+
+/* Remove the general tooltip style */
+.iconButton:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-very-small);
+  white-space: nowrap;
+  z-index: 1000;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+
+/* Specific positioning for save button tooltip */
+.spriteControls button:first-child:hover::after {
+  top: -30px;
+}
+
+/* Specific positioning for randomize button tooltip */
+.spriteControls button:nth-child(2):hover::after {
+  bottom: -30px;
 }
 
 @media (max-width: 768px) {
@@ -54,17 +117,27 @@
 
   .welcomeSection {
     gap: 0.25rem;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 40%;
   }
 
   .welcomeText {
-    font-size: var(--font-size);
+    font-size: var(--font-size-very-small);
+    line-height: 1.2;
   }
 
   .welcomeText strong {
-    font-size: var(--font-size);
+    font-size: var(--font-size-very-small);
   }
 
   .username {
-    font-size: var(--font-size);
+    font-size: var(--font-size-small);
+    word-break: break-word;
+    line-height: 1.2;
+  }
+
+  .spriteControls button:hover::after {
+    display: none; /* Hide tooltips on mobile */
   }
 }
