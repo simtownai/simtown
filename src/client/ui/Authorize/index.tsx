@@ -17,15 +17,15 @@ export default function Authorize({ redirectTo }: { redirectTo: string }) {
           variables: {
             default: {
               colors: {
-                brand: '#e1af74',
-                brandAccent: '#e2b57e',
-                brandButtonText: '#522e02',
-                defaultButtonBackground: '#48331c',
-                defaultButtonBackgroundHover: '#6c4a2b',
-                inputBackground: '#6c4a2b',
-                inputBorder: '#48331c',
-                inputText: '#ffffff',
-                inputPlaceholder: '#a68868',
+                brand: "#e1af74",
+                brandAccent: "#e2b57e",
+                brandButtonText: "#522e02",
+                defaultButtonBackground: "#48331c",
+                defaultButtonBackgroundHover: "#6c4a2b",
+                inputBackground: "#6c4a2b",
+                inputBorder: "#48331c",
+                inputText: "#ffffff",
+                inputPlaceholder: "#a68868",
               },
               fonts: {
                 bodyFontFamily: `"Monogram Extended", Arial, sans-serif`,
@@ -37,20 +37,20 @@ export default function Authorize({ redirectTo }: { redirectTo: string }) {
           },
           style: {
             button: {
-              border: '1px solid #48331c',
-              color: '#ffffff',
-              fontSize: '1.2rem',
+              border: "1px solid #48331c",
+              color: "#ffffff",
+              fontSize: "1.2rem",
             },
             anchor: {
-              color: '#e2b57e',
-              fontSize: '1.2rem',
+              color: "#e2b57e",
+              fontSize: "1.2rem",
             },
             label: {
-              color: '#ffffff',
-              fontSize: '1.2rem',
+              color: "#ffffff",
+              fontSize: "1.2rem",
             },
             input: {
-              fontSize: '1.2rem',
+              fontSize: "1.2rem",
             },
           },
         }}
