@@ -7,6 +7,7 @@ import {
   UpdatePlayerData,
   VoteCandidate,
 } from "../shared/types"
+import { randomInt } from "crypto"
 import { Socket, io } from "socket.io-client"
 
 export type EmitInterface = {
@@ -33,6 +34,7 @@ export type SocketManagerConfig = {
   onNews: (news: NewsItem | NewsItem[]) => void
   adjustDirection: (username: string) => void
   adjustDirectionPlace: (place: string) => void
+  instanceId?: string
   initialPosition?: { x: number; y: number }
 }
 
@@ -48,9 +50,11 @@ export class SocketManager {
   private onNews: (news: NewsItem | NewsItem[]) => void
   private adjustDirection: (username: string) => void
   private adjustDirectionPlace: (place: string) => void
+  private instanceId: string
   constructor(args: SocketManagerConfig) {
     this.socket = io("http://localhost:3000", { autoConnect: false })
     this.roomId = args.roomId
+    this.instanceId = args.instanceId ? args.instanceId : randomInt(2 ** 30).toString()
     this.setupPlayers = args.setupPlayers
     this.onPlayerJoined = args.onPlayerJoined
     this.onEndConversation = args.onEndConversation
@@ -63,17 +67,24 @@ export class SocketManager {
     this.setupSocketEvents()
     this.socket.connect()
     if (args.initialPosition) {
-      this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition, args.initialPosition)
+      this.socket.emit(
+        "joinRoom",
+        this.roomId,
+        true,
+        this.instanceId,
+        args.username,
+        args.spriteDefinition,
+        args.initialPosition,
+      )
     } else {
-      this.socket.emit("joinRoom", this.roomId, true, args.username, args.spriteDefinition)
+      this.socket.emit("joinRoom", this.roomId, true, this.instanceId, args.username, args.spriteDefinition)
     }
   }
 
   private setupSocketEvents() {
     this.socket.on("connect", () => {
-      const socketId = this.socket.id!
       this.socket.on("existingPlayers", (players: PlayerData[]) => {
-        this.setupPlayers(players, socketId)
+        this.setupPlayers(players, this.instanceId)
       })
 
       this.socket.on("playerJoined", (player: PlayerData) => {

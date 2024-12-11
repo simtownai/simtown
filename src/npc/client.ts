@@ -30,6 +30,7 @@ export class NPC {
     scenario: string,
     private mapConfig: Tables<"map">,
     private mapData: MapData,
+    instanceId?: string,
     private reflections?: string[],
     initialPosition?: { x: number; y: number },
   ) {
@@ -53,6 +54,7 @@ export class NPC {
       onNews: this.onNews.bind(this),
       adjustDirection: this.adjustDirection.bind(this),
       adjustDirectionPlace: this.adjustDirectionPlace.bind(this),
+      instanceId: instanceId,
       initialPosition: initialPosition,
     })
   }
