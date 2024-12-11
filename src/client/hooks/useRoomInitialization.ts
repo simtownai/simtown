@@ -1,10 +1,10 @@
 import { CONFIG } from "../../shared/config"
 import { Tables } from "../../shared/supabase-types"
-import { supabase } from "../supabase"
+import { RoomWithMap } from "./useAvailableRooms"
 import { useEffect, useState } from "react"
 import io from "socket.io-client"
 
-export function useRoomInitialization(availableRooms: Tables<"room">[]) {
+export function useRoomInitialization(availableRooms: RoomWithMap[]) {
   const [room, setRoom] = useState<Tables<"room"> | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
   const [mapConfig, setMapConfig] = useState<Tables<"map"> | null>(null)

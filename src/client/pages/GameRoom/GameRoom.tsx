@@ -1,6 +1,6 @@
-import { Tables } from "../../../shared/supabase-types"
-import { BroadcastMessage, ChatMessage, NewsItem, PlayerData } from "../../../shared/types"
+import { BroadcastMessage, ChatMessage, NewsItem, PlayerData, PlayerSpriteDefinition } from "../../../shared/types"
 import { IRefPhaserGame, PhaserGame } from "../../game/PhaserGame"
+import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import { useLocalStorageMessages } from "../../hooks/useLocalStorageMessages"
 import { useRoomInitialization } from "../../hooks/useRoomInitialization"
 import ChatsContainer from "../../ui/ChatsContainer"

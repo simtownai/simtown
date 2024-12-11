@@ -1,21 +1,11 @@
-import { Json, Tables } from "../../shared/supabase-types"
+import { Tables } from "../../shared/supabase-types"
 import { supabase } from "../supabase"
 import { useEffect, useState } from "react"
 
 export type RoomWithMap = Tables<"room"> & {
-  map: {
-    name: string
-    description: string
-    image: string
-  } | null
-  room_instance: {
-    last_update: string
-  }[]
-  npc: {
-    id: number
-    name: string
-    sprite_definition: Json
-  }[]
+  map: Tables<"map">
+  room_instance: Tables<"room_instance">[]
+  npc: Tables<"npc">[]
 }
 
 export const useAvailableRooms = () => {
@@ -31,9 +21,9 @@ export const useAvailableRooms = () => {
           .select(
             `
             *,
-            map(name, description, image),
-            room_instance(last_update),
-            npc(id, name, sprite_definition)
+            map!inner(*),
+            room_instance(*),
+            npc(*)
           `,
           )
           .order("name", { ascending: false })
