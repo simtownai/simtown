@@ -17,8 +17,14 @@ const socket = io(CONFIG.SERVER_URL)
 
 function App() {
   const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
-  const { supabaseSession, username, spriteDefinition, setSpriteDefinition, saveSpriteDefinitionInSupabase } =
-    useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
+  const {
+    supabaseSession,
+    username,
+    spriteDefinition,
+    setSpriteDefinition,
+    saveSpriteDefinitionInSupabase,
+    initialMessages,
+  } = useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
   const { authState, setAuthContainerExpanded } = useAuth()
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
@@ -51,6 +57,10 @@ function App() {
     return <CenteredText text="No rooms available" />
   }
 
+  if (!initialMessages) {
+    return <CenteredText text="Loading messages..." />
+  }
+
   return (
     <BrowserRouter>
       <Routes>
@@ -80,6 +90,7 @@ function App() {
               spriteDefinition={spriteDefinition}
               availableRooms={availableRooms}
               isMobile={isMobile}
+              initialMessages={initialMessages}
             />
           }
         />

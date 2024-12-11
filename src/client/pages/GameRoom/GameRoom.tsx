@@ -1,5 +1,5 @@
 import { CONFIG } from "../../../shared/config"
-import { NewsItem, PlayerSpriteDefinition } from "../../../shared/types"
+import { ChatMessage, NewsItem, PlayerSpriteDefinition } from "../../../shared/types"
 import { IRefPhaserGame, PhaserGame } from "../../game/PhaserGame"
 import { AuthState } from "../../hooks/useAuth"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
@@ -26,6 +26,7 @@ interface GameRoomProps {
   isMobile: boolean
   setAuthContainerExpanded: (value: AuthState) => void
   session: Session | null
+  initialMessages: Map<string, ChatMessage[]>
 }
 
 export function GameRoom({
@@ -37,9 +38,9 @@ export function GameRoom({
   availableRooms,
   isMobile,
   session,
+  initialMessages,
 }: GameRoomProps) {
   const { room, roomId, mapConfig } = useRoomInitialization(availableRooms)
-  const { players } = usePlayerState(socket, username)
 
   const {
     isChatsContainerCollapsed,
@@ -70,6 +71,7 @@ export function GameRoom({
   const phaserRef = useRef<IRefPhaserGame | null>(null)
 
   const { messages, setMessages, markMessagesAsRead, addMessage } = useLocalStorageMessages()
+  const { players } = usePlayerState(socket, userId, username, messages, setMessages, initialMessages)
 
   const [hasShownAuthContainer, setHasShownAuthContainer] = useState(false)
 

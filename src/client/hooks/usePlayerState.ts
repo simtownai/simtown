@@ -1,19 +1,46 @@
-import { PlayerData } from "../../shared/types"
+import { ChatMessage, PlayerData } from "../../shared/types"
 import { useEffect, useState } from "react"
 import { Socket } from "socket.io-client"
 
-export function usePlayerState(socket: Socket, username: string) {
+export function usePlayerState(
+  socket: Socket,
+  userId: string,
+  username: string,
+  messages: Map<string, ChatMessage[]>,
+  setMessages: React.Dispatch<React.SetStateAction<Map<string, ChatMessage[]>>>,
+  initialMessages: Map<string, ChatMessage[]>,
+) {
   const [players, setPlayers] = useState<Map<string, PlayerData>>(new Map())
+
+  function handleInitializeThreadMessages(player: PlayerData) {
+    const playerMessages = initialMessages.get(player.id)
+    if (playerMessages) {
+      setMessages((prevMessages) => {
+        const idUsernameMap = new Map([
+          [userId, username],
+          [player.id, player.username],
+        ])
+        return new Map(prevMessages).set(
+          player.username,
+          playerMessages.map((msg) => ({ ...msg, from: idUsernameMap.get(msg.from)!, to: idUsernameMap.get(msg.to)! })),
+        )
+      })
+    }
+  }
 
   useEffect(() => {
     socket.on("playerJoined", (player: PlayerData) => {
       if (player.username !== username) {
         setPlayers((prevPlayers) => new Map(prevPlayers).set(player.username, player))
+        handleInitializeThreadMessages(player)
       }
     })
 
     socket.on("existingPlayers", (players: PlayerData[]) => {
       const playersMap = new Map(players.map((player) => [player.username, player]))
+      players.forEach((player) => {
+        handleInitializeThreadMessages(player)
+      })
       setPlayers(playersMap)
     })
 
