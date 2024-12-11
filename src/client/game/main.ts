@@ -49,6 +49,7 @@ const StartGame = (
   parent: string,
   socket: Socket,
   mapConfig: Tables<"map">,
+  userId: string,
   username: string,
   spriteDefinition: PlayerSpriteDefinition,
   roomId: string,
@@ -56,7 +57,7 @@ const StartGame = (
   const gameConfig = {
     ...config,
     parent,
-    scene: [new LoadingScene(mapConfig), new Game(socket, mapConfig, username, spriteDefinition, roomId)],
+    scene: [new LoadingScene(mapConfig), new Game(socket, mapConfig, userId, username, spriteDefinition, roomId)],
   }
   return new Phaser.Game(gameConfig)
 }

@@ -13,6 +13,7 @@ export interface IRefPhaserGame {
 interface IProps {
   socket: Socket
   roomId: string
+  userId: string
   username: string
   mapConfig: Tables<"map">
   spriteDefinition: PlayerSpriteDefinition
@@ -31,6 +32,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
   {
     socket,
     roomId,
+    userId,
     username,
     mapConfig,
     spriteDefinition,
@@ -50,7 +52,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
   useLayoutEffect(() => {
     if (game.current === null) {
-      game.current = StartGame("game-container", socket, mapConfig, username, spriteDefinition, roomId)
+      game.current = StartGame("game-container", socket, mapConfig, userId, username, spriteDefinition, roomId)
 
       if (typeof ref === "function") {
         ref({ game: game.current, scene: null })

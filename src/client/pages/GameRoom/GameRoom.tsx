@@ -13,13 +13,14 @@ import { Socket } from "socket.io-client"
 
 interface GameRoomProps {
   socket: Socket
+  userId: string
   username: string
-  spriteDefinition: any
-  availableRooms: Tables<"room">[]
+  spriteDefinition: PlayerSpriteDefinition
+  availableRooms: RoomWithMap[]
   isMobile: boolean
 }
 
-export function GameRoom({ socket, username, spriteDefinition, availableRooms, isMobile }: GameRoomProps) {
+export function GameRoom({ socket, userId, username, spriteDefinition, availableRooms, isMobile }: GameRoomProps) {
   const { room, roomId, mapConfig } = useRoomInitialization(availableRooms)
 
   const [isGameLoaded, setIsGameLoaded] = useState(false)
@@ -206,6 +207,7 @@ export function GameRoom({ socket, username, spriteDefinition, availableRooms, i
       <PhaserGame
         ref={phaserRef}
         mapConfig={mapConfig}
+        userId={userId}
         username={username}
         spriteDefinition={spriteDefinition}
         socket={socket}

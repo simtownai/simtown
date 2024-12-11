@@ -10,6 +10,7 @@ import CenteredText from "./ui/StatusContainer"
 import { useEffect } from "react"
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import io from "socket.io-client"
+import { v4 as uuidv4 } from "uuid"
 
 const socket = io(CONFIG.SERVER_URL)
 
@@ -67,6 +68,7 @@ function App() {
           element={
             <GameRoom
               socket={socket}
+              userId={supabaseSession ? supabaseSession.user.id : uuidv4()}
               username={username}
               spriteDefinition={spriteDefinition}
               availableRooms={availableRooms}

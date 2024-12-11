@@ -53,6 +53,7 @@ export class Game extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap
   private collisionLayer!: Phaser.Tilemaps.TilemapLayer
   private playerSprite!: Phaser.Physics.Arcade.Sprite
+  private userId: string
   private username: string
   private spriteDefinition: PlayerSpriteDefinition
   private spriteHandler!: SpriteHandler
@@ -91,6 +92,7 @@ export class Game extends Phaser.Scene {
   constructor(
     socket: Socket,
     mapConfig: Tables<"map">,
+    userId: string,
     username: string,
     spriteDefinition: PlayerSpriteDefinition,
     roomId: string,
@@ -98,6 +100,7 @@ export class Game extends Phaser.Scene {
     super({ key: "Game" })
     this.socket = socket
     this.mapConfig = mapConfig
+    this.userId = userId
     this.username = username
     this.spriteDefinition = spriteDefinition
     this.roomId = roomId
@@ -116,7 +119,7 @@ export class Game extends Phaser.Scene {
     this.setupInput()
     this.audioManager.startBackgroundMusic()
 
-    this.socket.emit("joinRoom", this.roomId, false, this.username, this.spriteDefinition)
+    this.socket.emit("joinRoom", this.roomId, false, this.userId, this.username, this.spriteDefinition)
 
     EventBus.emit("current-scene-ready", this)
   }
@@ -554,7 +557,7 @@ export class Game extends Phaser.Scene {
     this.updateSpriteDepth(this.playerSprite)
 
     const currentPlayerData: PlayerData = {
-      id: this.socket.id!,
+      id: this.userId,
       isNPC: false,
       username: this.username,
       spriteDefinition: this.spriteDefinition,
