@@ -6,11 +6,13 @@ import { useMessageState } from "../../hooks/useMessageState"
 import { useOverlayState } from "../../hooks/useOverlayState"
 import { usePlayerState } from "../../hooks/usePlayerState"
 import { useRoomInitialization } from "../../hooks/useRoomInitialization"
+import AuthContainer from "../../ui/Authorize"
 import ChatsContainer from "../../ui/ChatsContainer"
 import NewsContainer from "../../ui/NewsContainer"
 import ObserveContainer from "../../ui/ObserveContainer"
 import Overlay from "../../ui/Overlay"
 import CenteredText from "../../ui/StatusContainer"
+import { Session } from "@supabase/supabase-js"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
 
@@ -21,9 +23,18 @@ interface GameRoomProps {
   spriteDefinition: PlayerSpriteDefinition
   availableRooms: RoomWithMap[]
   isMobile: boolean
+  supabaseSession: Session | null
 }
 
-export function GameRoom({ socket, userId, username, spriteDefinition, availableRooms, isMobile }: GameRoomProps) {
+export function GameRoom({
+  socket,
+  supabaseSession,
+  userId,
+  username,
+  spriteDefinition,
+  availableRooms,
+  isMobile,
+}: GameRoomProps) {
   const { room, roomId, mapConfig } = useRoomInitialization(availableRooms)
   const { players } = usePlayerState(socket, username)
 

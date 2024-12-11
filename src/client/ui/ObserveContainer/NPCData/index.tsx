@@ -1,6 +1,6 @@
 import { getTextFromAction } from "../../../../shared/functions"
 import { PlayerData } from "../../../../shared/types"
-import Header from "../../ChatsContainer/Chat/Header"
+import Header from "../../OverlayHeader"
 import styles from "./styles.module.css"
 
 export default function NPCData({

@@ -1,6 +1,6 @@
 import { formatTimeAMPM } from "../../../shared/functions"
 import { NewsItem } from "../../../shared/types"
-import Header from "../ChatsContainer/Chat/Header"
+import Header from "../OverlayHeader"
 import styles from "./styles.module.css"
 import React, { useEffect, useMemo } from "react"
 

@@ -1,7 +1,7 @@
 import { ChatMessage } from "../../../../shared/types"
+import Header from "../../OverlayHeader"
 import Compose from "./Compose"
 import Footer from "./Footer"
-import Header from "./Header"
 import Message from "./Message"
 import styles from "./styles.module.css"
 import { FormEvent, useEffect, useRef } from "react"

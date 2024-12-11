@@ -1,5 +1,6 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
+import { useAuth } from "./hooks/useAuth"
 import { useAvailableRooms } from "./hooks/useAvailableRooms"
 import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
@@ -21,6 +22,7 @@ function App() {
     createRandomSpriteDefinition(),
     socket,
   )
+  const { isAuthContainerExpanded, setIsAuthContainerExpanded } = useAuth()
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
 
@@ -35,10 +37,6 @@ function App() {
       socket.off("connect")
     }
   }, [])
-
-  if (CONFIG.AUTH_ENABLED && !supabaseSession) {
-    return <Authorize redirectTo={window.location.href} />
-  }
 
   if (!socket) {
     return <CenteredText text="Connecting to server..." />
@@ -58,6 +56,13 @@ function App() {
 
   return (
     <BrowserRouter>
+      {CONFIG.AUTH_ENABLED && isAuthContainerExpanded && (
+        <Authorize
+          redirectTo={window.location.href}
+          isMobile={isMobile}
+          onClose={() => setIsAuthContainerExpanded(false)}
+        />
+      )}
       <Routes>
         <Route
           path="/"
@@ -68,6 +73,7 @@ function App() {
           element={
             <GameRoom
               socket={socket}
+              supabaseSession={supabaseSession}
               userId={supabaseSession ? supabaseSession.user.id : uuidv4()}
               username={username}
               spriteDefinition={spriteDefinition}

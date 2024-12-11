@@ -1,7 +1,7 @@
-import CloseIcon from "../../../_images/chat/header/close-icon.svg?react"
-import RefreshIcon from "../../../_images/chat/header/refresh-icon.svg?react"
-import RecizeIcon from "../../../_images/chat/message/compose-resize.svg?react"
-import localizations from "../../../_lib/localization"
+import CloseIcon from "../_images/chat/header/close-icon.svg?react"
+import RefreshIcon from "../_images/chat/header/refresh-icon.svg?react"
+import RecizeIcon from "../_images/chat/message/compose-resize.svg?react"
+import localizations from "../_lib/localization"
 import styles from "./styles.module.css"
 
 export default function Header({

@@ -1,5 +1,5 @@
 import { ChatMessage } from "../../../../shared/types"
-import Header from "../Chat/Header"
+import Header from "../../OverlayHeader"
 import ChatListItem from "./ChatListItem"
 import styles from "./styles.module.css"
 import React, { useEffect, useMemo } from "react"

@@ -1,4 +1,4 @@
-import Header from "../../ChatsContainer/Chat/Header"
+import Header from "../../OverlayHeader"
 import styles from "./styles.module.css"
 import React, { useEffect, useMemo } from "react"
 
