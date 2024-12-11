@@ -14,6 +14,7 @@ export function useRoomInitialization(availableRooms: RoomWithMap[]) {
     if (path === "/" || path === "") return
 
     let roomNamePath = path.startsWith("/") ? path.substring(1) : path
+    roomNamePath = decodeURIComponent(roomNamePath)
 
     if (availableRooms.length === 0) return
 
