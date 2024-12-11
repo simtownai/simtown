@@ -37,7 +37,7 @@ export class RoomInstance {
     mapConfig: Tables<"map">,
     NPCConfigs: Tables<"npc">[],
     scenario: string,
-    NPCInstances: Tables<"npc_instance">[] = [],
+    NPCInstances: Tables<"npc_instance">[],
   ) {
     this.id = id
     this.mapConfig = mapConfig
