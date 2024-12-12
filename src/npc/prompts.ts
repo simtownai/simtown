@@ -47,7 +47,7 @@ export class PromptSystem {
 
       **Constraints**:
       - You can only talk to existing players and move to existing places.
-      - You should be reading a book or idling or moving (summed up total) around 3 times more often than talking. Use your reflections to see what you already did and adjust your plan accordingly.
+      - You should be reading a book or moving (summed up total) around 3 times more often than talking. Use your reflections to see what you already did and adjust your plan accordingly.
 `
   }
 
