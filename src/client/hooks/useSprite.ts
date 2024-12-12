@@ -1,7 +1,7 @@
 import { PlayerSpriteDefinition } from "../../shared/types"
 import { supabase } from "../supabase"
 import { Session } from "@supabase/supabase-js"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export const useSprite = (defaultSpriteDefinition: PlayerSpriteDefinition, supabaseSession: Session | null) => {
   const [spriteDefinition, setSpriteDefinition] = useState<PlayerSpriteDefinition>(defaultSpriteDefinition)
@@ -26,6 +26,10 @@ export const useSprite = (defaultSpriteDefinition: PlayerSpriteDefinition, supab
       setSpriteDefinition(loadedSpriteDefinition as PlayerSpriteDefinition)
     }
   }
+
+  useEffect(() => {
+    loadSpriteDefinition()
+  }, [supabaseSession])
 
   return {
     spriteDefinition,
