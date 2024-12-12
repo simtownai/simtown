@@ -29,7 +29,7 @@ export class PromptSystem {
 
   constructBasePrompt(reflections: StringifiedBrainDump): string {
     return `
-      You are ${reflections.name}. Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
+      You are to engage in roleplaying as ${reflections.name}. You should imitate the style of the person and when relevant generate action text / narrative cues in * * like *he chuckled*.  Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
 
       You located in ${this.mapName}. ${this.mapDescription}.
 
@@ -43,39 +43,32 @@ export class PromptSystem {
     return `
       ${this.constructBasePrompt(reflections)}.
       You will now generate a new plan for the day.
+      Ensure it  aligns with their backstory and reflections.  
 
       **Constraints**:
-      - You should modify the current plan only if you have a good reason to do so based on your own reflections or news.
-      - You should add to the plan if there are fewer than 3 actions in it.
-      - Generate listen action only if you know there is a broadcast or speech happening soon.  
-      - You can only talk to existing players and move to existing places or coordinates.
-      - You should not repeat the same action twice in a row and not repeat it if you did it recently (based on your reflections).
-
-      **Instructions**:
-      - Generate a new action plan for the NPC, considering the existing planned actions.
-      - Ensure the new plan aligns with their backstory and reflections.
-      - If you add or modify existing actions, briefly explain why in comments. Otherwise, do not provide any comments.
-    `
+      - You can only talk to existing players and move to existing places.
+      - You should be reading a book or idling and moving roughly 4 times more often than talking.
+`
   }
 
   summarizeConversation(reflections: StringifiedBrainDump): string {
     return `
       ${this.constructBasePrompt(reflections)}.
-      Provide a short summary of the conversation. It should consist of concise bullet points (1-2) for short conversations and up to 4-5 points for longer ones. Extract only points that can affect your opinion or goals. If nothing relevant is mentioned, just say "No relevant information". Remember that your name is ${reflections.name} and you are to provide a summary based on your perspective. Reply just with the summary and nothing else.
+      Provide a very short summary of the conversation. Focus on things that might affect your opinion, goals or plans.
     `
   }
 
   startConversation(reflections: StringifiedBrainDump, targetPlayer: string): string {
     return `
       ${this.constructBasePrompt(reflections)}.
-      You will now generate a message to start a conversation with a player named ${targetPlayer}. It should be short (2 sentences max) and relevant for the election/your goals or based on your knowledge of this player.
+      Start a conversation with a player named ${targetPlayer}. Keep it very short. 
     `
   }
 
   continueConversation(reflections: StringifiedBrainDump, targetPlayer: string): string {
     return `
       ${this.constructBasePrompt(reflections)}.
-      You will now generate a message to continue a conversation with a player named ${targetPlayer}. It should be short and relevant for the your goals or based on your knowledge of this player. You should keep in mind your plan for the day, and if you decide that those plans are more important than continuing the conversation, you should call function endConversation. The explanation for ending the conversation given to the function should be something you would actually say in real life, e.g., "I need to go as I want to prep for the upcoming speech I am about to give" or "We will never agree on this topic so I will stop talking to you, bye!" or "Okay, got it. Talk to you later." Remember to always call endConversation if you decide it's better to stop talking to this player. Keep the messages short but relevant (3-4 sentences max).
+       Continue on roleplaying with${targetPlayer}. Keep it short and relevant for the your goals or based on your knowledge of this player. If you want to walk away or finish the conversation, you must always call function endConversation. 
     `
   }
 
@@ -99,7 +92,6 @@ export class PromptSystem {
     return `
       ${this.constructBasePrompt(reflections)}.
       Provide a short summary of the speech. The summary should consist of concise bullet points (1-2) for short conversations and up to 4-5 points for longer ones. Reply just with the summary and nothing else.
-
       ${speechContent}
     `
   }
@@ -107,8 +99,8 @@ export class PromptSystem {
   summarizeReflections(braindump: StringifiedBrainDump): string {
     return `
       ${this.constructBasePrompt(braindump)}.
-      Your reflections are getting too long, so you need to summarize them.
-      Focus on the most important events and information that you think are relevant for your plan and goals in the future. Limit to 10 bullet points max. Current reflections are: ${braindump.reflections}
+      Your reflections are getting too long, so you need to extract key points from them.
+      Current reflections are: ${braindump.reflections}
     `
   }
 
