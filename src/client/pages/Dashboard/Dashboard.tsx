@@ -3,6 +3,7 @@ import { PlayerSpriteDefinition } from "../../../shared/types"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import { HeaderDashboard } from "../../ui/HeaderDashboard"
 import RoomItem from "../../ui/RoomItem"
+import CenteredText from "../../ui/StatusContainer"
 import styles from "./Dashboard.module.css"
 import { Session } from "@supabase/supabase-js"
 import { useNavigate } from "react-router-dom"
@@ -45,9 +46,13 @@ export function Dashboard({
         </section>
 
         <div className={styles.roomsGrid}>
-          {rooms.map((room) => (
-            <RoomItem key={room.id} room={room} onNavigate={(roomName) => navigate(`/${roomName}`)} />
-          ))}
+          {rooms.length > 0 ? (
+            rooms.map((room) => (
+              <RoomItem key={room.id} room={room} onNavigate={(roomName) => navigate(`/${roomName}`)} />
+            ))
+          ) : (
+            <CenteredText text="No rooms available" />
+          )}
         </div>
       </main>
     </div>

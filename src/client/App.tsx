@@ -2,6 +2,7 @@ import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
 import { useAuthContainerState } from "./hooks/useAuth"
 import { useAvailableRooms } from "./hooks/useAvailableRooms"
+import { useInitialMessages } from "./hooks/useInitialMessages"
 import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
 import { useSprite } from "./hooks/useSprite"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
@@ -20,7 +21,7 @@ function App() {
   const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
   const defaultSpriteDefinition = createRandomSpriteDefinition()
 
-  const { supabaseSession, username, initialMessages } = useSupabaseSession(defaultUsername, socket)
+  const { supabaseSession, username } = useSupabaseSession(defaultUsername, socket)
 
   const { spriteDefinition, setSpriteDefinition, saveSpriteDefinitionInSupabase } = useSprite(
     defaultSpriteDefinition,
@@ -29,7 +30,9 @@ function App() {
 
   const { authContainerState, setAuthContainerState } = useAuthContainerState()
 
-  const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
+  const { availableRooms, error: roomsError } = useAvailableRooms()
+
+  const { initialMessages, isLoading: isInitialMessagesLoading } = useInitialMessages()
 
   const isMobile = useMobileBreakpoint(mobileWindowWidthThreshold)
 
@@ -47,19 +50,11 @@ function App() {
     return <CenteredText text="Connecting to server..." />
   }
 
-  if (isLoadingRooms) {
-    return <CenteredText text="Loading available rooms..." />
-  }
-
   if (roomsError) {
     return <CenteredText text={`Error loading rooms: ${roomsError.message}`} />
   }
 
-  if (!availableRooms.length) {
-    return <CenteredText text="No rooms available" />
-  }
-
-  if (!initialMessages) {
+  if (isInitialMessagesLoading) {
     return <CenteredText text="Loading messages..." />
   }
 
