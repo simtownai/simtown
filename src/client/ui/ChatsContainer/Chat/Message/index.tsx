@@ -29,6 +29,22 @@ export default function Message({
 
     return `${day}/${month}/${year} ${hoursStr}:${minutes} ${ampm}`
   }
+
+  const renderMessageText = (text: string) => {
+    // Split by italic markers *...*
+    const parts = text.split(/(\*[^*]+\*)/)
+
+    return parts.map((part, index) => {
+      if (part.startsWith("*") && part.endsWith("*")) {
+        // Extract inner text without the asterisks
+        const innerText = part.slice(1, -1)
+        return <i key={index}>{innerText}</i>
+      }
+      // If no italic formatting, return as-is
+      return <span key={index}>{part}</span>
+    })
+  }
+
   return (
     <div className={styles.messageContainer}>
       <div className={styles.message}>
@@ -41,7 +57,7 @@ export default function Message({
           </div>
         )}
 
-        <p>{message.message}</p>
+        <p>{renderMessageText(message.message)}</p>
         {isLoading && <TripleDots />}
       </div>
     </div>

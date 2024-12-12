@@ -29,7 +29,7 @@ export class PromptSystem {
 
   constructBasePrompt(reflections: StringifiedBrainDump): string {
     return `
-      You are to engage in roleplaying as ${reflections.name}. You should imitate the style of the person and when relevant generate action text / narrative cues in * * like *he chuckled*.  Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
+      You are to engage in roleplaying as ${reflections.name}. You should imitate the style of the person and when relevant (max 1, 2 per message and not always.) generate action text in * * like *he chuckled*.  Your actions, thoughts, and conversations should be guided by your background: ${reflections.backstory}. 
 
       You located in ${this.mapName}. ${this.mapDescription}.
 
@@ -43,18 +43,18 @@ export class PromptSystem {
     return `
       ${this.constructBasePrompt(reflections)}.
       You will now generate a new plan for the day.
-      Ensure it  aligns with their backstory and reflections.  
+      Ensure it  aligns with their backstory and reflections. If based on your previous conversations, you should do sth, continue putting that as a first action in the plan. 
 
       **Constraints**:
       - You can only talk to existing players and move to existing places.
-      - You should be reading a book or idling or moving (summed up total) around 3 times more often than talking.
+      - You should be reading a book or idling or moving (summed up total) around 3 times more often than talking. Use your reflections to see what you already did and adjust your plan accordingly.
 `
   }
 
   summarizeConversation(reflections: StringifiedBrainDump): string {
     return `
       ${this.constructBasePrompt(reflections)}.
-      Provide a very short summary of the conversation. Focus on things that might affect your opinion, goals or plans.
+      Provide  very short summary of the conversation. Discard and action text. Extract key things that might affect your opinion, goals or plans. 
     `
   }
 
@@ -68,7 +68,7 @@ export class PromptSystem {
   continueConversation(reflections: StringifiedBrainDump, targetPlayer: string): string {
     return `
       ${this.constructBasePrompt(reflections)}.
-       Continue on roleplaying with${targetPlayer}. Keep it short and relevant for the your goals or based on your knowledge of this player. If you want to walk away or finish the conversation, you must always call function endConversation. 
+       Continue on roleplaying with${targetPlayer}. Keep it short and relevant for the your goals or based on your knowledge of this player. Do not put anything in parenthesis or other brackets. If you want to walk away or finish the conversation, you must always call function endConversation, for example if sb asks you to talk with sb else, you should call endConversation ("I must talk with sb else").
     `
   }
 

@@ -29,8 +29,6 @@ function App() {
 
   const { authContainerState, setAuthContainerState } = useAuthContainerState()
 
-  console.debug("authState is", authContainerState)
-
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
 
   const isMobile = useMobileBreakpoint(mobileWindowWidthThreshold)
