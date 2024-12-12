@@ -85,7 +85,41 @@ export class TalkAction extends Action {
   }
 
   private splitIntoChunks(message: string): string[] {
-    const chunks = message.match(/[^.!?]+[.!?]+/g) || [message]
+    // Match either:
+    // 1. Text between asterisks (roleplay actions)
+    // 2. Regular text ending with .!? followed by space or end of string
+    const regex = /(\*[^*]+\*)|([^.!?*]+[.!?]+(?=\s|$))/g
+    const matches = message.match(regex) || [message]
+
+    // Clean up and combine chunks
+    const chunks: string[] = []
+    let currentChunk = ""
+
+    matches.forEach((match) => {
+      match = match.trim()
+      if (match.startsWith("*")) {
+        // If we have accumulated text, push it as a chunk
+        if (currentChunk) {
+          chunks.push(currentChunk.trim())
+          currentChunk = ""
+        }
+        // Push roleplay action as its own chunk
+        chunks.push(match)
+      } else {
+        currentChunk += (currentChunk ? " " : "") + match
+        // If the match ends with sentence-ending punctuation, push the chunk
+        if (/[.!?]$/.test(match)) {
+          chunks.push(currentChunk.trim())
+          currentChunk = ""
+        }
+      }
+    })
+
+    // Push any remaining text
+    if (currentChunk) {
+      chunks.push(currentChunk.trim())
+    }
+
     return chunks.filter((chunk) => chunk.length > 0)
   }
 
