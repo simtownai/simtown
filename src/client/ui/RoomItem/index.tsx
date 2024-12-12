@@ -26,7 +26,7 @@ export default function RoomItem({ room, onNavigate }: RoomItemProps) {
       <div className={styles.roomHeader}>
         <div className={styles.roomInfo}>
           <h3>{room.name}</h3>
-          {
+          {/* {
             <span className={styles.lastUpdate}>
               {room.type === "shared"
                 ? "This is a shared room, users can join at any time"
@@ -34,7 +34,7 @@ export default function RoomItem({ room, onNavigate }: RoomItemProps) {
                   ? "Continue playing"
                   : "Start playing"}
             </span>
-          }
+          } */}
         </div>
       </div>
 
