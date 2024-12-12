@@ -113,6 +113,7 @@ export class LoadingScene extends Scene {
       frameWidth: 11,
       frameHeight: 11,
     })
-    this.load.audio("background-music", "assets/audio/medieval-background-music.mp3")
+    // this.load.audio("background-music", "assets/audio/medieval-background-music.mp3")
+    this.load.audio("background-music", "assets/audio/harry-potter-letters.mp3")
   }
 }
