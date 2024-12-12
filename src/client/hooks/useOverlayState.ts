@@ -8,7 +8,7 @@ export function useOverlayState() {
   const [isObserveContainerCollapsed, setIsObserveContainerCollapsed] = useState(true)
   const [isObservedNPCCollapsed, setIsObservedNPCCollapsed] = useState(true)
   const [isObservedContainerExpanded, setIsObservedContainerExpanded] = useState(false)
-  const [soundEnabled, setSoundEnabled] = useState(localStorage.getItem("soundEnabled") === "true")
+  const [soundEnabled, setSoundEnabled] = useState(localStorage.getItem("soundEnabled") !== "false")
 
   return {
     isChatsContainerCollapsed,

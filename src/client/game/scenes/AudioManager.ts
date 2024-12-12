@@ -7,7 +7,8 @@ export class AudioManager {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
-    this.soundEnabled = localStorage.getItem("soundEnabled") === "true"
+    this.soundEnabled = localStorage.getItem("soundEnabled") !== "false"
+    this.startBackgroundMusic()
     this.setupAudioListeners()
   }
 

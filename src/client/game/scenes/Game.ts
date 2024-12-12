@@ -117,7 +117,6 @@ export class Game extends Phaser.Scene {
     this.setupVirtualJoystick()
     this.setupCameras()
     this.setupInput()
-    this.audioManager.startBackgroundMusic()
 
     this.socket.emit("joinRoom", this.roomId, false, this.userId, this.username, this.spriteDefinition)
 
