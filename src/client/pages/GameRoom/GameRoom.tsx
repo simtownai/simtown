@@ -1,7 +1,7 @@
 import { CONFIG } from "../../../shared/config"
 import { ChatMessage, NewsItem, PlayerSpriteDefinition } from "../../../shared/types"
 import { IRefPhaserGame, PhaserGame } from "../../game/PhaserGame"
-import { AuthState } from "../../hooks/useAuth"
+import { AuthContainerState } from "../../hooks/useAuth"
 import { RoomWithMap } from "../../hooks/useAvailableRooms"
 import { useLocalStorageMessages } from "../../hooks/useLocalStorageMessages"
 import { useMessageState } from "../../hooks/useMessageState"
@@ -24,14 +24,14 @@ interface GameRoomProps {
   spriteDefinition: PlayerSpriteDefinition
   availableRooms: RoomWithMap[]
   isMobile: boolean
-  setAuthContainerExpanded: (value: AuthState) => void
+  setAuthContainerState: (value: AuthContainerState) => void
   session: Session | null
   initialMessages: Map<string, ChatMessage[]>
 }
 
 export function GameRoom({
   socket,
-  setAuthContainerExpanded,
+  setAuthContainerState,
   userId,
   username,
   spriteDefinition,
@@ -128,9 +128,10 @@ export function GameRoom({
     )
 
     if (totalMessages >= CONFIG.AUTH_THRESHOLD_MESSAGES && !session && !hasShownAuthContainer) {
-      setAuthContainerExpanded(
-        "You seem to be enjoying the game! Log in to save all your messages and continue your conversations next time you visit.",
-      )
+      setAuthContainerState({
+        message:
+          "You seem to be enjoying the game! Log in to save all your messages and continue your conversations next time you visit.",
+      })
       setHasShownAuthContainer(true)
     }
   }, [messages, session, hasShownAuthContainer])
@@ -175,7 +176,7 @@ export function GameRoom({
           setIsObserveContainerCollapsed={setIsObserveContainerCollapsed}
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
-          setAuthContainerExpanded={setAuthContainerExpanded}
+          setAuthContainerState={setAuthContainerState}
         />
       )}
       {isGameLoaded && !isChatsContainerCollapsed && (

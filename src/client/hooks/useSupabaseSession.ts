@@ -1,4 +1,4 @@
-import { ChatMessage, PlayerSpriteDefinition } from "../../shared/types"
+import { ChatMessage } from "../../shared/types"
 import { supabase } from "../supabase"
 import { Session } from "@supabase/supabase-js"
 import { useEffect, useState } from "react"
@@ -7,20 +7,12 @@ import { Socket } from "socket.io-client"
 interface UseSupabaseSessionReturn {
   supabaseSession: Session | null
   username: string
-  spriteDefinition: PlayerSpriteDefinition
-  setSpriteDefinition: (spriteDefinition: PlayerSpriteDefinition) => void
-  saveSpriteDefinitionInSupabase: () => void
   initialMessages: Map<string, ChatMessage[]> | null
 }
 
-export const useSupabaseSession = (
-  defaultUsername: string,
-  defaultSpriteDefinition: PlayerSpriteDefinition,
-  socket: Socket,
-): UseSupabaseSessionReturn => {
+export const useSupabaseSession = (defaultUsername: string, socket: Socket): UseSupabaseSessionReturn => {
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null)
   const [username, setUsername] = useState<string>(defaultUsername)
-  const [spriteDefinition, setSpriteDefinition] = useState<PlayerSpriteDefinition>(defaultSpriteDefinition)
   const [initialMessages, setInitialMessages] = useState<Map<string, ChatMessage[]> | null>(null)
 
   useEffect(() => {
@@ -31,20 +23,6 @@ export const useSupabaseSession = (
       setSupabaseSession(session)
       if (session) {
         setUsername(session.user.email ? session.user.email.split("@")[0] : session.user.id)
-        supabase
-          .from("users")
-          .select("sprite_definition")
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("Error loading user sprite definition:", error)
-              return
-            }
-            const spriteDefinition = data[0].sprite_definition
-            if (spriteDefinition) {
-              setSpriteDefinition(spriteDefinition as PlayerSpriteDefinition)
-            }
-          })
-
         const initialMessages = await initializeMessages(session.user.id)
         setInitialMessages(initialMessages)
         console.log("initialMessages", initialMessages)
@@ -59,19 +37,9 @@ export const useSupabaseSession = (
     }
   }, [socket])
 
-  const saveSpriteDefinitionInSupabase = async () => {
-    if (!supabaseSession) {
-      throw new Error("Should not be able to save sprite definition without a session")
-    }
-    await supabase.from("users").update({ sprite_definition: spriteDefinition }).eq("id", supabaseSession.user.id)
-  }
-
   return {
     supabaseSession,
     username,
-    spriteDefinition,
-    setSpriteDefinition,
-    saveSpriteDefinitionInSupabase,
     initialMessages,
   }
 }

@@ -1,5 +1,5 @@
 import { getGameTime } from "../../../shared/functions"
-import { AuthState } from "../../hooks/useAuth"
+import { AuthContainerState } from "../../hooks/useAuth"
 import chatsIcon from "../_images/overlay/chats-icon.png"
 import hintsIcon from "../_images/overlay/hints-icon.png"
 import homeIcon from "../_images/overlay/home-icon.png"
@@ -21,7 +21,7 @@ interface OverlayProps {
   setIsObserveContainerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   soundEnabled: boolean
   setSoundEnabled: React.Dispatch<React.SetStateAction<boolean>>
-  setAuthContainerExpanded: (value: AuthState) => void
+  setAuthContainerState: (value: AuthContainerState) => void
   session: Session | null
 }
 
@@ -36,7 +36,7 @@ export default function Overlay({
   setIsObserveContainerCollapsed,
   soundEnabled,
   setSoundEnabled,
-  setAuthContainerExpanded,
+  setAuthContainerState,
 }: OverlayProps) {
   const [isHelpContainerCollapsed, setIsHelpContainerCollapsed] = useState(true)
   const [currentTime, setCurrentTime] = useState(getGameTime())
@@ -122,7 +122,7 @@ export default function Overlay({
             className={`${styles.loginButton}`}
             onClick={(e) => {
               handleClick(e)
-              setAuthContainerExpanded("")
+              setAuthContainerState({ message: "" })
             }}
           >
             Log In

@@ -1,8 +1,9 @@
 import { CONFIG } from "../shared/config"
 import { createRandomSpriteDefinition } from "../shared/functions"
-import { useAuth } from "./hooks/useAuth"
+import { useAuthContainerState } from "./hooks/useAuth"
 import { useAvailableRooms } from "./hooks/useAvailableRooms"
 import { mobileWindowWidthThreshold, useMobileBreakpoint } from "./hooks/useMobileBreakpoint"
+import { useSprite } from "./hooks/useSprite"
 import { useSupabaseSession } from "./hooks/useSupabaseSession"
 import { Dashboard } from "./pages/Dashboard/Dashboard"
 import { GameRoom } from "./pages/GameRoom/GameRoom"
@@ -17,15 +18,18 @@ const socket = io(CONFIG.SERVER_URL)
 
 function App() {
   const defaultUsername = "Player" + Math.floor(Math.random() * 1000) + 1
-  const {
+  const defaultSpriteDefinition = createRandomSpriteDefinition()
+
+  const { supabaseSession, username, initialMessages } = useSupabaseSession(defaultUsername, socket)
+
+  const { spriteDefinition, setSpriteDefinition, saveSpriteDefinitionInSupabase } = useSprite(
+    defaultSpriteDefinition,
     supabaseSession,
-    username,
-    spriteDefinition,
-    setSpriteDefinition,
-    saveSpriteDefinitionInSupabase,
-    initialMessages,
-  } = useSupabaseSession(defaultUsername, createRandomSpriteDefinition(), socket)
-  const { authState, setAuthContainerExpanded } = useAuth()
+  )
+
+  const { authContainerState, setAuthContainerState } = useAuthContainerState()
+
+  console.debug("authState is", authContainerState)
 
   const { availableRooms, isLoading: isLoadingRooms, error: roomsError } = useAvailableRooms()
 
@@ -70,7 +74,7 @@ function App() {
             <Dashboard
               saveSpriteDefinitionInSupabase={saveSpriteDefinitionInSupabase}
               setSpriteDefinition={setSpriteDefinition}
-              showAuthContainer={() => setAuthContainerExpanded("")}
+              showAuthContainer={() => setAuthContainerState({ message: "" })}
               session={supabaseSession}
               rooms={availableRooms}
               username={username}
@@ -84,7 +88,7 @@ function App() {
             <GameRoom
               session={supabaseSession}
               socket={socket}
-              setAuthContainerExpanded={setAuthContainerExpanded}
+              setAuthContainerState={setAuthContainerState}
               userId={supabaseSession ? supabaseSession.user.id : uuidv4()}
               username={username}
               spriteDefinition={spriteDefinition}
@@ -96,12 +100,12 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      {CONFIG.AUTH_ENABLED && authState && (
+      {CONFIG.AUTH_ENABLED && authContainerState && (
         <Authorize
-          message={authState}
+          message={authContainerState.message}
           redirectTo={window.location.href}
           isMobile={isMobile}
-          onClose={() => setAuthContainerExpanded(false)}
+          onClose={() => setAuthContainerState(false)}
         />
       )}
     </BrowserRouter>

@@ -1,12 +1,12 @@
 import { useState } from "react"
 
-export type AuthState = false | string
+export type AuthContainerState = false | { message: string }
 
-export function useAuth() {
-  const [authState, setAuthContainerExpanded] = useState<AuthState>(false)
+export function useAuthContainerState() {
+  const [authContainerState, setAuthContainerState] = useState<AuthContainerState>(false)
 
   return {
-    authState,
-    setAuthContainerExpanded,
+    authContainerState,
+    setAuthContainerState,
   }
 }
