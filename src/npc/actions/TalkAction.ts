@@ -43,7 +43,7 @@ export type ConversationType = { type: "existing"; message: ChatMessage } | { ty
 export class TalkAction extends Action {
   private readonly MESSAGE_BUFFER_TIMEOUT = 3000
   private readonly CHUNK_DELAY = 1000
-  private readonly CONVERSATION_TIMEOUT = 45000
+  private readonly CONVERSATION_TIMEOUT = 60000
 
   private state: TalkActionState = {
     type: "awaiting_message",
