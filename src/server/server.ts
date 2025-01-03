@@ -763,7 +763,8 @@ export async function handleMessage(supabase: SupabaseClient, { from, to, messag
         throw error
       }
     }
-
+    const user = await supabase.auth.getUser()
+    console.debug("user is :", user.data.user)
     // Add message to thread
     const { data: newMessage, error: messageError } = await supabase
       .from("message")

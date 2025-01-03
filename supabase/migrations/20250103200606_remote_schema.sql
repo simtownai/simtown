@@ -90,13 +90,14 @@ ALTER TYPE "public"."room_type" OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."create_room_instance"("p_id" "text", "p_room_id" integer) RETURNS "text"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
     AS $$
 BEGIN
   INSERT INTO room_instance (id, room_id)
   VALUES (p_id, p_room_id);
 
-  INSERT INTO npc_instance (npc_id, room_instance_id)
+  INSERT INTO npc_instance (npc_id, room_instance_id) 
   SELECT nr.npc_id, p_id
   FROM npc_room nr
   WHERE nr.room_id = p_room_id;
@@ -310,6 +311,8 @@ CREATE TABLE IF NOT EXISTS "public"."thread" (
     "id" "text" DEFAULT "gen_random_uuid"() NOT NULL,
     "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE ONLY "public"."thread" FORCE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."thread" OWNER TO "postgres";
@@ -811,6 +814,7 @@ GRANT ALL ON TABLE "public"."room_instance" TO "service_role";
 GRANT ALL ON TABLE "public"."thread" TO "anon";
 GRANT ALL ON TABLE "public"."thread" TO "authenticated";
 GRANT ALL ON TABLE "public"."thread" TO "service_role";
+GRANT ALL ON TABLE "public"."thread" TO "authenticator";
 
 
 
