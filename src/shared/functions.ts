@@ -22,16 +22,17 @@ export function calculateDistance(x1: number, y1: number, x2: number, y2: number
 
 export function worldToGrid(x: number, y: number): GridPosition {
   return {
-    gridX: Math.floor((x - 1) / CONFIG.TILE_SIZE),
-    gridY: Math.floor((y - 1) / CONFIG.TILE_SIZE),
+    gridX: Math.floor(x / CONFIG.TILE_SIZE),
+    gridY: Math.floor(y / CONFIG.TILE_SIZE),
   }
 }
 
 export function gridToWorld(cell: GridPosition): { x: number; y: number } {
-  return {
+  const result = {
     x: cell.gridX * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
-    y: cell.gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE,
+    y: cell.gridY * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
   }
+  return result
 }
 
 const currentDate = new Date()

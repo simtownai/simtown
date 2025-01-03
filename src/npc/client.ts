@@ -1,5 +1,11 @@
 import { CONFIG } from "../shared/config"
-import { getActionSchema, getBroadcastAnnouncementsKey, getDirection, get_move_message } from "../shared/functions"
+import {
+  createRandomSpriteDefinition,
+  getActionSchema,
+  getBroadcastAnnouncementsKey,
+  getDirection,
+  get_move_message,
+} from "../shared/functions"
 import logger from "../shared/logger"
 import { Tables } from "../shared/supabase-types"
 import { ChatMessage, MapData, NewsItem, PlayerData, PlayerSpriteDefinition, UpdatePlayerData } from "../shared/types"
@@ -44,7 +50,7 @@ export class NPC {
     this.socketManager = new SocketManager({
       roomId: this.roomId,
       username: this.npcConfig.name,
-      spriteDefinition: this.npcConfig.sprite_definition as PlayerSpriteDefinition,
+      spriteDefinition: createRandomSpriteDefinition(), //this.npcConfig.sprite_definition as PlayerSpriteDefinition,
       setupPlayers: this.setupPlayers.bind(this),
       onPlayerJoined: this.onPlayerJoined.bind(this),
       onPlayerDataChanged: this.onPlayerDataChanged.bind(this),
