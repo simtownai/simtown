@@ -110,6 +110,17 @@ $$;
 ALTER FUNCTION "public"."create_room_instance"("p_id" "text", "p_room_id" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_current_user_id"() RETURNS "uuid"
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select nullif(current_setting('request.jwt.claims.sub', true), '')::uuid
+$$;
+
+
+ALTER FUNCTION "public"."get_current_user_id"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -523,6 +534,89 @@ ALTER TABLE ONLY "public"."user_room_instance"
 
 
 
+CREATE POLICY "Enable read access for all users" ON "public"."npc" FOR SELECT TO "authenticated", "anon", "authenticator" USING (true);
+
+
+
+CREATE POLICY "authenticator_message" ON "public"."message" TO "authenticated", "anon", "authenticator" USING (true);
+
+
+
+ALTER TABLE "public"."map" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "map_select_all" ON "public"."map" FOR SELECT USING (true);
+
+
+
+ALTER TABLE "public"."message" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."npc" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."npc_instance" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."npc_room" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "npc_room_select" ON "public"."npc_room" FOR SELECT TO "authenticated", "anon", "authenticator" USING (true);
+
+
+
+CREATE POLICY "npc_select" ON "public"."npc" FOR SELECT TO "authenticated", "anon", "authenticator" USING (true);
+
+
+
+ALTER TABLE "public"."room" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."room_instance" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "room_instance_select" ON "public"."user_room_instance" FOR SELECT TO "authenticated", "anon", "authenticator" USING (("user_id" = ("public"."get_current_user_id"())::"text"));
+
+
+
+CREATE POLICY "room_select" ON "public"."room_instance" FOR SELECT TO "authenticated", "anon", "authenticator" USING (((EXISTS ( SELECT 1
+   FROM "public"."user_room_instance" "uri"
+  WHERE (("uri"."room_instance_id" = "room_instance"."id") AND ("uri"."user_id" = (("current_setting"('request.jwt.claims'::"text"))::"jsonb" ->> 'sub'::"text"))))) OR (EXISTS ( SELECT 1
+   FROM "public"."room" "r"
+  WHERE (("r"."id" = "room_instance"."room_id") AND ("r"."type" = 'shared'::"public"."room_type"))))));
+
+
+
+CREATE POLICY "room_select_public_when_visible" ON "public"."room" FOR SELECT USING (("visible" = true));
+
+
+
+CREATE POLICY "select_npc_instance" ON "public"."npc_instance" FOR SELECT TO "authenticated", "anon", "authenticator" USING (true);
+
+
+
+ALTER TABLE "public"."user_room_instance" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "users_delete_authenticated" ON "public"."users" FOR DELETE TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "users_insert_authenticated" ON "public"."users" FOR INSERT TO "authenticated" WITH CHECK (true);
+
+
+
+CREATE POLICY "users_select_authenticated" ON "public"."users" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "users_update_authenticated" ON "public"."users" FOR UPDATE TO "authenticated" USING (true) WITH CHECK (true);
+
+
+
 
 
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
@@ -715,6 +809,12 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 GRANT ALL ON FUNCTION "public"."create_room_instance"("p_id" "text", "p_room_id" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."create_room_instance"("p_id" "text", "p_room_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_room_instance"("p_id" "text", "p_room_id" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_current_user_id"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_current_user_id"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_current_user_id"() TO "service_role";
 
 
 
