@@ -1,14 +1,98 @@
+# SimTown
+
+[![Build and Deploy](https://github.com/simtownai/simtown/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/simtownai/simtown/actions/workflows/build-and-deploy.yml)
+
+A multiplayer web-based simulation game built with React, Phaser, Socket.IO, Supabase, and OpenAI. NPCs powered by GPT-4 interact with players in a shared virtual space.
+
+https://github.com/user-attachments/assets/fab45016-44c4-48f6-9512-0e8e36c7d3b7
+
+<!--
+![](https://github.com/user-attachments/assets/9a9aeb0a-3347-409c-bbab-dadfe53a6277)
+-->
+
+## Technical Highlights
+
+- Autonomous AI characters & interactions with them using OpenAI's GPT-4
+- Real-time multiplayer synchronization with [Socket.IO](https://socket.io/)
+- Mobile-responsive design with touch controls and virtual joystick
+- Google OAuth integration
+- Persistent player interactions and chat history for authorized players
+
+## Project Structure
+
+The project consists of a server and a client. The server manages NPCs, rooms, and inter-player communication, while the client is responsible for the UI and game rendering.
+
+Notable client directories include:
+
+- [`src/client/game/`](./src/client/game/) - Core game mechanics and rendering
+- [`src/client/ui/`](./src/client/ui/) - React-based game UI components
+
+Server directories:
+
+- [`src/npc/brain/`](./src/npc/brain/) - AI character behavior and decision-making
+- [`src/server/`](./src/server/) - Server implementation, including room management
+
+## Development
+
+### Setup
+
+1. Install dependencies:
+
+```bash
+bun install
+```
+
+2. Configure environment:
+
+```bash
+cp .env.example .env
+```
+
+Required environment variables:
+
+- `OPENAI_API_KEY`: Your OpenAI API key
+- `VITE_SUPABASE_URL`: Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Supabase anonymous key
+
+### Running Locally
+
+Start all services in development mode:
+
+```bash
+bun dev
+```
+
+Or run services individually:
+
+```bash
+# Game server
+bun dev:server    # Runs on :3000
+
+# Frontend
+bun dev:client    # Runs on :3001
+```
+
+### Docker Deployment
+
+Build and run the server using Docker Compose:
+
+```bash
+docker compose up -d --build
+```
+
+<!--
+
 # ToDo
 
 - restore room instance for user private room if exists
 - save chats
-- add room recreation on server on JoinRoom
+- add room recreation on the server on JoinRoom
 - offer to log in
-- trying to move on a phone but started at NPC so chat opened
-- joystick on a phone dances when holding at one direction
-- chat hard to read on a phone
+- trying to move on a phone but started at NPC so the chat opened
+- The joystick on the phone dances when held at one direction
+- chat is hard to read on a phone
 - figure out how chat should look like
-- if deleting room instance check if other players are still connected and if yes then delete only your connection
+- if deleting the room instance check if other players are still connected and if yes then delete only your connection
 - remove user room connection when room deleted
 - improving login with google with icon and name
   - add privacy policy and terms of service URLs (https://console.cloud.google.com/auth/branding?authuser=1&inv=1&invt=AbjQXA&project=simtown-443721)
@@ -17,14 +101,14 @@
 - if you want to save the account
 - change the story of the setup
 - finish thread when end conversation or disconnect + fix history logging
-- action subset (special room type); to elimiated broadcasting and voting
+- action subset (special room type); to eliminate broadcasting and voting
 - custom map + characters for the community
 - idling
-- uncensored models (try gpt jailbreak)
+- uncensored models (try GPT jailbreak)
 - tutorial cookie on onboard
 - observer interface
   - add past actions
-  - add characters icons
+  - add character icons
 - idlining like in generative agents
   - eat
   - rest (idle idle)
@@ -110,3 +194,5 @@
 - hide help container when chat opens and vice versa
 - enable help menu toggle via "?" but do not listen to it while chat window is opened
 - walk behind big tree bushes
+
+-->
