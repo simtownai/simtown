@@ -11,14 +11,3 @@ services:
     restart: always
     tty: true
     command: ["bun", "src/server/server.ts"]
-#   simtown-npc:
-#     container_name: simtown-npc
-#     image: ${IMAGE_NAME:-simtown}
-#     build:
-#       context: .
-#     env_file:
-#       - .env
-#     network_mode: "host"
-#     restart: always
-#     tty: true
-#     command: ["bun", "src/npc/client.ts"]
