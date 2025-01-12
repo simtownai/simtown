@@ -4,10 +4,9 @@
   "type": "module",
   "description": "",
   "scripts": {
-    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\" \"bun run dev:npc\"",
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\"",
     "dev:server": "bun run --watch src/server/server.ts",
     "dev:client": "vite --port 3001",
-    "dev:npc": "bun run --watch src/npc/client.ts",
     "build": "vite build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
